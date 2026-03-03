@@ -44,10 +44,10 @@ void TextMesh::buildVertices() {
         float h = static_cast<float>(tile.height);
 
         // xyz, uv, color //
-        vertices.push_back({x + w, y + h, 0.0f, tile.u2, tile.v1, 0,0,0,1});
-        vertices.push_back({x + w, y,     0.0f, tile.u2, tile.v2, 0,0,0,1});
-        vertices.push_back({x,     y,     0.0f, tile.u1, tile.v2, 0,0,0,1});
-        vertices.push_back({x,     y + h, 0.0f, tile.u1, tile.v1, 0,0,0,1});
+        vertices.push_back({x + w, y + h, 0.0f, tile.u2, tile.v1, 1, 1, 1, 1});
+        vertices.push_back({x + w, y,     0.0f, tile.u2, tile.v2, 1, 1, 1, 1});
+        vertices.push_back({x,     y,     0.0f, tile.u1, tile.v2, 1, 1, 1, 1});
+        vertices.push_back({x,     y + h, 0.0f, tile.u1, tile.v1, 1, 1, 1, 1});
 
         indices.push_back(indCount+0);
         indices.push_back(indCount+1);

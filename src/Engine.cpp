@@ -192,10 +192,8 @@ void Engine::run() {
 
 						curText->getContent().push_back(codepoint);
 						TextMesh mesh(curText.get());
-						textModel->mesh = std::make_shared<GPUMesh>(device, mesh);
+						textModel->mesh->update(mesh);
 					}
-
-					
 				}
 
 				int frameIndex = renderer.getFrameIndex();
@@ -269,5 +267,5 @@ void Engine::loadModels() {
 	
 	std::shared_ptr<GPUTexture> bitmapFontGPU = std::make_shared<GPUTexture>(device, curText->getFont()->fontData.bitmap, TextureFilter::Nearest);
 	textModel->material = std::make_shared<GPUMaterial>(*globalPool, *uiMaterialSetLayout, bitmapFontGPU);
-	textModel->mesh = std::make_shared<GPUMesh>(device, textMesh);
+	textModel->mesh = std::make_shared<GPUMesh>(device, textMesh, GPUMeshBufferFlags::CreateWithReserve);
 }
