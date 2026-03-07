@@ -4,6 +4,7 @@
 #include "RenderSystem.hpp"
 #include "Swapchain.hpp"
 #include "UIRenderSystem.hpp"
+#include "gui/GuiContext.hpp"
 #include "model/GPUMesh.hpp"
 #include "model/GPUTexture.hpp"
 #include "model/Mesh.hpp"
@@ -14,8 +15,6 @@
 #include <memory>
 #include <string>
 #include <thread>
-#include <locale>
-#include <codecvt>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -34,14 +33,13 @@ struct GlobalUbo {
 Engine::Engine() : camera(window.width, window.height, glm::dvec3(0, 0, 5), glm::radians(90.0f)) {
 	Events::init(window.window);
 
-	globalPool = DescriptorPool::Builder(device)
-		.setMaxSets(64)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 32)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 32)
+	globalPool = DescriptorPoolManager::Builder(device)
+		.setMaxSets(72)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 8)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 64)
 		.build();
 
 	createGlobalLayouts();
-	createUILayouts();
 	loadModels();
 }
 
@@ -81,47 +79,6 @@ void Engine::createGlobalLayouts() {
 	}
 }
 
-void Engine::createUILayouts() {
-	uiUniform.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-	for(int i = 0; i < uiUniform.size(); i++) {
-		uiUniform[i] = std::make_unique<Buffer>(
-			device, 
-			sizeof(GlobalUbo),
-			1,
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 
-			VMA_MEMORY_USAGE_CPU_TO_GPU);
-		uiUniform[i]->map();
-	}
-
-	uiSetLayout = DescriptorSetLayout::Builder(device)
-		.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-		.build();
-	uiLayouts.push_back(uiSetLayout->getDescriptorSetLayout());
-
-	uiMaterialSetLayout = DescriptorSetLayout::Builder(device)
-		.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-		.build();
-	uiLayouts.push_back(uiMaterialSetLayout->getDescriptorSetLayout());
-
-	uiDescriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-	for(int i = 0; i < uiDescriptorSets.size(); i++) {
-		auto bufferInfo = uiUniform[i]->descriptorInfo();
-		DescriptorWriter(*uiSetLayout, *globalPool)
-			.writeBuffer(0, &bufferInfo)
-			.build(uiDescriptorSets[i]);
-	}
-
-	GlobalUbo ubo{};
-	ubo.projview = camera.getProjviewOrtho();
-
-	uiUniform[0]->writeToBuffer(&ubo);
-	uiUniform[0]->flush();
-
-	uiUniform[1]->writeToBuffer(&ubo);
-	uiUniform[1]->flush();
-}
-
 void Engine::run() {
 	//VkDescriptorImageInfo imageInfo;
 	//if(model->texture) {
@@ -130,11 +87,21 @@ void Engine::run() {
 	//	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	//}
 
-	UIRenderSystem uiRenderSystem(device, renderer.getSwapChainRenderPass(), uiLayouts);
-	RenderSystem renderSystem(device, renderer.getSwapChainRenderPass(), globalLayouts);
 
-	renderSystem.addModel(model.get());
-	uiRenderSystem.addModel(textModel.get());
+	
+	GUIContext guiContext(window.width, window.height);
+	auto guiWindow = std::make_shared<GUIWindow>();
+	guiWindow->windowWidth = 700;
+	guiWindow->windowHeight = 500;
+	guiWindow->posX = 200;
+	guiWindow->posY = 200;
+	
+	guiContext.createWindow(guiWindow);
+
+	UIRenderSystem uiRenderSystem(device, renderer.getSwapChainRenderPass(), globalPool.get(), &guiContext, &camera);
+
+	RenderSystem renderSystem(device, renderer.getSwapChainRenderPass(), globalLayouts);
+	renderSystem.addModel(model);
 
 	Events::toggle_cursor(&window);
 	double lastTime = glfwGetTime();
@@ -186,23 +153,13 @@ void Engine::run() {
 			if (auto commandBuffer = renderer.beginFrame()) {
 				renderer.beginSwapChainRenderPass(commandBuffer);
 
-				if(writingActive) {
-					while(!Events::pressed_codepoints.empty()) {
-						uint32_t codepoint = Events::pressed_codepoints.top(); Events::pressed_codepoints.pop();
-
-						curText->getContent().push_back(codepoint);
-						TextMesh mesh(curText.get());
-						textModel->mesh->update(mesh);
-					}
-				}
-
 				int frameIndex = renderer.getFrameIndex();
 				FrameInfo frameInfo{
 					frameIndex,
 					(float)frameTime,
 					commandBuffer,
 					camera,
-					globalDescriptorSets[frameIndex]};
+					globalDescriptorSets[frameIndex].set};
 
 				camera.update();
 
@@ -212,8 +169,6 @@ void Engine::run() {
 				globalUniform[frameIndex]->flush();
 
 				renderSystem.render(frameInfo);
-
-				frameInfo.globalDescriptorSet = uiDescriptorSets[frameIndex];
 				uiRenderSystem.render(frameInfo);
 
 				renderer.endSwapChainRenderPass(commandBuffer);
@@ -251,22 +206,4 @@ void Engine::loadModels() {
 	std::shared_ptr<GPUTexture> gpuTexture = std::make_shared<GPUTexture>(device, &texture);
 	model->material = std::make_shared<GPUMaterial>(*globalPool, *materialSetLayout, gpuTexture);
 	model->mesh = std::make_shared<GPUMesh>(device, meshInstance);
-
-	// FONT LOADING //
-	std::string utf8text = "Простой текст в Vulkan API. ";
-	std::u32string u32text = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8text);
-
-	FontSample* sample = fontHandler.getSample("Times");
-	curFont = std::make_unique<Font>(sample);
-	curText = std::make_unique<Text>(curFont.get(), u32text);
-
-	// TEXT MESH CREATING //
-	textModel = std::make_shared<Model>();
-	textModel->transform.translate({100.0, 900.0, 0.0});
-	TextMesh textMesh(curText.get());
-	TextureUtils::save(curText->getFont()->fontData.bitmap.get(), absolutePath+"resources/img/bitmap.bmp");
-	
-	std::shared_ptr<GPUTexture> bitmapFontGPU = std::make_shared<GPUTexture>(device, curText->getFont()->fontData.bitmap.get(), TextureFilter::Nearest);
-	textModel->material = std::make_shared<GPUMaterial>(*globalPool, *uiMaterialSetLayout, bitmapFontGPU);
-	textModel->mesh = std::make_shared<GPUMesh>(device, textMesh, GPUMeshBufferFlags::CreateWithReserve);
 }

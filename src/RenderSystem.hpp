@@ -11,10 +11,6 @@
 
 const std::string absolutePath = "C:\\cplusplus\\VulkanRender\\VulkanRender\\";
 
-struct PushConstantData {
-	alignas(16) glm::mat4 model;
-};
-
 namespace myvk {
 	class RenderSystem {
 	public:
@@ -25,13 +21,13 @@ namespace myvk {
 		RenderSystem(const RenderSystem&) = delete;
 		RenderSystem& operator=(const RenderSystem&) = delete;
 
-		void render(FrameInfo& frame);
-		void addModel(Model* model);
+		virtual void render(FrameInfo& frame);
+		void addModel(std::shared_ptr<Model> model);
 	protected:
 		void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts);
 		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
 
-		std::vector<Model*> models;
+		std::vector<std::shared_ptr<Model>> models;
 
 		Device& device;
 

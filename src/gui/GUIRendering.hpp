@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "GUIContext.hpp"
@@ -10,34 +11,29 @@
 namespace myvk {
 
 struct GUIContentModel {
+    uint32_t id = 0;
     uint32_t version = 0;
     std::shared_ptr<Model> model;
 };
 
 struct GUIWindowRender {
-    uint32_t windowId = 0;
+    GUIWindow* window;
     uint32_t version = 0;
     bool visible = true;
     int zOrder = 0;
     
-    std::vector<MeshInstance> meshInstances;
     std::vector<GUIContentModel> models;
-};
 
-struct GUIMeshMaker {
-    void makeMesh(GUIWindowRender* windowRender, GUIWindow* contextWindow);
+    void buildMeshes(Device& device);
 };
 
 struct GUIRender {
-    std::vector<GUIWindowRender> windowToRender;
-
-    GUIMeshMaker meshMaker;
+    std::vector<std::unique_ptr<GUIWindowRender>> windowToRender;
     GUIContext* context;
     
     GUIRender(GUIContext* guiContext);
 
-    void update();
-    
+    void fetchContext(Device& device);
 };
 
-}
+} 

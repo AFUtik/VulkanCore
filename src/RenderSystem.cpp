@@ -24,7 +24,7 @@ RenderSystem::~RenderSystem() {
 	vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
 }
 
-void RenderSystem::addModel(Model* model) {
+void RenderSystem::addModel(std::shared_ptr<Model> model) {
 	models.push_back(model);
 }
 

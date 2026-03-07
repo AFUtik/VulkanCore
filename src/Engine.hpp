@@ -33,36 +33,21 @@ namespace myvk {
 		void run();
 	private:
 		void createGlobalLayouts();
-		void createUILayouts();
 		void loadModels();
-		
-		
 
 		Window window{ WIDTH, HEIGHT, "Vulkan Engine" };
 		Device device{ window };
 		Renderer renderer{ window, device };
 
-		FontHandler fontHandler;
-
-		std::unique_ptr<Font> curFont = nullptr;
-		std::unique_ptr<Text> curText = nullptr;
-
 		Camera camera;
 
-		std::unique_ptr<DescriptorPool> globalPool{};
+		std::unique_ptr<DescriptorPoolManager> globalPool{};
+
 		std::unique_ptr<DescriptorSetLayout> globalSetLayout;
 		std::unique_ptr<DescriptorSetLayout> materialSetLayout;
-		std::vector<VkDescriptorSet> globalDescriptorSets;
+		std::vector<DescriptorSetData> globalDescriptorSets;
 		std::vector<VkDescriptorSetLayout> globalLayouts;
 		std::vector<std::unique_ptr<Buffer>> globalUniform;
-
-		std::unique_ptr<DescriptorSetLayout> uiSetLayout;
-		std::unique_ptr<DescriptorSetLayout> uiMaterialSetLayout;
-		std::vector<VkDescriptorSet> uiDescriptorSets;
-		std::vector<VkDescriptorSetLayout> uiLayouts;
-		std::vector<std::unique_ptr<Buffer>> uiUniform;
-
 		std::shared_ptr<Model> model;
-		std::shared_ptr<Model> textModel;
 	};
 }

@@ -1,6 +1,7 @@
 #pragma once
  
 #include "Device.hpp"
+#include "vulkan/vulkan_core.h"
  
 // std
 #include <memory>
@@ -43,7 +44,14 @@ private:
     friend class DescriptorWriter;
 };
 
-class DescriptorPool {
+struct DescriptorSetData {
+    VkDescriptorPool pool;
+    VkDescriptorSetLayout layout;
+
+    VkDescriptorSet set = VK_NULL_HANDLE;
+};
+
+class DescriptorPoolManager {
 public:
     class Builder {
     public:
@@ -52,7 +60,7 @@ public:
         Builder &addPoolSize(VkDescriptorType descriptorType, uint32_t count);
         Builder &setPoolFlags(VkDescriptorPoolCreateFlags flags);
         Builder &setMaxSets(uint32_t count);
-        std::unique_ptr<DescriptorPool> build() const;
+        std::unique_ptr<DescriptorPoolManager> build() const;
     
     private:
         Device &device;
@@ -61,41 +69,48 @@ public:
         VkDescriptorPoolCreateFlags poolFlags = 0;
     };
 
-    DescriptorPool(
+    DescriptorPoolManager(
         Device &device,
         uint32_t maxSets,
         VkDescriptorPoolCreateFlags poolFlags,
         const std::vector<VkDescriptorPoolSize> &poolSizes);
-    ~DescriptorPool();
-    DescriptorPool(const DescriptorPool &) = delete;
-    DescriptorPool &operator=(const DescriptorPool &) = delete;
+    ~DescriptorPoolManager();
+    DescriptorPoolManager(const DescriptorPoolManager &) = delete;
+    DescriptorPoolManager &operator=(const DescriptorPoolManager &) = delete;
     
-    bool allocateDescriptor(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) const;
+    bool allocateDescriptor(const VkDescriptorSetLayout descriptorSetLayout, DescriptorSetData &descriptor);
     
-    void freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const;
-    
+    void freeDescriptors(std::vector<DescriptorSetData> &descriptors) const;
+
     void resetPool();
-    
 private:
+    void allocateNewPool();
+
     Device &device;
-    VkDescriptorPool descriptorPool;
+
+    uint32_t maxSets;
+
+    VkDescriptorPoolCreateFlags poolFlags; 
+    std::vector<VkDescriptorPool> descriptorPools;
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    VkDescriptorPool freePool;
     
     friend class DescriptorWriter;
 };
 
 class DescriptorWriter {
  public:
-  DescriptorWriter(DescriptorSetLayout &setLayout, DescriptorPool &pool);
+  DescriptorWriter(DescriptorSetLayout &setLayout, DescriptorPoolManager &poolManager);
  
   DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
   DescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo *imageInfo);
  
-  bool build(VkDescriptorSet &set);
-  void overwrite(VkDescriptorSet &set);
+  bool build(DescriptorSetData &set);
+  void overwrite(DescriptorSetData &set);
  
  private:
   DescriptorSetLayout &setLayout;
-  DescriptorPool &pool;
+  DescriptorPoolManager &poolManager;
   std::vector<VkWriteDescriptorSet> writes;
 };
 

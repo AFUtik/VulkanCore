@@ -25,8 +25,8 @@ Texture2D::Texture2D(std::string path, TextureChannels channels_) : path(path), 
     }
 }
 
-Texture2D::Texture2D(uint8_t* ptr, int width, int height, int channels) :
-    pixels(ptr), width(width), height(height), channels(channels)
+Texture2D::Texture2D(std::unique_ptr<uint8_t[]> ptr, int width, int height, int channels) :
+    pixels(std::move(ptr)), width(width), height(height), channels(channels)
 {
     
 }

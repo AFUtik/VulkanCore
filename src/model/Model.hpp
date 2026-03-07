@@ -1,8 +1,9 @@
 #pragma once
 
+#include "../FrameInfo.hpp"
 
-#include "model/GPUMaterial.hpp"
-#include "model/GPUMesh.hpp"
+#include "GPUMaterial.hpp"
+#include "GPUMesh.hpp"
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -12,6 +13,10 @@
 #include <memory>
 
 namespace myvk {
+	struct PushConstantData {
+		alignas(16) glm::mat4 model;
+	};
+
 	struct Transform {
 		glm::dvec3 pos {0.0f};
 		glm::quat  rot {1, 0, 0, 0};
@@ -67,6 +72,8 @@ namespace myvk {
 		Transform transform;
 		std::shared_ptr<GPUMesh> mesh;
 		std::shared_ptr<GPUMaterial> material;
+
+		void render(FrameInfo& frame, VkPipelineLayout pipelineLayout);
 
 		Model() {};
 		~Model() {};

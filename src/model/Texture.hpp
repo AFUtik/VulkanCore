@@ -19,7 +19,7 @@ public:
     
     Texture2D(const uint8_t* c_ptr, int width, int height, int channels);
 
-    Texture2D(uint8_t* ptr, int width, int height, int channels);
+    Texture2D(std::unique_ptr<uint8_t[]> ptr, int width, int height, int channels);
 
     Texture2D(int width, int height, int channels);
 

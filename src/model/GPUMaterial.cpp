@@ -2,9 +2,9 @@
 
 namespace myvk {
 
-GPUMaterial::GPUMaterial(DescriptorPool& pool,
-                   DescriptorSetLayout& layout,
-                   std::shared_ptr<GPUTexture> albedo) : pool(pool), layout(layout), albedo(albedo)
+GPUMaterial::GPUMaterial(DescriptorPoolManager& pool,
+                         DescriptorSetLayout& layout,
+                         std::shared_ptr<GPUTexture> albedo) : pool(pool), layout(layout), albedo(albedo)
 {
    create(albedo);
 }
@@ -26,14 +26,14 @@ void GPUMaterial::create(std::shared_ptr<GPUTexture> albedo)
 	}
 }
 
-void GPUMaterial::bind(VkCommandBuffer commandBuffer, VkPipelineLayout& pipelineLayout, int frame) const {
+void GPUMaterial::bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, int frame) const {
     vkCmdBindDescriptorSets(
         commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         pipelineLayout,
         1,
         1,
-        &descriptorSets[frame],
+        &descriptorSets[frame].set,
         0,
 	    nullptr);
 }

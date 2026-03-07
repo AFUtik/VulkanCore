@@ -62,6 +62,8 @@ struct TextBox : GUIContent {
 struct GUIWindow {
     uint32_t version = 0;
 
+    uint32_t posX;
+    uint32_t posY;
     uint32_t windowWidth;
     uint32_t windowHeight;
     uint32_t scrollX;
@@ -102,12 +104,13 @@ struct GUIContext {
 
     GUIWindow* activeWindow = nullptr;
 
-    std::vector<std::unique_ptr<GUIWindow>> windows_;
+    std::vector<std::shared_ptr<GUIWindow>> windows_;
 
     GUIContext(uint32_t width, uint32_t height);
 
     void key(KeyboardEvent& keyboardEvent);
     void mouse(MouseEvent& mouseEvent);
 
-    std::vector<std::unique_ptr<GUIWindow>>& windows();
+    void createWindow(std::shared_ptr<GUIWindow> window);
+    inline std::vector<std::shared_ptr<GUIWindow>>& windows() {return windows_;}
 };
