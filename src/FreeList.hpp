@@ -6,27 +6,27 @@
 #include <cassert>
 #include <vector>
 
-typedef uint32_t Handle;
-
 template<typename T>
-class FreeListShared {
-    FreeListShared(size_t initial_capacity) {
+class FreeList {
+public:
+    FreeList(size_t initial_capacity = 16) {
         s_ptrs.reserve(initial_capacity);
         next.reserve(initial_capacity);
     }
 
-    inline Handle create(std::shared_ptr<T> sptr) {
+    inline uint32_t create(T sptr) {
         uint32_t idx = obtain_free_index();
-        s_ptrs[idx] = sptr;
+        s_ptrs[idx] = std::move(sptr);
+        return idx;
     }
 
-    inline void remove(Handle handle) {
+    inline void remove(uint32_t handle) {
         s_ptrs[handle].reset();
         next[handle] = free_head;
         free_head = handle;
     }
 
-    inline std::shared_ptr<T>& operator[](Handle handle) {
+    inline T& operator[](uint32_t handle) {
         return s_ptrs[handle];
     }
 private:
@@ -43,7 +43,7 @@ private:
 
     static constexpr uint32_t invalid_index = std::numeric_limits<uint32_t>::max();
 
-    std::vector<std::shared_ptr<T>> s_ptrs;
+    std::vector<T> s_ptrs;
     std::vector<uint32_t> next;
 
     int free_head = invalid_index;

@@ -1,9 +1,11 @@
 #pragma once
 
-#include "../FrameInfo.hpp"
 
-#include "GPUMaterial.hpp"
-#include "GPUMesh.hpp"
+#include "glm/detail/qualifier.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "Mesh.hpp"
+#include "Texture.hpp"
+#include <cstdint>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -12,41 +14,43 @@
 #include <vector>
 #include <memory>
 
+class RenderSystem;
+
 namespace myvk {
 	struct PushConstantData {
 		alignas(16) glm::mat4 model;
 	};
 
-	struct Transform {
+	template<typename T>
+	struct Transform3 {
 		glm::dvec3 pos {0.0f};
 		glm::quat  rot {1, 0, 0, 0};
 		glm::dvec3 scl {1.0f};
 		bool dirty = true;
 		glm::mat4 mat{ 1.0f };
+		using vec = glm::vec<3, T, glm::defaultp>;
 
-		inline void translate(const glm::dvec3& delta) {
-			pos += delta; 
-			dirty = true;
+		inline void translate(vec delta) {
+			mat[3] += glm::vec4(delta.x, delta.y, delta.z, 0.0f);
 		}
 
-		inline void setPosition(const glm::dvec3& npos) {
-			this->pos = npos; 
-			dirty = true;
+		inline void setPosition(vec npos) {
+			mat[3] = glm::vec4(npos.x, npos.y, npos.z, 1.0f);
 		}
 
-		inline void rotateLocal (double radians, const glm::dvec3& axis) {
+		inline void rotateLocal (double radians, vec axis) {
 			glm::quat q = glm::angleAxis((float)radians, glm::normalize(glm::vec3(axis)));
 			rot = glm::normalize(q * rot);
 			dirty = true;
 		}
 
-		inline void rotateGlobal(double radians, const glm::dvec3& axis) {
+		inline void rotateGlobal(double radians, vec axis) {
 			glm::quat q = glm::angleAxis((float)radians, glm::normalize(glm::vec3(axis)));
 			rot = glm::normalize(rot * q);
 			dirty = true;
 		}
 
-		inline void setScale(const glm::dvec3& s)
+		inline void setScale(vec s)
 		{
 			scl = s;
 			dirty = true;
@@ -69,17 +73,46 @@ namespace myvk {
 
 	class Model {
 	public:
-		Transform transform;
-		std::shared_ptr<GPUMesh> mesh;
-		std::shared_ptr<GPUMaterial> material;
+		Transform3<double> transform;
+		std::unique_ptr<MeshInstance> meshInstance;
+		std::unique_ptr<Texture2D> albedo;
 
-		void render(FrameInfo& frame, VkPipelineLayout pipelineLayout);
+		/*
+		void render(FrameInfo& frame, VkPipelineLayout pipelineLayout) {
+			vkCmdPushConstants(
+				frame.commandBuffer,
+				pipelineLayout,
+				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+				0,
+				sizeof(PushConstantData),
+				&transform.model()
+			);
 
-		Model() {};
+			if(material) material->bind(frame.commandBuffer, pipelineLayout, frame.frameIndex);
+			mesh->bind(frame.commandBuffer);
+			mesh->draw(frame.commandBuffer);
+		}
+		*/
+
+		std::shared_ptr<Model> getInstance() {
+			auto model = std::make_shared<Model>();
+			model->meshHandle     = meshHandle;
+			model->materialHandle = materialHandle;
+			return model;
+		}
+
+		Model() : meshInstance(std::make_unique<MeshInstance>()) {};
 		~Model() {};
 
 		Model(const Model&) = delete;
 		Model& operator=(const Model&) = delete;
-	
+		
+		int modelId = -1;
+	private:
+		RenderSystem* renderSystem = nullptr;
+		int meshHandle = -1;
+		int materialHandle = -1;
+		
+		friend class RenderSystem;
 	};
 }

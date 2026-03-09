@@ -8,6 +8,7 @@
 #include <variant>
 #include <queue>
 #include "../Fonts.hpp"
+#include "../window/Events.hpp"
 
 // GUI LOGIC HEADER //
 
@@ -19,24 +20,54 @@ enum GUIContentType {
     TextBox
 };
 
-enum MouseEventType {
-    Scroll,
-    Button
+enum MouseButtons {
+    Left, Right, Middle
+};
+
+struct Vec2 {
+    uint32_t x;
+    uint32_t y;
+};
+
+struct Rect {
+    uint32_t width;
+    uint32_t height;
 };
 
 struct Color {
     float r=1.0f, g=1.0f, b=1.0f, a=1.0f; // Default white //
+
+    static constexpr Color hex(const std::string& hex_string) {
+        unsigned int r=0, g=0, b=0;
+        if(hex_string[0] == '#') {
+            std::string rs = hex_string.substr(1,2);
+            std::string gs = hex_string.substr(3,2);
+            std::string bs = hex_string.substr(5,2);
+            r = std::stoul(rs, nullptr, 16);
+            g = std::stoul(gs, nullptr, 16);
+            b = std::stoul(bs, nullptr, 16);
+        }
+        return Color{ r / 255.0f, g / 255.0f, b / 255.0f, 1.0f };
+    }
 };
 
-struct MouseEvent {
-    MouseEventType eventType;
-    uint32_t mouse_x;
-    uint32_t mouse_y;
-    float scroll;
-    bool mouseButton;
+struct MouseMoveEvent {
+    uint32_t mouseX = 0;
+    uint32_t mouseY = 0;
+    float deltaX = 0.0f;
+    float deltaY = 0.0f;
+    float scrollX = 0.0f;
+    float scrollY = 0.0f;
+    int button = 0;
 };
 
-struct KeyboardEvent {
+struct MouseClickEvent {
+    uint32_t mouseX = 0;
+    uint32_t mouseY = 0;
+    int button = 0;
+};
+
+struct KeyEvent {
     uint32_t codepointPressed;
     uint8_t  keyPressed;
 };
@@ -44,9 +75,6 @@ struct KeyboardEvent {
 struct GUIContent {
     uint32_t id;
     uint32_t version = 0;
-
-    virtual void key(KeyboardEvent& keyEvent);
-    virtual void mouse(MouseEvent& mouseEvent);
 };
 
 struct TextBox : GUIContent {
@@ -60,24 +88,24 @@ struct TextBox : GUIContent {
 };
 
 struct GUIWindow {
+    uint32_t id = 0;
     uint32_t version = 0;
+    uint32_t zOrder = 0;
+    bool visible = true;
 
-    uint32_t posX;
-    uint32_t posY;
-    uint32_t windowWidth;
-    uint32_t windowHeight;
-    uint32_t scrollX;
-    uint32_t scrollY;
+    Vec2 pos;
+    Vec2 scroll;
+    Vec2 padding;
+    Rect window;
+    Rect footer;
+    Rect content;
+
     bool scrollEnable = false;
-    Color windowColor;
-
-    // Content padding //
-    uint32_t contentWidth;
-    uint32_t contentHeight;
-    uint32_t left_padding = 0;
-    uint32_t top_padding  = 0;
+    Color footerColor = Color::hex("#d8d8d8");
+    Color windowColor = Color::hex("#ffffff");
     Color contentColor;
 
+    // Content padding //
     GUIContent* activeContent = nullptr;
 
     std::vector<std::unique_ptr<GUIContent>> contents;
@@ -96,21 +124,37 @@ struct GUIWindow {
     }
 };
 
-struct GUIContext {
+class GUIContext {
+public:
     MetricsFormat metricsFormat;
+    Rect screen;
+    
+    GUIContext(Rect windowRect);
 
-    uint32_t screenWidth;
-    uint32_t screenHeight;
-
-    GUIWindow* activeWindow = nullptr;
-
-    std::vector<std::shared_ptr<GUIWindow>> windows_;
-
-    GUIContext(uint32_t width, uint32_t height);
-
-    void key(KeyboardEvent& keyboardEvent);
-    void mouse(MouseEvent& mouseEvent);
+    void keyEvent(KeyEvent& keyboardEvent);
+    void mouseMoveEvent(MouseMoveEvent& mouseEvent);
+    void mouseClickEvent(MouseClickEvent& mouseClickEvent);
 
     void createWindow(std::shared_ptr<GUIWindow> window);
+    void closeWindow (std::shared_ptr<GUIWindow> window);
     inline std::vector<std::shared_ptr<GUIWindow>>& windows() {return windows_;}
+private:
+    void reorderWindows();
+    void reorderWindow(GUIWindow* window);
+    GUIWindow* getWindowByCursor(Vec2 pos); 
+
+    std::vector<std::shared_ptr<GUIWindow>> windows_;
+    std::vector<GUIWindow*> windowOrder;
+};
+
+struct GUIEventListener {
+    GUIContext* context;
+
+    MouseMoveEvent mouseMoveEvent;
+    MouseClickEvent mouseClickEvent;
+    KeyEvent keyEvent;
+
+    GUIEventListener(GUIContext* context) : context(context) {};
+
+    void listen();
 };

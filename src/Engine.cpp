@@ -1,15 +1,16 @@
 #include "Engine.hpp"
-#include "Buffer.hpp"
 #include "Descriptors.hpp"
-#include "RenderSystem.hpp"
-#include "Swapchain.hpp"
+
 #include "UIRenderSystem.hpp"
+#include "GlobalRenderSystem.hpp"
+
+#include "gui/GUIContext.hpp"
+#include "gui/GUIRendering.hpp"
 #include "gui/GuiContext.hpp"
 #include "model/GPUMesh.hpp"
 #include "model/GPUTexture.hpp"
 #include "model/Mesh.hpp"
 #include "model/Texture.hpp"
-#include "vulkan/vulkan_core.h"
 #include "window/Events.hpp"
 
 #include <memory>
@@ -26,57 +27,17 @@
 
 using namespace myvk;
 
-struct GlobalUbo {
-	glm::mat4 projview{1.f};
-};
-
-Engine::Engine() : camera(window.width, window.height, glm::dvec3(0, 0, 5), glm::radians(90.0f)) {
+Engine::Engine() : camera(window.width, window.height, glm::dvec3(0, 0, 5), glm::radians(90.0f)), frameInfo(0, 0.0f, VK_NULL_HANDLE, camera) {
 	Events::init(window.window);
-
 	globalPool = DescriptorPoolManager::Builder(device)
 		.setMaxSets(72)
 		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 8)
 		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 64)
 		.build();
-
-	createGlobalLayouts();
-	loadModels();
 }
 
 Engine::~Engine() {
 	
-}
-
-void Engine::createGlobalLayouts() {
-	globalUniform.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-	for(int i = 0; i < globalUniform.size(); i++) {
-		globalUniform[i] = std::make_unique<Buffer>(
-			device, 
-			sizeof(GlobalUbo),
-			1,
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 
-			VMA_MEMORY_USAGE_CPU_TO_GPU);
-		globalUniform[i]->map();
-	}
-
-	globalSetLayout = DescriptorSetLayout::Builder(device)
-		.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-		.build();
-	globalLayouts.push_back(globalSetLayout->getDescriptorSetLayout());
-
-	materialSetLayout = DescriptorSetLayout::Builder(device)
-		.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-		.build();
-	globalLayouts.push_back(materialSetLayout->getDescriptorSetLayout());
-
-	globalDescriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-	for(int i = 0; i < globalDescriptorSets.size(); i++) {
-		auto bufferInfo = globalUniform[i]->descriptorInfo();
-		DescriptorWriter(*globalSetLayout, *globalPool)
-			.writeBuffer(0, &bufferInfo)
-			.build(globalDescriptorSets[i]);
-	}
 }
 
 void Engine::run() {
@@ -87,21 +48,24 @@ void Engine::run() {
 	//	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	//}
 
-
-	
-	GUIContext guiContext(window.width, window.height);
+	GUIContext guiContext(Rect{(uint32_t)window.width, (uint32_t)window.height});
 	auto guiWindow = std::make_shared<GUIWindow>();
-	guiWindow->windowWidth = 700;
-	guiWindow->windowHeight = 500;
-	guiWindow->posX = 200;
-	guiWindow->posY = 200;
-	
+	guiWindow->window.width = 700;
+	guiWindow->window.height = 500;
+	guiWindow->pos.x = 200;
+	guiWindow->pos.y = 200;
+	guiWindow->footer.height = 30;
 	guiContext.createWindow(guiWindow);
+	
+	GUIEventListener guiEventListener(&guiContext);
 
-	UIRenderSystem uiRenderSystem(device, renderer.getSwapChainRenderPass(), globalPool.get(), &guiContext, &camera);
+	UIRenderSystem uiRenderSystem(device, renderer.getSwapChainRenderPass(), globalPool.get(), frameInfo);
+	std::shared_ptr<GUIRenderer> guiRenderer = std::make_shared<GUIRenderer>(&guiContext);
+	guiRenderer->fetchContext();
 
-	RenderSystem renderSystem(device, renderer.getSwapChainRenderPass(), globalLayouts);
-	renderSystem.addModel(model);
+	uiRenderSystem.registerRenderer(guiRenderer);
+
+	GlobalRenderSystem renderSystem(device, renderer.getSwapChainRenderPass(), globalPool.get(), frameInfo);
 
 	Events::toggle_cursor(&window);
 	double lastTime = glfwGetTime();
@@ -111,7 +75,6 @@ void Engine::run() {
 	const double speed = 2.0;
 	float camX = 0.0f;
 	float camY = 0.0f;
-	bool writingActive = false;
 	while (!window.isShouldClose()) {
 		double currentTime = glfwGetTime();
 		double frameTime = currentTime - lastTime;
@@ -119,6 +82,8 @@ void Engine::run() {
 
 		timeAccu += frameTime;
 		if (timeAccu >= H) {
+			guiEventListener.listen();
+
 			if (Events::pressed(GLFW_KEY_W)) {
 				camera.translate(camera.zdir() * H * speed);
 			}
@@ -131,8 +96,8 @@ void Engine::run() {
 			if (Events::pressed(GLFW_KEY_A)) {
 				camera.translate(-camera.xdir() * H * speed);
 			}
-			if (Events::pressed(GLFW_KEY_TAB)) {
-				writingActive=!writingActive;
+			if (Events::jpressed(GLFW_KEY_TAB)) {
+				Events::toggle_cursor(&window);
 			}
 
 			if (Events::_cursor_locked) {
@@ -152,24 +117,13 @@ void Engine::run() {
 
 			if (auto commandBuffer = renderer.beginFrame()) {
 				renderer.beginSwapChainRenderPass(commandBuffer);
-
-				int frameIndex = renderer.getFrameIndex();
-				FrameInfo frameInfo{
-					frameIndex,
-					(float)frameTime,
-					commandBuffer,
-					camera,
-					globalDescriptorSets[frameIndex].set};
+				frameInfo.frameIndex = renderer.getFrameIndex();
+				frameInfo.commandBuffer = commandBuffer;
 
 				camera.update();
 
-				GlobalUbo ubo{};
-				ubo.projview = camera.getProjviewProspective();
-				globalUniform[frameIndex]->writeToBuffer(&ubo);
-				globalUniform[frameIndex]->flush();
-
-				renderSystem.render(frameInfo);
-				uiRenderSystem.render(frameInfo);
+				renderSystem.renderGlobal();
+				uiRenderSystem.render();
 
 				renderer.endSwapChainRenderPass(commandBuffer);
 				renderer.endFrame();
@@ -184,6 +138,8 @@ void Engine::run() {
 	}
 	vkDeviceWaitIdle(device.device());
 }
+
+/*
 
 void Engine::loadModels() {
 	model = std::make_shared<Model>();
@@ -207,3 +163,5 @@ void Engine::loadModels() {
 	model->material = std::make_shared<GPUMaterial>(*globalPool, *materialSetLayout, gpuTexture);
 	model->mesh = std::make_shared<GPUMesh>(device, meshInstance);
 }
+
+*/

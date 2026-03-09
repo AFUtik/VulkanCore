@@ -5,7 +5,7 @@ Camera::Camera(int width, int height, dvec3 position, float fov) : width(width),
 
 	ortho = glm::ortho(0.0f, (float)width,
            					 (float)height, 0.0f,   // если хочешь origin сверху
-           					 0.0f, 1.0f);
+           					 -100.0f, 100.0f);
 }
 
 void Camera::set(const glm::dvec3& p) {

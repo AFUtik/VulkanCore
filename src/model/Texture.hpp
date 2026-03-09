@@ -13,6 +13,7 @@ enum TextureChannels : uint32_t {
     GrayscaleAlpha = 2
 };
 
+// Contains data about image not vulkan image //
 class Texture2D {
 public:
     std::string path;

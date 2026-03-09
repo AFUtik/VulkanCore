@@ -67,4 +67,20 @@ void TextMesh::build() {
     buildVertices(); 
 }
 
+void MeshTools::createQuad(MeshInstance &instance, Quad& quad)
+{
+    uint32_t vertOffset = instance.vertices.size();
+
+    instance.vertices.push_back({quad.x2, quad.y2, 0.0f, quad.u2, quad.v1, quad.r, quad.g, quad.b, quad.a});
+    instance.vertices.push_back({quad.x2, quad.y1, 0.0f, quad.u2, quad.v2, quad.r, quad.g, quad.b, quad.a});
+    instance.vertices.push_back({quad.x1, quad.y1, 0.0f, quad.u1, quad.v2, quad.r, quad.g, quad.b, quad.a});
+    instance.vertices.push_back({quad.x1, quad.y2, 0.0f, quad.u1, quad.v1, quad.r, quad.g, quad.b, quad.a});
+
+    instance.indices.push_back(vertOffset + 0);
+    instance.indices.push_back(vertOffset + 1);
+    instance.indices.push_back(vertOffset + 2);
+    instance.indices.push_back(vertOffset + 2);
+    instance.indices.push_back(vertOffset + 3);
+    instance.indices.push_back(vertOffset + 0);
+}
 }

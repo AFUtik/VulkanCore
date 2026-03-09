@@ -1,41 +1,63 @@
-
 #include "GUIRendering.hpp"
 #include "../model/Mesh.hpp"
 #include "../model/GPUMesh.hpp"
 
 namespace myvk {
 
-void GUIWindowRender::buildMeshes(Device& device) {
-    MeshInstance mesh;
-
-    mesh.vertices.push_back({float(window->posX + window->windowWidth), float(window->posY + window->windowHeight), 0.0f, 0, 0, 1, 1, 1, 1});
-    mesh.vertices.push_back({float(window->posX + window->windowWidth), float(window->posY),     0.0f, 0, 0, 1, 1, 1, 1});
-    mesh.vertices.push_back({float(window->posX), float(window->posY),     0.0f, 0, 0, 1, 1, 1, 1});
-    mesh.vertices.push_back({float(window->posX), float(window->posY + window->windowHeight), 0.0f, 0, 0, 1, 1, 1, 1});
-
-    mesh.indices.push_back(0);
-    mesh.indices.push_back(1);
-    mesh.indices.push_back(2);
-    mesh.indices.push_back(2);
-    mesh.indices.push_back(3);
-    mesh.indices.push_back(0);
-
+void GUIWindowRender::buildMesh() {
     std::shared_ptr<Model> model = std::make_shared<Model>();
-    model->mesh = std::make_shared<GPUMesh>(device, mesh);  
-    
-    models.emplace_back(0, 0, model);
+    MeshTools::Quad quad;
+
+    // Window mesh //
+    quad.r = window->windowColor.r; 
+    quad.g = window->windowColor.g; 
+    quad.b = window->windowColor.b; 
+    quad.a = window->windowColor.a;
+    quad.x2 = (float)window->window.width;
+    quad.y2 = (float)window->window.height;
+
+    MeshTools::createQuad(*model->meshInstance.get(), quad);
+    models.push_back(model);
+
+    // Footer model //
+    std::shared_ptr<Model> footerModel = std::make_shared<Model>();
+    quad = MeshTools::Quad();
+
+    quad.r = window->footerColor.r; 
+    quad.g = window->footerColor.g; 
+    quad.b = window->footerColor.b; 
+    quad.a = window->footerColor.a;
+    quad.y1 = (float)(window->window.height - window->footer.height);
+    quad.x2 = (float)window->window.width;
+    quad.y2 = (float)window->window.height;
+    MeshTools::createQuad(*footerModel->meshInstance.get(), quad);
+
+    footerModel->transform.translate({0.0, 0.0, 1.0});
+    models.push_back(footerModel);
 }
 
-GUIRender::GUIRender(GUIContext* context) : context(context) {
+void GUIWindowRender::fetchWindow() {
+    for(auto& model : models) {
+        model->transform.setPosition({window->pos.x, window->pos.y, 0.0});
+        //cmodel.model->transform.setZ((float)window->zOrder);
+    }
+}
+
+GUIRenderer::GUIRenderer(GUIContext* context) : context(context) {
 
 }
 
-void GUIRender::fetchContext(Device& device) {
+void GUIRenderer::buildDrawList() {
+    for(auto& window : windowToRender) for(auto model : window->models) renderSystem->addToDrawList(model.get());
+}
+
+void GUIRenderer::fetchContext() {
     for(std::shared_ptr<GUIWindow>& window : context->windows()) {
         auto windowRender = std::make_unique<GUIWindowRender>();
         windowRender->window = window.get();
         windowRender->version = window->version;
-        windowRender->buildMeshes(device);
+        windowRender->buildMesh();
+
         windowToRender.push_back(std::move(windowRender));
     }
 }

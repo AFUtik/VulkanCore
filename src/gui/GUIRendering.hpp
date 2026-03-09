@@ -2,38 +2,36 @@
 #pragma once
 
 #include "GUIContext.hpp"
-
-#include "../model/GPUMesh.hpp"
-#include "../model/Model.hpp"
+#include "../RenderSystem.hpp"
 
 #include <memory>
 
 namespace myvk {
 
-struct GUIContentModel {
-    uint32_t id = 0;
+class GUIWindowRender {
+public:
     uint32_t version = 0;
-    std::shared_ptr<Model> model;
-};
-
-struct GUIWindowRender {
-    GUIWindow* window;
-    uint32_t version = 0;
-    bool visible = true;
-    int zOrder = 0;
     
-    std::vector<GUIContentModel> models;
+    std::vector<std::shared_ptr<Model>> models;
 
-    void buildMeshes(Device& device);
+    inline bool isVisible() {return window->visible;};
+    void fetchWindow();
+private:
+    void buildMesh();
+    GUIWindow* window;
+
+    friend class GUIRenderer;
 };
 
-struct GUIRender {
+class GUIRenderer : public ObjectRenderer {
+public:
     std::vector<std::unique_ptr<GUIWindowRender>> windowToRender;
     GUIContext* context;
     
-    GUIRender(GUIContext* guiContext);
+    GUIRenderer(GUIContext* guiContext);
 
-    void fetchContext(Device& device);
+    void fetchContext();
+    void buildDrawList() override;
 };
 
 } 
