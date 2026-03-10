@@ -11,6 +11,8 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
+#include "GPUManager.hpp"
+
 #include <vector>
 #include <memory>
 
@@ -71,48 +73,14 @@ namespace myvk {
 		}
 	};
 
-	class Model {
+	class MeshObject {
 	public:
 		Transform3<double> transform;
-		std::unique_ptr<MeshInstance> meshInstance;
-		std::unique_ptr<Texture2D> albedo;
 
-		/*
-		void render(FrameInfo& frame, VkPipelineLayout pipelineLayout) {
-			vkCmdPushConstants(
-				frame.commandBuffer,
-				pipelineLayout,
-				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-				0,
-				sizeof(PushConstantData),
-				&transform.model()
-			);
+		MeshObject() {};
+		~MeshObject() {};
 
-			if(material) material->bind(frame.commandBuffer, pipelineLayout, frame.frameIndex);
-			mesh->bind(frame.commandBuffer);
-			mesh->draw(frame.commandBuffer);
-		}
-		*/
-
-		std::shared_ptr<Model> getInstance() {
-			auto model = std::make_shared<Model>();
-			model->meshHandle     = meshHandle;
-			model->materialHandle = materialHandle;
-			return model;
-		}
-
-		Model() : meshInstance(std::make_unique<MeshInstance>()) {};
-		~Model() {};
-
-		Model(const Model&) = delete;
-		Model& operator=(const Model&) = delete;
-		
-		int modelId = -1;
-	private:
-		RenderSystem* renderSystem = nullptr;
-		int meshHandle = -1;
-		int materialHandle = -1;
-		
-		friend class RenderSystem;
+		MeshObject(const MeshObject&) = delete;
+		MeshObject& operator=(const MeshObject&) = delete;
 	};
 }

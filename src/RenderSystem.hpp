@@ -19,11 +19,6 @@ struct GlobalUbo {
 };
 
 namespace myvk {
-	struct GPUModel {
-		std::shared_ptr<GPUMaterial> material;
-		std::shared_ptr<GPUMesh> mesh;
-	};
-
 	class ObjectRenderer {
 	public:
 		RenderSystem* renderSystem;
@@ -45,13 +40,10 @@ namespace myvk {
 
 		inline void addToDrawList(Model* model) {drawList.push_back(model);}
 
-		void createModel(Model* model);
-
-		/*void deleteModel(Model* model);*/
+		std::shared_ptr<Model> getModel();
 	protected:
 		void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts);
 		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
-		void createEmptyMaterial();
 
 		Device& device;
 		FrameInfo& frame;
@@ -68,10 +60,7 @@ namespace myvk {
 
 		std::vector<Model*> drawList;
 		std::vector<std::shared_ptr<ObjectRenderer>> renderers;
-		FreeList<std::unique_ptr<GPUModel>>  modelsFreelist;
-		FreeList<std::weak_ptr<GPUMaterial>> materialsFreelist;
-		FreeList<std::weak_ptr<GPUMesh>>     meshesFreelist;
 
-		std::shared_ptr<GPUMaterial> emptyMaterial;
+		std::unique_ptr<GPUManager> gpuManager;
 	};
 }

@@ -4,6 +4,7 @@
 #include "model/GPUTexture.hpp"
 #include "model/Mesh.hpp"
 
+#include <memory>
 #include <stdexcept>
 
 #define GLM_FORCE_RADIANS
@@ -14,7 +15,6 @@ namespace myvk {
 
 RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass, std::vector<VkDescriptorSetLayout> layouts, FrameInfo& frame) : device(device), frame(frame) {
 	createPipelineLayout(layouts);
-	createEmptyMaterial();
 
 	PipelineConfigInfo config{};
 	Pipeline::defaultPipelineConfigInfo(config);
@@ -26,34 +26,19 @@ RenderSystem::~RenderSystem() {
 	vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
 }
 
+std::shared_ptr<Model> RenderSystem::getModel() {
+	auto model = std::make_shared<Model>();
+	model->manager  = gpuManager.get();
+	model->material = gpuManager->getDefaultMaterial();
+	return model;
+}
+
 void RenderSystem::registerRenderer(std::shared_ptr<ObjectRenderer> renderer) {
 	renderer->renderSystem = this;
 	renderers.push_back(renderer);
 }
 
-void RenderSystem::createModel(Model* model) {
-	std::unique_ptr<GPUModel> gpuModel = std::make_unique<GPUModel>();
-	if(model->modelId < 0) {
-		if(model->meshHandle < 0 && model->meshInstance) {
-			auto mesh = std::make_shared<GPUMesh>(device, *model->meshInstance.get());
-			uint32_t handle = meshesFreelist.create(mesh);
-			model->meshHandle = handle;
-			gpuModel->mesh = mesh;
-		}
-
-		if(!model->albedo) {
-			gpuModel->material = emptyMaterial; 
-		}
-		else if(model->materialHandle < 0) {
-			auto texture  = std::make_shared<GPUTexture>(device, model->albedo.get());
-			auto material = std::make_shared<GPUMaterial>(*descriptorPool, *materialSetLayout, texture);
-			uint32_t handle = materialsFreelist.create(material);
-			model->materialHandle = handle;
-		}
-	}
-	model->modelId = modelsFreelist.create(std::move(gpuModel));
-}
-
+/*
 void RenderSystem::createEmptyMaterial() {
 	std::unique_ptr<uint8_t[]> whitePixel = std::make_unique<uint8_t[]>(4);
 	whitePixel[0] = 255;
@@ -65,6 +50,7 @@ void RenderSystem::createEmptyMaterial() {
 	std::shared_ptr<GPUTexture> gpuTexture = std::make_shared<GPUTexture>(device, texture.get());
 	emptyMaterial = std::make_unique<GPUMaterial>(*descriptorPool, *materialSetLayout, gpuTexture);
 }
+*/
 
 void RenderSystem::createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts_) {
 	VkPushConstantRange pushConstantRange{};
@@ -110,9 +96,6 @@ void RenderSystem::render() {
 		0, nullptr
 	);
 	for(Model* model : drawList) {
-		if(model->modelId < 0) createModel(model);
-
-		auto& gpuModel = modelsFreelist[model->modelId];
 		vkCmdPushConstants(
 			frame.commandBuffer,
 			pipelineLayout,
@@ -122,9 +105,9 @@ void RenderSystem::render() {
 			&model->transform.model()
 		);
 
-		gpuModel->material->bind(frame.commandBuffer, pipelineLayout, frame.frameIndex);
-		gpuModel->mesh->bind(frame.commandBuffer);
-		gpuModel->mesh->draw(frame.commandBuffer);
+		model->material->bind(frame.commandBuffer, pipelineLayout, frame.frameIndex);
+		model->mesh->bind(frame.commandBuffer);
+		model->mesh->draw(frame.commandBuffer);
 	}
 	drawList.clear();
 }

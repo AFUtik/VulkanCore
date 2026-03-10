@@ -8,7 +8,7 @@ class Text;
 namespace myvk 
 {
 
-class MeshInstance {
+class Mesh {
 public:
     struct Vertex {
         float x, y, z;
@@ -20,18 +20,18 @@ public:
 	std::vector<uint32_t> indices;
     uint32_t indCount = 0;
     
-	MeshInstance(uint32_t reservedVertices, uint32_t reservedIndices = 0) {
+	Mesh(uint32_t reservedVertices, uint32_t reservedIndices = 0) {
         vertices.reserve(reservedVertices);
         if(reservedIndices) indices.reserve(reservedIndices);
     };
-    MeshInstance() {};
-	~MeshInstance() {};
+    Mesh() {};
+	~Mesh() {};
 
-    MeshInstance(const MeshInstance&) = delete;
-	MeshInstance& operator=(const MeshInstance&) = delete;
+    Mesh(const Mesh&) = delete;
+	Mesh& operator=(const Mesh&) = delete;
 };
 
-class TextMesh : public MeshInstance {
+class TextMesh : public Mesh {
     Text* text = nullptr;
     std::u32string meshContent;
 
@@ -53,7 +53,7 @@ public:
         float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
     };
 
-    static void createQuad(MeshInstance& instance, Quad& quad);
+    static void createQuad(Mesh& instance, Quad& quad);
 };
 
 }
