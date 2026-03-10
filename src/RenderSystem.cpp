@@ -26,13 +26,6 @@ RenderSystem::~RenderSystem() {
 	vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
 }
 
-std::shared_ptr<Model> RenderSystem::getModel() {
-	auto model = std::make_shared<Model>();
-	model->manager  = gpuManager.get();
-	model->material = gpuManager->getDefaultMaterial();
-	return model;
-}
-
 void RenderSystem::registerRenderer(std::shared_ptr<ObjectRenderer> renderer) {
 	renderer->renderSystem = this;
 	renderers.push_back(renderer);

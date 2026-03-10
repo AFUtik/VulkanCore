@@ -21,7 +21,7 @@ public:
     }
 
     inline void remove(uint32_t handle) {
-        s_ptrs[handle].reset();
+        s_ptrs[handle] = T();
         next[handle] = free_head;
         free_head = handle;
     }

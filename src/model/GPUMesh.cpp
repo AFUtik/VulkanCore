@@ -6,11 +6,11 @@
 #include <iostream>
 
 namespace myvk {
-	GPUMesh::GPUMesh(Device& device, MeshInstance& instance, uint32_t flags) : device(device), flags(flags) {
+	GPUMesh::GPUMesh(Device& device, Mesh& instance, uint32_t flags) : device(device), flags(flags) {
 		createBuffers(instance);
 	}
 
-    void GPUMesh::createBuffers(MeshInstance& instance) {
+    void GPUMesh::createBuffers(Mesh& instance) {
 		if(!instance.vertices.capacity()) {
 			throw std::runtime_error("Failed to create gpu buffer: instance data is empty.");
 		}

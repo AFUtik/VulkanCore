@@ -1,19 +1,16 @@
 #pragma once
 
-
 #include "glm/detail/qualifier.hpp"
 #include "glm/ext/matrix_transform.hpp"
-#include "Mesh.hpp"
-#include "Texture.hpp"
+
 #include <cstdint>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
-#include "GPUManager.hpp"
-
-#include <vector>
+#include "Mesh.hpp"
+#include "Texture.hpp"
 #include <memory>
 
 class RenderSystem;
@@ -73,9 +70,17 @@ namespace myvk {
 		}
 	};
 
+	struct Material {
+		std::shared_ptr<Texture2D> albedo;
+	};
+
 	class MeshObject {
 	public:
+		uint32_t objectId;
+
 		Transform3<double> transform;
+		std::shared_ptr<Mesh> mesh;
+		std::shared_ptr<Material> material;
 
 		MeshObject() {};
 		~MeshObject() {};

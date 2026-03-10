@@ -5,6 +5,7 @@
 #include "FrameInfo.hpp"
 #include "Camera.hpp"
 
+#include "RenderScene.hpp"
 #include "model/GPUMesh.hpp"
 #include "model/GPUMaterial.hpp"
 #include "model/Model.hpp"
@@ -38,9 +39,7 @@ namespace myvk {
 		virtual void render();
 		void registerRenderer(std::shared_ptr<ObjectRenderer> renderer);
 
-		inline void addToDrawList(Model* model) {drawList.push_back(model);}
-
-		std::shared_ptr<Model> getModel();
+		inline void addToDrawList(Handle<RenderObject> objectId) {drawList.push_back(objectId);}
 	protected:
 		void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts);
 		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
@@ -58,9 +57,7 @@ namespace myvk {
 		std::vector<VkDescriptorSetLayout> layouts;
 		std::vector<std::unique_ptr<Buffer>> uniforms;
 
-		std::vector<Model*> drawList;
+		std::vector<Handle<RenderObject>> drawList;
 		std::vector<std::shared_ptr<ObjectRenderer>> renderers;
-
-		std::unique_ptr<GPUManager> gpuManager;
 	};
 }

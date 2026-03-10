@@ -1,5 +1,4 @@
 #include "GlobalRenderSystem.hpp"
-#include "RenderSystem.hpp"
 
 namespace myvk {
 
@@ -9,7 +8,6 @@ GlobalRenderSystem::GlobalRenderSystem(Device &device, VkRenderPass renderPass, 
 	this->descriptorPool = descriptorPool;
 
     createGlobalLayouts();
-    createEmptyMaterial();
     createPipelineLayout(layouts);
 
 	PipelineConfigInfo config{};

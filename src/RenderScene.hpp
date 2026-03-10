@@ -5,6 +5,7 @@
 #include "model/GPUMaterial.hpp"
 
 #include "Descriptors.hpp"
+#include "FreeList.hpp"
 
 #include <memory>
 
@@ -22,12 +23,21 @@ struct DrawMesh {
 	uint32_t vertexCount;
 	bool isMerged;
 
-	std::unique_ptr<GPUMesh> original;
+	std::unique_ptr<GPUMesh> gpuData;
+    Mesh* original;
+    uint32_t refCount = 0;
+};
+
+struct DrawMaterial {
+    std::unique_ptr<GPUMaterial> gpuData;
+    Material* original;
+    uint32_t refCount = 0;
 };
 
 struct RenderObject {
+    MeshObject* meshObject;
     Handle<DrawMesh> mesh;
-    Handle<GPUMaterial> material;
+    Handle<DrawMaterial> material;
     glm::mat4 transform;
 };
 
@@ -38,24 +48,31 @@ private:
     DescriptorSetLayout& materialLayout;
     VkPipelineLayout pipelineLayout;
     
-    std::vector<RenderObject> renderables;
-    std::vector<DrawMesh> meshes;
-    std::vector<std::unique_ptr<GPUMaterial>> materials;
+    FreeList<RenderObject> renderables;
+    FreeList<DrawMesh> meshes;
+    FreeList<DrawMaterial> materials;
 
     std::vector<Handle<RenderObject>> dirtyObjects;
 
 	std::unordered_map<Mesh*, Handle<DrawMesh>> meshConvert;
-    //std::unordered_map<vkutil::Material*, Handle<GPUMaterial>> materialConvert;
+    std::unordered_map<Material*, Handle<DrawMaterial>> materialConvert;
+    
+    Handle<DrawMesh> getMeshHandle(Mesh* m);
+    Handle<DrawMaterial> getMaterialHandle(Material* m);
+
+    void deleteMeshDeffered(Handle<DrawMesh> &handle);
+    void deleteMaterialDeffered(Handle<DrawMaterial> &handle);
 public:
     RenderScene(Device& device, DescriptorPoolManager& pool, DescriptorPoolManager& materialLayout, VkPipelineLayout pipelineLayout);
 
     Handle<RenderObject> registerObject(MeshObject* meshObject);
-    void deleteObject(Handle<RenderObject> objectId);
+    void updateObject(Handle<RenderObject> objectId);
+
+    void deleteObjectDeffered(Handle<RenderObject> objectId);
     
     void updateTransform(Handle<RenderObject> objectId, const glm::mat4& localToWorld);
 
-	Handle<DrawMesh> getMeshHandle(Mesh* m);
-    //Handle<GPUMaterial> getMaterialHandle(vkutil::Material* m);
+    inline RenderObject& getRenderObject(Handle<RenderObject> handle) {return renderables[handle.handle];}
 };
 
 }

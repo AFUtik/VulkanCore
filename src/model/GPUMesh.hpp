@@ -25,18 +25,18 @@ private:
 	uint32_t indexCount;
 	uint32_t flags;
 	
-	void createBuffers(MeshInstance& instance);
-	void updateBuffers(MeshInstance& instance);
+	void createBuffers(Mesh& instance);
+	void updateBuffers(Mesh& instance);
 
 	friend class RenderSystem;
 public:
-	GPUMesh(Device& device, MeshInstance& instance, uint32_t flags = (CreateWithReserve | CreateOnGPUMemory));
+	GPUMesh(Device& device, Mesh& instance, uint32_t flags = (CreateWithReserve | CreateOnGPUMemory));
 	~GPUMesh() {};
 
 	GPUMesh(const GPUMesh&) = delete;
 	GPUMesh& operator=(const GPUMesh&) = delete;
 
-	void update(MeshInstance& instance);
+	void update(Mesh& instance);
 	
 	void draw(VkCommandBuffer commandBuffer) const;
 	void bind(VkCommandBuffer commandBuffer) const;
