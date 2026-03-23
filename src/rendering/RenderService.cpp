@@ -1,10 +1,12 @@
 #include "RenderService.hpp"
 #include <iostream>
+#include <stdexcept>
 
 namespace myvk {
 
-RenderService::RenderService(Device& device, DescriptorPoolManager& pool, DescriptorSetLayout& materialLayout) : device(device), pool(pool), materialLayout(materialLayout) 
+RenderService::RenderService(Device& device, DescriptorPoolManager& pool, DescriptorSetLayout& materialLayout) : device(device), pool(pool), materialLayout(materialLayout), container(this)
 {   
+    container.service = this;
     createEmptyMaterial();
 }
 
@@ -16,34 +18,21 @@ void RenderService::createEmptyMaterial() {
 	whitePixel[3] = 255;
 
     Material material {std::make_shared<Texture2D>(std::move(whitePixel), 1, 1, TextureChannels::RGBA)};
-    defMaterialHandle = createMaterialHandle(&material);
+    defMaterialHandle = createMaterialHandle(&material, container);
 }
 
 void RenderService::render(Handle<RenderObject> id, const glm::mat4& transform) {
     drawList.push_back( DrawCommand { transform, id.handle });
 }
 
-Handle<RenderObject> RenderService::registerRenderObject(RenderObject object) {
+Handle<RenderObject> RenderService::registerRenderObject(RenderObject object, HandleContainer& container) {
     Handle<RenderObject> handle;
     handle.handle = renderables.create(object);
+    container.push(handle);
     return handle;
 }
 
-void RenderService::deleteObjectDeffered(Handle<RenderObject> handle) {
-    if(!handle.valid()) {
-        std::cerr << "RenderService: Failed to delete RenderObject by this handle. The handle is invalid" << std::endl;
-        return;
-    }
-
-    RenderObject& renderObject = renderables[handle.handle];
-
-    deleteMeshDeffered(renderObject.mesh);
-    deleteMaterialDeffered(renderObject.material);
-
-    renderables.remove(handle.handle);
-}
-
-void RenderService::deleteMeshDeffered(Handle<DrawMesh> &handle) {
+void RenderService::deleteMeshDefferedDirect(Handle<DrawMesh> &handle) {
     if(!handle.valid()) {
         std::cerr << "RenderService: Failed to delete Mesh by this handle. The handle is invalid" << std::endl;
         return;
@@ -58,7 +47,7 @@ void RenderService::deleteMeshDeffered(Handle<DrawMesh> &handle) {
     handle.destroy();
 }
 
-void RenderService::deleteMaterialDeffered(Handle<DrawMaterial> &handle) {
+void RenderService::deleteMaterialDefferedDirect(Handle<DrawMaterial> &handle) {
     if(!handle.valid()) {
         std::cerr << "RenderService: Failed to delete Material by this handle. The handle is invalid" << std::endl;
         return;
@@ -75,7 +64,7 @@ void RenderService::deleteMaterialDeffered(Handle<DrawMaterial> &handle) {
     handle.destroy();
 }
 
-Handle<DrawMesh> RenderService::createMeshHandle(const Mesh *mesh, std::string tag) {
+Handle<DrawMesh> RenderService::createMeshHandle(const Mesh *mesh, HandleContainer& container, std::string tag) {
     if(!mesh) return Handle<DrawMesh>();
 
     DrawMesh drawMesh;
@@ -91,12 +80,13 @@ Handle<DrawMesh> RenderService::createMeshHandle(const Mesh *mesh, std::string t
         tagMeshMap.emplace(tag, handle);
         drawMesh.tag = tag;
     }
+    container.push(handle);
     handle.handle = meshes.create(std::move(drawMesh));
 
     return handle;
 };
 
-Handle<DrawMaterial> RenderService::createMaterialHandle(const Material* material, std::string tag) {
+Handle<DrawMaterial> RenderService::createMaterialHandle(const Material* material, HandleContainer& container, std::string tag) {
     if(material == nullptr) return defMaterialHandle; // Return default material //
     if(!material->albedo) return Handle<DrawMaterial>();
 
@@ -110,6 +100,7 @@ Handle<DrawMaterial> RenderService::createMaterialHandle(const Material* materia
         tagMaterialMap.emplace(tag, handle);
         drawMaterial.tag = tag;
     }
+    container.push(handle);
     handle.handle = materials.create(std::move(drawMaterial));
     
     return handle;
@@ -131,5 +122,65 @@ Handle<DrawMaterial> RenderService::getMaterialHandle(std::string tag) {
     return Handle<DrawMaterial>();
 }
 
+void RenderService::deleteObject(Handle<RenderObject>& handle, HandleContainer& container) {
+    RenderObject& object = renderables[handle.handle];
+    deleteMesh(object.mesh, container);
+    deleteMaterial(object.material, container);
+    container.remove(UHandle::make(handle));
+}
+
+void RenderService::deleteMesh(Handle<DrawMesh>& handle, HandleContainer& container) {
+    deleteMeshDefferedDirect(handle);
+    container.remove(UHandle::make(handle));
+}
+
+void RenderService::deleteMaterial(Handle<DrawMaterial>& handle, HandleContainer& container) {
+    deleteMaterialDefferedDirect(handle);
+    container.remove(UHandle::make(handle));
+}
+
+// Handle Container //
+
+HandleContainer::HandleContainer(RenderService* service) : service(service) {
+    if(service==nullptr) {
+        throw std::runtime_error("HandleContainer Cons: RenderService is nullptr.");
+    }
+}
+
+void HandleContainer::remove_and_handle(UHandle handle) {
+    remove(handle);
+    handles.remove(handle.handle_container);
+}
+
+void HandleContainer::remove(UHandle handle) {
+    if(handle.type == HandleType::Undefined) {
+        std::cerr << "a Type of the Handle is Undefined." << std::endl;
+        return;
+    }
+    if(handle.type == HandleType::Mesh_H) {
+        auto typed_handle = Handle<DrawMesh> {handle.handle};
+        service->deleteMeshDefferedDirect(typed_handle);
+    }
+    else if(handle.type == HandleType::Material_H) {
+        auto typed_handle = Handle<DrawMaterial> {handle.handle};
+        service->deleteMaterialDefferedDirect(typed_handle);
+    }
+    else if(handle.type == HandleType::RenderObject_H) {
+        service->renderables.remove(handle.handle);
+    }
+}
+
+HandleContainer::~HandleContainer() {
+    if(service) {
+        for(int i = 0; i < handles.size(); i++) {
+            UHandle& u = handles[i];
+            if(u.valid()) remove(handles[i]);
+        }
+    } else {
+        throw std::runtime_error("HandleContainer Desc: RenderService is nullptr. ");
+    }
+
+    std::cout << "Successfully allocated." << std::endl;
+}
 
 };

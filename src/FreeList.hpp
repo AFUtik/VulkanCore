@@ -26,6 +26,10 @@ public:
         free_head = handle;
     }
 
+    inline size_t size() {
+        return s_ptrs.size();
+    }
+
     inline T& operator[](uint32_t handle) {
         return s_ptrs[handle];
     }

@@ -77,7 +77,7 @@ namespace myvk {
 
 	struct Material {
 		std::shared_ptr<Texture2D> albedo;
-		TextureFilter albedoFilter;
+		TextureFilter albedoFilter = TextureFilter::Linear;
 	};
 
 	class MeshObject {

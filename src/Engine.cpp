@@ -8,6 +8,7 @@
 //#include "gui/GUIContext.hpp"
 //#include "gui/GUIRendering.hpp"
 //#include "gui/GuiContext.hpp"
+#include "rendering/RenderSystem.hpp"
 #include "window/Events.hpp"
 
 #include <memory>
@@ -81,9 +82,14 @@ void Engine::run() {
 	mesh.indices.push_back(3);
 	mesh.indices.push_back(0);
 
-	renderObj.mesh = service->createMeshHandle(&mesh);
-	renderObj.material = service->createMaterialHandle(nullptr);
-	Handle<RenderObject> obj_h = service->registerRenderObject(std::move(renderObj));
+	HandleContainer container(service);
+	Material mat;
+	mat.albedo = std::make_shared<Texture2D>(absolutePath+"resources/img/tuff.png");
+	mat.albedoFilter = TextureFilter::Nearest;
+
+	renderObj.mesh = service->createMeshHandle(&mesh, container);
+	renderObj.material = service->createMaterialHandle(&mat, container);
+	Handle<RenderObject> obj_h = service->registerRenderObject(std::move(renderObj), container);
 
 	Events::toggle_cursor(&window);
 	double lastTime = glfwGetTime();
