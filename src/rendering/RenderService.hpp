@@ -16,8 +16,6 @@
 #include <unordered_map>
 #include <type_traits>
 
-namespace myvk {
-
 enum HandleType {
     Mesh_H,
     Material_H, 
@@ -46,12 +44,12 @@ struct DrawMesh {
 	uint32_t vertexCount;
 	bool isMerged;
 
-	std::unique_ptr<GPUMesh> gpuData;
+	std::unique_ptr<myvk::GPUMesh> gpuData;
     std::string tag;
 };
 
 struct DrawMaterial {
-    std::unique_ptr<GPUMaterial> gpuData;
+    std::unique_ptr<myvk::GPUMaterial> gpuData;
     std::string tag;
 };
 
@@ -114,9 +112,9 @@ class RenderSystem;
 
 class RenderService {
 private:
-    Device& device;
-    DescriptorPoolManager& pool;
-    DescriptorSetLayout& materialLayout;
+    myvk::Device& device;
+    myvk::DescriptorPoolManager& pool;
+    myvk::DescriptorSetLayout& materialLayout;
     
     FreeList<RenderObject> renderables;
     FreeList<DrawMesh> meshes;
@@ -138,9 +136,9 @@ private:
     Handle<DrawMaterial> defMaterialHandle;
 
     friend class HandleContainer;
-    friend class RenderSystem;
+    friend class myvk::RenderSystem;
 public:
-    RenderService(Device& device, DescriptorPoolManager& pool, DescriptorSetLayout& materialLayout);
+    RenderService(myvk::Device& device, myvk::DescriptorPoolManager& pool, myvk::DescriptorSetLayout& materialLayout);
 
     void render(Handle<RenderObject> id, const glm::mat4& transform);
 
@@ -165,5 +163,3 @@ public:
     void deleteMaterial(Handle<DrawMaterial>& handle, HandleContainer& container);
     void deleteMesh(Handle<DrawMesh>& handle, HandleContainer& container);
 };
-
-}

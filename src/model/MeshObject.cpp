@@ -1,7 +1,5 @@
 #include "MeshObject.hpp"
 
-namespace myvk {
-
 MeshObject::~MeshObject() {
     //if(renderScene) renderService->deleteObjectDeffered(Handle<RenderObject>(renderId));
 }
@@ -24,6 +22,4 @@ void MeshObject::updateMesh() {
 
 void MeshObject::updateMaterial() {
     // renderScene->updateMeshData(this, Handle<RenderObject>(renderId));
-}
-
 }

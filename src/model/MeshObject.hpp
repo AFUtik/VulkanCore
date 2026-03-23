@@ -13,7 +13,6 @@
 #include "Texture.hpp"
 #include <memory>
 
-namespace myvk {
 	class RenderService;
 
 	struct PushConstantData {
@@ -132,4 +131,3 @@ namespace myvk {
 		uint32_t scissorWidth = 0;
 		uint32_t scissorHeight = 0;
 	};
-}

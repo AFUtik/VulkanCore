@@ -5,6 +5,7 @@
 #include "../model/MeshObject.hpp"
 
 #include "RenderService.hpp"
+#include "RenderComponent.hpp"
 
 #include "../vk/GPUMesh.hpp"
 #include "../vk/GPUMaterial.hpp"
@@ -39,6 +40,7 @@ namespace myvk {
 		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
 
 		std::unique_ptr<RenderService> renderService;
+		//std::vector<std::shared_ptr<>> renderComponents;
 
 		Device& device;
 		FrameInfo& frame;
@@ -52,8 +54,5 @@ namespace myvk {
 		std::vector<DescriptorSetData> descriptorSets;
 		std::vector<VkDescriptorSetLayout> layouts;
 		std::vector<std::unique_ptr<Buffer>> uniforms;
-
-		std::vector<Handle<RenderObject>> drawList;
-		//std::vector<std::shared_ptr<ObjectRenderer>> renderers;
 	};
 }

@@ -5,9 +5,6 @@
 #include <iostream>
 #include <string_view>
 
-namespace myvk {
-
-
 TextMesh::TextMesh(Text* text, Font* font) : Mesh(512), text(text), font(font) {
     buildVertices();
 }
@@ -79,5 +76,4 @@ void MeshTools::createQuad(Mesh* mesh, Quad& quad)
     mesh->indices.push_back(vertOffset + 2);
     mesh->indices.push_back(vertOffset + 3);
     mesh->indices.push_back(vertOffset + 0);
-}
 }

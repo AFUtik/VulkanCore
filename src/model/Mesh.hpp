@@ -6,9 +6,6 @@
 class Font;
 class Text;
 
-namespace myvk 
-{
-
 class Mesh {
 public:
     struct Vertex {
@@ -57,5 +54,3 @@ public:
 
     static void createQuad(Mesh* instance, Quad& quad);
 };
-
-}

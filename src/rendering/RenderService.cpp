@@ -2,9 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace myvk {
-
-RenderService::RenderService(Device& device, DescriptorPoolManager& pool, DescriptorSetLayout& materialLayout) : device(device), pool(pool), materialLayout(materialLayout), container(this)
+RenderService::RenderService(myvk::Device& device, myvk::DescriptorPoolManager& pool, myvk::DescriptorSetLayout& materialLayout) : device(device), pool(pool), materialLayout(materialLayout), container(this)
 {   
     container.service = this;
     createEmptyMaterial();
@@ -69,7 +67,7 @@ Handle<DrawMesh> RenderService::createMeshHandle(const Mesh *mesh, HandleContain
 
     DrawMesh drawMesh;
 
-    drawMesh.gpuData = std::make_unique<GPUMesh>(device, mesh);
+    drawMesh.gpuData = std::make_unique<myvk::GPUMesh>(device, mesh);
     drawMesh.firstVertex = 0;
     drawMesh.firstIndex  = 0;
     drawMesh.indexCount  = mesh->indices.size();
@@ -90,10 +88,10 @@ Handle<DrawMaterial> RenderService::createMaterialHandle(const Material* materia
     if(material == nullptr) return defMaterialHandle; // Return default material //
     if(!material->albedo) return Handle<DrawMaterial>();
 
-    auto texture  = std::make_shared<GPUTexture>(device, material->albedo.get(), material->albedoFilter);
+    auto texture  = std::make_shared<myvk::GPUTexture>(device, material->albedo.get(), material->albedoFilter);
 
     DrawMaterial drawMaterial;
-    drawMaterial.gpuData  = std::make_unique<GPUMaterial>(pool, materialLayout, texture);
+    drawMaterial.gpuData  = std::make_unique<myvk::GPUMaterial>(pool, materialLayout, texture);
 
     Handle<DrawMaterial> handle;
     if(!tag.empty()) {
@@ -182,5 +180,3 @@ HandleContainer::~HandleContainer() {
 
     std::cout << "Successfully allocated." << std::endl;
 }
-
-};
