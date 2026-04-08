@@ -32,10 +32,7 @@ namespace myvk {
         createFramebuffers();
         createSyncObjects();
 
-        delQueues.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-        device.setDeletionQueueProvider([this]() -> DeletionQueue& {
-            return delQueues[currentFrame];
-        });
+        device.createDeletionQueues(MAX_FRAMES_IN_FLIGHT);
     }
 
     SwapChain::~SwapChain() {
@@ -67,13 +64,12 @@ namespace myvk {
             vkDestroySemaphore(device.device(), renderFinishedSemaphores[i], nullptr);
             vkDestroySemaphore(device.device(), imageAvailableSemaphores[i], nullptr);
             vkDestroyFence(device.device(), inFlightFences[i], nullptr);
-            delQueues[i].flush();
         }
     }
 
     VkResult SwapChain::acquireNextImage(uint32_t* imageIndex) {
         vkWaitForFences(device.device(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-        delQueues[currentFrame].flush();
+        device.freeDeletionQueue(currentFrame);
         VkResult result = vkAcquireNextImageKHR(
             device.device(),
             swapChain,
@@ -127,6 +123,7 @@ namespace myvk {
         VkResult result = vkQueuePresentKHR(device.presentQueue(), &presentInfo);
 
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+        device.setFrameIndex(currentFrame);
 
         return result;
     }

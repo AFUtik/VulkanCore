@@ -31,6 +31,8 @@ namespace myvk {
         }
 
         void flush() {
+            if(!deletors.size()) return;
+
             // reverse iterate the deletion queue to execute all the functions
             for (auto it = deletors.rbegin(); it != deletors.rend(); it++) {
                 (*it)(); //call the function
@@ -56,17 +58,6 @@ namespace myvk {
 
     class Device {
     public:
-        using DeletionQueueProvider = std::function<DeletionQueue&()>;
-
-        void setDeletionQueueProvider(DeletionQueueProvider provider) {
-            deletionQueueProvider = provider;
-        }
-
-        DeletionQueue& getDeletionQueue() {
-            //assert(deletionQueueProvider);
-            return deletionQueueProvider();
-        }
-
         #ifdef NDEBUG
                 const bool enableValidationLayers = false;
         #else
@@ -114,6 +105,19 @@ namespace myvk {
             VkMemoryPropertyFlags properties,
             VkImage& image,
             VmaAllocation& allocation);
+            
+        void createDeletionQueues(uint64_t amount);
+            
+        void freeDeletionQueue(uint32_t index) {
+            deletionQueues[index].flush();
+        }
+
+        inline void setFrameIndex(uint32_t index) {
+            frame_index = index;
+        }
+
+        // Device Allocation //
+        template <typename T> void allocate(T* resource);
 
         VkPhysicalDeviceProperties properties;
     private:
@@ -147,7 +151,8 @@ namespace myvk {
         VkQueue presentQueue_;
         VmaAllocator allocator_;
 
-        DeletionQueueProvider deletionQueueProvider;
+        std::vector<DeletionQueue> deletionQueues;
+        uint32_t frame_index = 0;
 
         const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
         const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };

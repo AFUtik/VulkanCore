@@ -5,6 +5,10 @@
 #include <set>
 #include <unordered_set>
 
+#include "Buffer.hpp"
+#include "GPUTexture.hpp"
+#include "Descriptors.hpp"
+
 namespace myvk {
     // local callback functions
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
@@ -582,6 +586,63 @@ namespace myvk {
             throw std::runtime_error("Failed to create VMA allocator");
         }
         allocator_ = allocator;
+    }
+
+    void Device::createDeletionQueues(uint64_t amount) {deletionQueues.resize(amount);}
+
+    template<>
+    void Device::allocate<Buffer>(Buffer* resource) 
+    {
+        struct DeletionInfo {
+            VkBuffer buffer;
+            VmaAllocation allocation;
+        };
+
+        deletionQueues[frame_index].push_function(
+            [info = DeletionInfo{resource->buffer, resource->vmaAllocation}, allocator = allocator_] {
+                vmaDestroyBuffer(allocator, info.buffer, info.allocation);
+            }
+        );
+    }
+
+    template<>
+    void Device::allocate<GPUTexture>(GPUTexture* resource) {
+        struct DeletionInfo {
+            VkSampler sampler;
+            VkImageView view;
+            VkImage image;
+            VmaAllocation allocation;
+        };
+
+        deletionQueues[frame_index].push_function(
+            [info = DeletionInfo{resource->sampler, resource->view, resource->image, resource->vmaAllocation},
+             device = this->device_, allocator = allocator_] {
+                vkDestroySampler(device, info.sampler, nullptr);
+                vkDestroyImageView(device, info.view, nullptr);
+                vmaDestroyImage(allocator, info.image, info.allocation);
+            }
+        );
+    }
+
+    template<>
+    void Device::allocate<DescriptorSetLayout>(DescriptorSetLayout* resource) {
+        deletionQueues[frame_index].push_function(
+            [device = this->device_, layout = resource->descriptorSetLayout] {
+                vkDestroyDescriptorSetLayout(device, layout, nullptr);
+            }
+        );
+    }
+
+    template<>
+    void Device::allocate<DescriptorPoolManager>(DescriptorPoolManager* resource) {
+        deletionQueues[frame_index].push_function(
+            [device = this->device_, pools = resource->descriptorPools] {
+                for(VkDescriptorPool pool : pools) {
+                    if(pool == VK_NULL_HANDLE) continue;
+                    vkDestroyDescriptorPool(device, pool, nullptr);
+                }
+            }
+        );
     }
 
 }  // namespace myvk

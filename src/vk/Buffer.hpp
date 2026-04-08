@@ -7,12 +7,6 @@ namespace myvk {
 
 class Buffer {
 public:
-    struct DeletionInfo {
-        VkBuffer buffer;
-        VmaAllocator allocator;
-        VmaAllocation allocation;
-    };
-
     Buffer(
         Device &device,
         VkDeviceSize instanceSize,
@@ -48,7 +42,6 @@ public:
     VkMemoryPropertyFlags getMemoryPropertyFlags() const { return memoryPropertyFlags; }
     VkDeviceSize getBufferSize() const { return bufferSize; }
 private:
-    Buffer::DeletionInfo getDeletionInfo();
     static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
     Device& device;
@@ -62,6 +55,8 @@ private:
     VkDeviceSize alignmentSize;
     VkBufferUsageFlags usageFlags;
     VkMemoryPropertyFlags memoryPropertyFlags;
+
+    friend class Device;
 };
 
 }  // namespace myvk

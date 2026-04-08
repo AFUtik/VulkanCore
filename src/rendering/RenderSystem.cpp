@@ -107,8 +107,7 @@ void RenderSystem::render() {
 		drawMaterial.gpuData->bind(frame.commandBuffer, pipelineLayout, frame.frameIndex);
 		drawMesh.gpuData->bind(frame.commandBuffer);
 		drawMesh.gpuData->draw(frame.commandBuffer);
-		renderService->drawList.clear();
-
+	
 		//if(renderObject.scissorHeight > 0 && renderObject.scissorWidth > 0)
 		//{
 		//	int x = (int)renderObject.meshObject->transform.getX();
@@ -124,6 +123,7 @@ void RenderSystem::render() {
 		//	vkCmdSetScissor(frame.commandBuffer, 0, 1, &vkRect);
 		//}
 	}
+	renderService->drawList.clear();
 }
 
 }

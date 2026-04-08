@@ -61,5 +61,7 @@ namespace myvk {
         VkSampler sampler;
         VkImageLayout imageLayout;
         Device& device;
+
+        friend class Device;
     };
 }

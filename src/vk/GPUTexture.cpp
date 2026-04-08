@@ -42,16 +42,6 @@ bool HasStencilComponent(VkFormat Format)
 		    (Format == VK_FORMAT_D24_UNORM_S8_UINT));
 }
 
-GPUTexture::DeletionInfo GPUTexture::getDeletionInfo() {
-	return GPUTexture::DeletionInfo{
-		device.device(),
-		sampler,
-		view,
-		image,
-		device.allocator(),
-		vmaAllocation
-	};
-}
 
 GPUTexture::GPUTexture(Device& device, Texture2D* texture, TextureFilter filter) : 
 	device(device),
@@ -65,14 +55,7 @@ GPUTexture::GPUTexture(Device& device, Texture2D* texture, TextureFilter filter)
 }
 
 GPUTexture::~GPUTexture() {
-	auto info = getDeletionInfo();
-	device.getDeletionQueue().push_function(
-		[info]() {
-			vkDestroySampler(info.device, info.sampler, nullptr);
-    		vkDestroyImageView(info.device, info.view, nullptr);
-    		vmaDestroyImage(info.allocator, info.image, info.allocation);
-		}
-	);
+	device.allocate<GPUTexture>(this);
 }
 
 // Copied from the "3D Graphics Rendering Cookbook"

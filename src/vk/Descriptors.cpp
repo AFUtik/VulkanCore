@@ -56,14 +56,7 @@ DescriptorSetLayout::~DescriptorSetLayout() {
   if (descriptorSetLayout == VK_NULL_HANDLE)
         return;
 
-  VkDevice dev = device.device();
-  VkDescriptorSetLayout layout = descriptorSetLayout;
-
-  device.getDeletionQueue().push_function(
-      [dev, layout]() {
-          vkDestroyDescriptorSetLayout(dev, layout, nullptr);
-      }
-  );
+  device.allocate<DescriptorSetLayout>(this);
   
   descriptorSetLayout = VK_NULL_HANDLE;
 }
@@ -103,17 +96,7 @@ DescriptorPoolManager::DescriptorPoolManager(
 }
  
 DescriptorPoolManager::~DescriptorPoolManager() {
-  VkDevice dev = device.device();
-  std::vector<VkDescriptorPool> pools = descriptorPools;
-
-  device.getDeletionQueue().push_function(
-      [dev, pools]() {
-          for(VkDescriptorPool pool : pools) {
-            if(pool == VK_NULL_HANDLE) continue;
-            vkDestroyDescriptorPool(dev, pool, nullptr);
-          }
-      }
-  );
+  device.allocate<DescriptorPoolManager>(this);
 }
 
 void DescriptorPoolManager::allocateNewPool() {

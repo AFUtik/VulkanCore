@@ -40,6 +40,7 @@ private:
     VkDescriptorSetLayout descriptorSetLayout;
     std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
     
+    friend class Device;
     friend class DescriptorWriter;
 };
 
@@ -94,6 +95,7 @@ private:
     std::vector<VkDescriptorPoolSize> poolSizes;
     VkDescriptorPool freePool;
     
+    friend class Device; 
     friend class DescriptorWriter;
 };
 
