@@ -1,20 +1,18 @@
 #include "GlobalRenderSystem.hpp"
-#include "../Camera.hpp"
+
+#include "../vk/Renderer.hpp"
 
 namespace myvk {
 
-GlobalRenderSystem::GlobalRenderSystem(Device &device, VkRenderPass renderPass, DescriptorPoolManager* descriptorPool, FrameInfo& frame)
-: RenderSystem(device, frame)
+GlobalRenderSystem::GlobalRenderSystem(Renderer& renderer) : RenderSystem(renderer)
 {
-	this->descriptorPool = descriptorPool;
-
     createGlobalLayouts();
     createPipelineLayout(layouts);
 
 	PipelineConfigInfo config{};
 	Pipeline::defaultPipelineConfigInfo(config);
 
-	createPipeline(renderPass, config);
+	createPipeline(renderer.getSwapChainRenderPass(), config);
 }
 
 void GlobalRenderSystem::createGlobalLayouts() {

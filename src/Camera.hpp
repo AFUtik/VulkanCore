@@ -80,8 +80,8 @@ class Camera {
 
 	void updateVectors();
 
-	int width;
-	int height;
+	int width = 0;
+	int height = 0;
 
 	dvec3 x_dir;
 	dvec3 y_dir;
@@ -105,6 +105,9 @@ class Camera {
 	dvec3 getRebaseShift();
 public:
 	Camera(int width, int height, dvec3 position, float fov);
+
+    inline void setWidth(int width) {this->width = width;}
+    inline void setHeight(int height) {this->height = height;}
 
 	//inline Frustum& getFrustum() { return frustum; }
 

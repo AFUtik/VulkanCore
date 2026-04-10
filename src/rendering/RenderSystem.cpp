@@ -1,5 +1,6 @@
 #include "RenderSystem.hpp"
 
+#include "../vk/Renderer.hpp"
 #include "../vk/FrameInfo.hpp"
 #include "../vk/Pipeline.hpp"
 #include "../vk/Texture.hpp"
@@ -15,15 +16,14 @@
 
 namespace myvk {
 
-RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass, std::vector<VkDescriptorSetLayout> layouts, FrameInfo& frame) : 
-	device(device), frame(frame) 
+RenderSystem::RenderSystem(Renderer& renderer) : renderer(renderer), descriptorPool(renderer.getDescriptorPool())
 {
 	createPipelineLayout(layouts);
 
 	PipelineConfigInfo config{};
 	Pipeline::defaultPipelineConfigInfo(config);
 
-	createPipeline(renderPass, config);
+	createPipeline(renderer.getSwapChainRenderPass(), config);
 }
 
 RenderSystem::~RenderSystem() {
@@ -75,6 +75,8 @@ void RenderSystem::createPipeline(VkRenderPass renderPass ,PipelineConfigInfo& p
 }
 
 void RenderSystem::render(Mesh* mesh, Material* mat, const glm::mat4& model, Camera* camera) {
+	const FrameInfo& frame = renderer.frameInfo();
+
 	ubo.projview = camera->getProjviewProspective();
 	uniforms[frame.frameIndex]->writeToBuffer(&ubo);
 	uniforms[frame.frameIndex]->flush();

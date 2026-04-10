@@ -7,31 +7,33 @@
 
 struct GLFWwindow;
 
-namespace myvk {
-	class Window {
-	public:
-		GLFWwindow* window;
+class Window {
+public:
+	static Window& instance() {
+		static Window window; 
+		return window;
+	}
 
-		int init(const char* title);
+	int init(int width, int height, const char* title);
 
-		Window(int width, int height, const char* title);
-		~Window();
+	Window() {};
+	~Window();
 
-		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
-		VkExtent2D getExtent() { return { static_cast<uint32_t>(width), static_cast<uint32_t>(height) }; }
+	bool isShouldClose();
+	void setShouldClose(bool flag);
+	void swapBuffers();
+	void setCursorMode(int mode);
+	bool wasWindowResized() { return frameBufferResized; }
+	void resetWindowResizedFlag() { frameBufferResized = false; }
 
-		bool isShouldClose();
-		void setShouldClose(bool flag);
-		void swapBuffers();
-		void setCursorMode(int mode);
-
-		bool wasWindowResized() { return frameBufferResized; }
-		void resetWindowResizedFlag() { frameBufferResized = false; }
-
-		int width;
-		int height;
-	private:
-		static void framebufferResizeCallback(GLFWwindow* glfwWindow, int width, int height);
-		bool frameBufferResized = false;
-	};
-}
+	static int getWidth()  {return width;}
+	static int getHeight() {return height;}
+	static GLFWwindow* getGlfwWindow() {return window;}
+private:
+	static void framebufferResizeCallback(GLFWwindow* glfwWindow, int width, int height);
+	
+	inline static int width  = 800;
+	inline static int height = 600;
+	inline static GLFWwindow* window = nullptr;
+	inline static bool frameBufferResized = false;
+};

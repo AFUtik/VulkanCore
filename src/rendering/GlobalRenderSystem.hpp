@@ -3,6 +3,7 @@
 #include "RenderSystem.hpp"
 
 class Camera;
+class Renderer;
 
 namespace myvk {
 
@@ -10,7 +11,7 @@ class GlobalRenderSystem : public RenderSystem {
 private:
     void createGlobalLayouts();
 public:
-    GlobalRenderSystem(Device &device, VkRenderPass renderPass, DescriptorPoolManager* descriptorPool, FrameInfo& frame);
+    GlobalRenderSystem(Renderer& renderer);
 };
 
 }

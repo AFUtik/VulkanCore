@@ -19,12 +19,12 @@ struct GlobalUbo {
 };
 
 namespace myvk {
-	class RenderSystem;
+
+	class Renderer; 
 
 	class RenderSystem {
 	public:
-		RenderSystem(Device& device, VkRenderPass renderPass, std::vector<VkDescriptorSetLayout> layouts, FrameInfo& frame);
-		RenderSystem(Device& device, FrameInfo& frame) : device(device), frame(frame) {};
+		RenderSystem(Renderer& renderer);
 		~RenderSystem();
 
 		RenderSystem(const RenderSystem&) = delete;
@@ -43,8 +43,8 @@ namespace myvk {
 		void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts);
 		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
 
-		Device& device;
-		FrameInfo& frame;
+		const Renderer& renderer; 
+		Device& device = Device::instance();
 
 		std::unique_ptr<Pipeline> pipeline;
 		VkPipelineLayout pipelineLayout;

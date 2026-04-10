@@ -6,6 +6,7 @@
 #include "Pipeline.hpp"
 #include "Swapchain.hpp"
 #include "Descriptors.hpp"
+#include "FrameInfo.hpp"
 
 #include <memory>
 #include <vector>
@@ -14,7 +15,7 @@
 namespace myvk {
 	class Renderer {
 	public:
-		Renderer(Window &window, Device &device);
+		Renderer();
 		~Renderer();
 
 		Renderer(const Renderer&) = delete;
@@ -35,24 +36,28 @@ namespace myvk {
 			return currentFrameIndex; 
 		}
 
-		VkCommandBuffer beginFrame();
+		void beginFrame();
 		void endFrame();
 
 		void beginSwapChainRenderPassLowResolution(VkCommandBuffer commandBuffer);
 		void endSwapChainRenderPassLowResolution  (VkCommandBuffer commandBuffer);
 
-		void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
-		void endSwapChainRenderPass  (VkCommandBuffer commandBuffer);
+		void beginSwapChainRenderPass();
+		void endSwapChainRenderPass  ();
+
+		const FrameInfo& frameInfo() const {return frame;}
 	private:
 		void createCommandBuffers();
 		void recreateSwapChain();
 		void freeCommandBuffers();
 
-		Window& window;
-		Device& device;
+		Window& window = Window::instance();
+		Device& device = Device::instance();
+
+		FrameInfo frame;
 
 		std::unique_ptr<SwapChain> swapchain;
-		std::unique_ptr<SwapChain> lowresSwapchain;
+		//std::unique_ptr<SwapChain> lowresSwapchain;
 
 		std::vector<VkCommandBuffer> commandBuffers;
 

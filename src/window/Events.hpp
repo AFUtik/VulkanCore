@@ -19,7 +19,7 @@ public:
 
 	static std::stack<uint32_t> pressed_codepoints;
 
-	static int init(GLFWwindow* window);
+	static int init();
 	static void pullEvents();
 
 	static bool pressed(int keycode);
@@ -28,5 +28,5 @@ public:
 	static bool clicked(int button);
 	static bool jclicked(int button);
 
-	static void toggle_cursor(myvk::Window* window);
+	static void toggle_cursor();
 };

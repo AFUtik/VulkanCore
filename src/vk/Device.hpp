@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../window/Window.hpp"
-
 #include <vma/vk_mem_alloc.h>
 
 #include <string>
@@ -64,13 +62,18 @@ namespace myvk {
                 const bool enableValidationLayers = true;
         #endif
         
-        Device(Window& window);
+        Device();
         ~Device();
 
         Device(const Device&) = delete;
         Device& operator=(const Device&) = delete;
         Device(Device&&) = delete;
         Device& operator=(Device&&) = delete;
+
+        static Device& instance() {
+            static Device static_device;
+            return static_device;
+        }
 
         VkCommandPool getCommandPool() { return commandPool; }
         VkDevice device() { return device_; }
@@ -139,10 +142,9 @@ namespace myvk {
         bool checkDeviceExtensionSupport(VkPhysicalDevice device);
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
-        VkInstance instance;
+        VkInstance instance_;
         VkDebugUtilsMessengerEXT debugMessenger;
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-        Window& window;
         VkCommandPool commandPool;
 
         VkDevice device_;

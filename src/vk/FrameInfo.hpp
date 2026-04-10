@@ -5,8 +5,9 @@
 namespace myvk {
 
 struct FrameInfo {
-    int frameIndex;
-    float frameTime;
-    VkCommandBuffer commandBuffer;
-  };
+  int frameIndex = 0;
+  float frameTime = 0.0f;
+  VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+};
+
 }

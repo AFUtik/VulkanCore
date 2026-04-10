@@ -2,15 +2,19 @@
 
 #include "Fonts.hpp"
 
-#include "rendering/GlobalRenderSystem.hpp"
+
 
 //#include "gui/GUIContext.hpp"
 //#include "gui/GUIRendering.hpp"
 //#include "gui/GuiContext.hpp"
 #include "rendering/RenderSystem.hpp"
+#include "rendering/GlobalRenderSystem.hpp"
+
+#include "vk/Device.hpp"
 #include "vk/Mesh.hpp"
 #include "vk/Texture.hpp"
 #include "window/Events.hpp"
+#include "window/Window.hpp"
 
 #include <memory>
 #include <string>
@@ -25,16 +29,21 @@
 #include <stb_image.h>
 #include <iostream>
 
-Engine::Engine() : camera(window.width, window.height, glm::dvec3(0, 0, 5), glm::radians(90.0f)), frameInfo(0, 0.0f, VK_NULL_HANDLE) {
-	Events::init(window.window);
+#define WIDTH 1920
+#define HEIGHT 1080
+
+Engine::Engine() : camera(0, 0, glm::dvec3(0, 0, 5), glm::radians(90.0f)) {
+	Window::instance().init(WIDTH, HEIGHT, "Vulkan Engine");
+	camera.setWidth(WIDTH); camera.setHeight(HEIGHT);
+
+	Events::init();
 }
 
-Engine::~Engine() {
-	
-}
+Engine::~Engine() {}
 
 void Engine::run() {
-	myvk::Renderer renderer(window, device);
+	Window& window = Window::instance();
+	myvk::Renderer renderer;
 
 	//VkDescriptorImageInfo imageInfo;
 	//if(model->texture) {
@@ -63,7 +72,7 @@ void Engine::run() {
 	
 	//guiRenderer->fetchContext();
 
-	myvk::GlobalRenderSystem renderSystem(device, renderer.getSwapChainRenderPass(), renderer.getDescriptorPool(), frameInfo);
+	myvk::GlobalRenderSystem renderSystem(renderer);
 
 	Mesh mesh;
 	mesh.vertices.push_back({1.0f, 1.0f, 0.0f,   1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
@@ -78,17 +87,17 @@ void Engine::run() {
 	mesh.indices.push_back(3);
 	mesh.indices.push_back(0);
 
-	myvk::Mesh vkMesh = myvk::Mesh(device);
+	myvk::Mesh vkMesh = myvk::Mesh(myvk::Device::instance());
 	vkMesh.update(mesh.vertices, mesh.indices);
 	
 	Texture2D texture(absolutePath+"resources/img/tuff.png");
 	myvk::Material vkMat = myvk::Material(
 		*renderer.getDescriptorPool(), 
 		*renderSystem.getMaterialSetLayout(), 
-		std::make_shared<myvk::Texture>(device, &texture)
+		std::make_shared<myvk::Texture>(myvk::Device::instance(), &texture)
 	);
 
-	Events::toggle_cursor(&window);
+	Events::toggle_cursor();
 	double lastTime = glfwGetTime();
 	double timeAccu = 0.0f;
 	const double target_fps = 60.0;
@@ -119,12 +128,12 @@ void Engine::run() {
 				camera.translate(-camera.xdir() * H * speed);
 			}
 			if (Events::jpressed(GLFW_KEY_TAB)) {
-				Events::toggle_cursor(&window);
+				Events::toggle_cursor();
 			}
 
 			if (Events::_cursor_locked) {
-				camY += -Events::deltaY / window.height * 2;
-				camX += -Events::deltaX / window.height * 2;
+				camY += -Events::deltaY / Window::getHeight() * 2;
+				camX += -Events::deltaX / Window::getHeight() * 2;
 
 				if (camY < -radians(89.0f)) {
 					camY = -radians(89.0f);
@@ -137,22 +146,20 @@ void Engine::run() {
 				camera.rotate(-camY, camX, 0);
 			}
 
-			if (auto commandBuffer = renderer.beginFrame()) {
-				renderer.beginSwapChainRenderPass(commandBuffer);
-				frameInfo.frameIndex = renderer.getFrameIndex();
-				frameInfo.commandBuffer = commandBuffer;
+			renderer.beginFrame();
+			renderer.beginSwapChainRenderPass();
 
-				camera.update();
+			camera.update();
 
-				renderSystem.render(
-					&vkMesh, 
-					&vkMat, 
-					glm::mat4(1.0f), 
-					&camera);
+			renderSystem.render(
+				&vkMesh, 
+				&vkMat, 
+				glm::mat4(1.0f), 
+				&camera);
 
-				renderer.endSwapChainRenderPass(commandBuffer);
-				renderer.endFrame();
-			}
+			renderer.endSwapChainRenderPass();
+			renderer.endFrame();
+			
 			timeAccu -= H;
 		}
 		else {
@@ -162,8 +169,7 @@ void Engine::run() {
 		Events::pullEvents();
 	}
 
-	vkDeviceWaitIdle(device.device());
-	std::cout << "End Function" << std::endl;
+	vkDeviceWaitIdle(myvk::Device::instance().device());
 }
 
 /*

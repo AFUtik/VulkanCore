@@ -29,11 +29,5 @@ public:
 
 	void run();
 private:
-	//void loadModels();
-
-	myvk::Window window{ WIDTH, HEIGHT, "Vulkan Engine" };
-	myvk::Device device{ window };
-	myvk::FrameInfo frameInfo;
-	
 	Camera camera;
 };

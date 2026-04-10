@@ -9,6 +9,8 @@
 #include "Texture.hpp"
 #include "Descriptors.hpp"
 
+#include "VkWindow.hpp"
+
 namespace myvk {
     // local callback functions
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
@@ -50,7 +52,7 @@ namespace myvk {
     }
 
     // class member functions
-    Device::Device(Window& window) : window{ window } {
+    Device::Device() {
         createInstance();
         setupDebugMessenger();
         createSurface();
@@ -73,12 +75,12 @@ namespace myvk {
         vkDestroyDevice(device_, nullptr);
 
         if (enableValidationLayers) {
-            DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+            DestroyDebugUtilsMessengerEXT(instance_, debugMessenger, nullptr);
         }
 
-        vkDestroySurfaceKHR(instance, surface_, nullptr);
+        vkDestroySurfaceKHR(instance_, surface_, nullptr);
 
-        vkDestroyInstance(instance, nullptr);
+        vkDestroyInstance(instance_, nullptr);
     }
 
     void Device::createInstance() {
@@ -114,7 +116,7 @@ namespace myvk {
             createInfo.enabledLayerCount = 0;
             createInfo.pNext = nullptr;
         }
-        if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
+        if (vkCreateInstance(&createInfo, nullptr, &instance_) != VK_SUCCESS) {
             throw std::runtime_error("failed to create instance!");
         }
 
@@ -123,13 +125,13 @@ namespace myvk {
 
     void Device::pickPhysicalDevice() {
         uint32_t deviceCount = 0;
-        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+        vkEnumeratePhysicalDevices(instance_, &deviceCount, nullptr);
         if (deviceCount == 0) {
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
         }
         std::cout << "Device count: " << deviceCount << std::endl;
         std::vector<VkPhysicalDevice> devices(deviceCount);
-        vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+        vkEnumeratePhysicalDevices(instance_, &deviceCount, devices.data());
 
         for (const auto& device : devices) {
             if (isDeviceSuitable(device)) {
@@ -207,7 +209,7 @@ namespace myvk {
         }
     }
 
-    void Device::createSurface() { window.createWindowSurface(instance, &surface_); }
+    void Device::createSurface() { VkWindow::createWindowSurface(instance_, &surface_); }
 
     bool Device::isDeviceSuitable(VkPhysicalDevice device) {
         QueueFamilyIndices indices = findQueueFamilies(device);
@@ -244,7 +246,7 @@ namespace myvk {
         if (!enableValidationLayers) return;
         VkDebugUtilsMessengerCreateInfoEXT createInfo;
         populateDebugMessengerCreateInfo(createInfo);
-        if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+        if (CreateDebugUtilsMessengerEXT(instance_, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
             throw std::runtime_error("failed to set up debug messenger!");
         }
     }
@@ -579,7 +581,7 @@ namespace myvk {
         VmaAllocatorCreateInfo allocatorInfo = {};
         allocatorInfo.physicalDevice = physicalDevice;
         allocatorInfo.device = device_;
-        allocatorInfo.instance = instance;
+        allocatorInfo.instance = instance_;
         allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_0; 
 
         VmaAllocator allocator = VK_NULL_HANDLE;

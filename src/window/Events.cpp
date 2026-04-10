@@ -1,6 +1,8 @@
 #include "Events.hpp"
+#include "Window.hpp"
 
 #include <GLFW/glfw3.h>
+#include <cassert>
 #include <string.h>
 
 bool* Events::_keys;
@@ -57,7 +59,10 @@ void char_callback(GLFWwindow* window, uint32_t codepoint) {
 	Events::pressed_codepoints.push(codepoint);
 }
 
-int Events::init(GLFWwindow *window){
+int Events::init(){
+	GLFWwindow* window = Window::getGlfwWindow();
+	assert(window!=nullptr && "Glfw Window is nullptr");
+
 	_keys = new bool[1032];
 	_frames = new uint[1032];
 
@@ -93,9 +98,9 @@ bool Events::jclicked(int button){
 	return _keys[index] && _frames[index] == _current;
 }
 
-void Events::toggle_cursor(myvk::Window *window) {
+void Events::toggle_cursor() {
 	_cursor_locked = !_cursor_locked;
-	window->setCursorMode(_cursor_locked ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+	Window::instance().setCursorMode(_cursor_locked ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 }
 
 

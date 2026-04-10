@@ -21,6 +21,8 @@ find_package(imgui CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(Freetype REQUIRED)
 
+include_directories(${PROJECT_NAME} include/)
+
 target_link_libraries(${PROJECT_NAME} 
 	glfw 
 	GLEW::GLEW 
