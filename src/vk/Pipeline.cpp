@@ -1,5 +1,5 @@
 #include "Pipeline.hpp"
-#include "GPUMesh.hpp"
+#include "Mesh.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -76,8 +76,8 @@ namespace myvk {
 		shaderStages[1].pNext = nullptr;
 		shaderStages[1].pSpecializationInfo = nullptr;
 
-		auto bindingDescriptions = GPUMesh::getBindingDescriptions();
-		auto attributeDescriptions = GPUMesh::getAttributeDescriptions();
+		auto bindingDescriptions = Mesh::getBindingDescriptions();
+		auto attributeDescriptions = Mesh::getAttributeDescriptions();
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertexInputInfo.vertexAttributeDescriptionCount =

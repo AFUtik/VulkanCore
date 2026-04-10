@@ -15,8 +15,6 @@ GlobalRenderSystem::GlobalRenderSystem(Device &device, VkRenderPass renderPass, 
 	Pipeline::defaultPipelineConfigInfo(config);
 
 	createPipeline(renderPass, config);
-
-	renderService = std::make_unique<RenderService>(device, *descriptorPool, *materialSetLayout);
 }
 
 void GlobalRenderSystem::createGlobalLayouts() {
@@ -49,15 +47,6 @@ void GlobalRenderSystem::createGlobalLayouts() {
 			.writeBuffer(0, &bufferInfo)
 			.build(descriptorSets[i]);
 	}
-}
-
-void GlobalRenderSystem::renderGlobal(Camera* camera) {
-	ubo.projview = camera->getProjviewProspective();
-	
-	uniforms[frame.frameIndex]->writeToBuffer(&ubo);
-	uniforms[frame.frameIndex]->flush();
-
-	this->render();
 }
 
 }

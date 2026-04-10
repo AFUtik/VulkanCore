@@ -38,8 +38,11 @@ namespace myvk {
 		VkCommandBuffer beginFrame();
 		void endFrame();
 
+		void beginSwapChainRenderPassLowResolution(VkCommandBuffer commandBuffer);
+		void endSwapChainRenderPassLowResolution  (VkCommandBuffer commandBuffer);
+
 		void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
-		void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+		void endSwapChainRenderPass  (VkCommandBuffer commandBuffer);
 	private:
 		void createCommandBuffers();
 		void recreateSwapChain();
@@ -49,6 +52,8 @@ namespace myvk {
 		Device& device;
 
 		std::unique_ptr<SwapChain> swapchain;
+		std::unique_ptr<SwapChain> lowresSwapchain;
+
 		std::vector<VkCommandBuffer> commandBuffers;
 
 		std::unique_ptr<DescriptorPoolManager> descriptorPoolManager;

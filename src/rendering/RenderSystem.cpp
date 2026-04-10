@@ -1,9 +1,8 @@
 #include "RenderSystem.hpp"
-#include "RenderService.hpp"
 
 #include "../vk/FrameInfo.hpp"
 #include "../vk/Pipeline.hpp"
-#include "../vk/GPUTexture.hpp"
+#include "../vk/Texture.hpp"
 #include "../model/Mesh.hpp"
 
 #include <memory>
@@ -75,8 +74,10 @@ void RenderSystem::createPipeline(VkRenderPass renderPass ,PipelineConfigInfo& p
 		pipelineConfig);
 }
 
-void RenderSystem::render() {
-	//for(auto& renderer : renderers) renderer->buildDrawList();
+void RenderSystem::render(Mesh* mesh, Material* mat, const glm::mat4& model, Camera* camera) {
+	ubo.projview = camera->getProjviewProspective();
+	uniforms[frame.frameIndex]->writeToBuffer(&ubo);
+	uniforms[frame.frameIndex]->flush();
 
 	pipeline->bind(frame.commandBuffer);
 	vkCmdBindDescriptorSets(
@@ -88,42 +89,20 @@ void RenderSystem::render() {
 		&descriptorSets[frame.frameIndex].set,
 		0, nullptr
 	);
-	for(const DrawCommand& drawCommand : renderService->drawList) {
-		if(!Handle<RenderObject>::valid(drawCommand.object_id)) continue;
 
-		RenderObject& renderObject = renderService->renderables[drawCommand.object_id];
-		DrawMesh& drawMesh = renderService->meshes[renderObject.mesh.handle];
-		DrawMaterial& drawMaterial = renderService->materials[renderObject.material.handle];
+	vkCmdPushConstants(
+		frame.commandBuffer,
+		pipelineLayout,
+		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+		0,
+		sizeof(PushConstantData),
+		&model
+	);
 
-		vkCmdPushConstants(
-			frame.commandBuffer,
-			pipelineLayout,
-			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			0,
-			sizeof(PushConstantData),
-			&drawCommand.transform
-		);
+	mesh->bind(frame.commandBuffer);
+	mat->bind(frame.commandBuffer, pipelineLayout, frame.frameIndex);
 
-		drawMaterial.gpuData->bind(frame.commandBuffer, pipelineLayout, frame.frameIndex);
-		drawMesh.gpuData->bind(frame.commandBuffer);
-		drawMesh.gpuData->draw(frame.commandBuffer);
-	
-		//if(renderObject.scissorHeight > 0 && renderObject.scissorWidth > 0)
-		//{
-		//	int x = (int)renderObject.meshObject->transform.getX();
-		//	int y = 1050 - (int)renderObject.meshObject->transform.getY();
-//
-		//	VkRect2D vkRect{};
-		//	vkRect.offset = { x, y };
-		//	vkRect.extent = {
-		//		renderObject.scissorWidth,
-		//		renderObject.scissorHeight
-		//	};
-//
-		//	vkCmdSetScissor(frame.commandBuffer, 0, 1, &vkRect);
-		//}
-	}
-	renderService->drawList.clear();
+	mesh->draw(frame.commandBuffer);
 }
 
 }

@@ -6,7 +6,7 @@
 #include <unordered_set>
 
 #include "Buffer.hpp"
-#include "GPUTexture.hpp"
+#include "Texture.hpp"
 #include "Descriptors.hpp"
 
 namespace myvk {
@@ -62,21 +62,23 @@ namespace myvk {
 
     Device::~Device() {
         vkDeviceWaitIdle(device_);
+        
+        for (DeletionQueue& queue : deletionQueues)
+            queue.flush();
 
         vkDestroyCommandPool(device_, commandPool, nullptr);
+
+        vmaDestroyAllocator(allocator_);
+
+        vkDestroyDevice(device_, nullptr);
 
         if (enableValidationLayers) {
             DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         }
 
         vkDestroySurfaceKHR(instance, surface_, nullptr);
+
         vkDestroyInstance(instance, nullptr);
-
-        // VMA DESTROY
-        vmaDestroyAllocator(allocator_);
-
-		// Destroy logical device
-        vkDestroyDevice(device_, nullptr);
     }
 
     void Device::createInstance() {
@@ -606,7 +608,7 @@ namespace myvk {
     }
 
     template<>
-    void Device::allocate<GPUTexture>(GPUTexture* resource) {
+    void Device::allocate<Texture>(Texture* resource) {
         struct DeletionInfo {
             VkSampler sampler;
             VkImageView view;

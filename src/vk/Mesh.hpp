@@ -3,16 +3,16 @@
 #include "Buffer.hpp"
 #include "Device.hpp"
 
-#include "../model/Mesh.hpp"
+#include "../model/Vertex.hpp"
 
 namespace myvk {
 
-enum GPUMeshBufferFlags : uint32_t {
+enum MeshBufferFlags : uint32_t {
 	CreateWithReserve,
 	CreateOnGPUMemory
 };
 
-class GPUMesh {
+class Mesh {
 private:
 	Device& device;
 	std::unique_ptr<Buffer> vertexBuffer;
@@ -25,18 +25,18 @@ private:
 	uint32_t indexCount;
 	uint32_t flags;
 	
-	void createBuffers(const Mesh* mesh);
-	void updateBuffers(const Mesh* mesh);
+	void createBuffers(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+	void updateBuffers(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 
 	friend class RenderSystem;
 public:
-	GPUMesh(Device& device, const Mesh* mesh, uint32_t flags = (CreateWithReserve | CreateOnGPUMemory));
-	~GPUMesh() {};
+	Mesh(Device& device, uint32_t flags = (CreateWithReserve | CreateOnGPUMemory));
+	~Mesh() {};
 
-	GPUMesh(const GPUMesh&) = delete;
-	GPUMesh& operator=(const GPUMesh&) = delete;
+	Mesh(const Mesh&) = delete;
+	Mesh& operator=(const Mesh&) = delete;
 
-	void update(const Mesh* mesh);
+	void update(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 	
 	void draw(VkCommandBuffer commandBuffer) const;
 	void bind(VkCommandBuffer commandBuffer) const;

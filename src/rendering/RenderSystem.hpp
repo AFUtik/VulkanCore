@@ -4,11 +4,8 @@
 #include "../Camera.hpp"
 #include "../model/MeshObject.hpp"
 
-#include "RenderService.hpp"
-#include "RenderComponent.hpp"
-
-#include "../vk/GPUMesh.hpp"
-#include "../vk/GPUMaterial.hpp"
+#include "../vk/Mesh.hpp"
+#include "../vk/Material.hpp"
 #include "../vk/Pipeline.hpp"
 #include "../vk/FrameInfo.hpp"
 
@@ -33,20 +30,26 @@ namespace myvk {
 		RenderSystem(const RenderSystem&) = delete;
 		RenderSystem& operator=(const RenderSystem&) = delete;
 
-		virtual void render();
-		RenderService* getRenderService() {return renderService.get();}
+		virtual void render(
+			Mesh* mesh, 
+			Material* mat, 
+			const glm::mat4& model,
+			Camera* camera);
+
+		inline DescriptorSetLayout* getMaterialSetLayout() {
+			return materialSetLayout.get();
+		}
 	protected:
 		void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts);
 		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
-
-		std::unique_ptr<RenderService> renderService;
-		//std::vector<std::shared_ptr<>> renderComponents;
 
 		Device& device;
 		FrameInfo& frame;
 
 		std::unique_ptr<Pipeline> pipeline;
 		VkPipelineLayout pipelineLayout;
+
+		GlobalUbo ubo{};
 
 		DescriptorPoolManager* descriptorPool;
 		std::unique_ptr<DescriptorSetLayout> setLayout;

@@ -8,44 +8,32 @@
 #include <vma/vk_mem_alloc.h>
 
 namespace myvk {
-    class GPUTexture {
+    class Texture {
     public:
-        struct DeletionInfo {
-            VkDevice device;
-            VkSampler sampler;
-            VkImageView view;
-            VkImage image;
+        Texture(Device& device, Texture2D* texture, TextureFilter filter = TextureFilter::Linear);
+        ~Texture();
 
-            VmaAllocator allocator;
-            VmaAllocation allocation;
-        };
-
-        GPUTexture(Device& device, Texture2D* texture, TextureFilter filter = TextureFilter::Linear);
-        ~GPUTexture();
-
-        GPUTexture(const GPUTexture&) = delete;
-		GPUTexture& operator=(const GPUTexture&) = delete;
+        Texture(const Texture&) = delete;
+		Texture& operator=(const Texture&) = delete;
 
         VkSampler getSampler() {return sampler;}
         VkImageView getView() {return view;}
     private:
-        GPUTexture::DeletionInfo getDeletionInfo();
-
         void imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout, VkImageLayout NewLayout, int layerCount);
         
         void transitionImageLayout(VkImageLayout OldLayout, VkImageLayout NewLayout, int LayerCount);
 
-		void updateGPUTextureImage(int layerCount, const void* pPixels);
+		void updateTextureImage(int layerCount, const void* pPixels);
 
 		void createImageView(VkImageAspectFlags AspectFlags);
 
-		void createGPUTextureSampler(VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode);
+		void createTextureSampler(VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode);
 
 		void createImage();
 
-        void createGPUTextureFromData(const void* pPixels);
+        void createTextureFromData(const void* pPixels);
 
-		void createGPUTexture(Texture2D* texture);
+		void createTexture(Texture2D* texture);
 
         bool isCubemap = false;
         int imageWidth, imageHeight, imageChannels;

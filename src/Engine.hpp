@@ -15,26 +15,25 @@
 
 #include "Fonts.hpp"
 
-namespace myvk {
-	class Engine {
-	public:
-		static constexpr int WIDTH = 1920;
-		static constexpr int HEIGHT = 1080;
 
-		Engine();
-		~Engine();
+class Engine {
+public:
+	static constexpr int WIDTH = 1920;
+	static constexpr int HEIGHT = 1080;
 
-		Engine(const Engine&) = delete;
-		Engine& operator=(const Engine&) = delete;
+	Engine();
+	~Engine();
 
-		void run();
-	private:
-		//void loadModels();
+	Engine(const Engine&) = delete;
+	Engine& operator=(const Engine&) = delete;
 
-		Window window{ WIDTH, HEIGHT, "Vulkan Engine" };
-		Device device{ window };
+	void run();
+private:
+	//void loadModels();
 
-		FrameInfo frameInfo;
-		Camera camera;
-	};
-}
+	myvk::Window window{ WIDTH, HEIGHT, "Vulkan Engine" };
+	myvk::Device device{ window };
+	myvk::FrameInfo frameInfo;
+	
+	Camera camera;
+};

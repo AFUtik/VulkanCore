@@ -5,7 +5,7 @@
 
 int main()
 {
-	myvk::Engine engine{};
+	Engine engine{};
 
 	try {
 		engine.run();

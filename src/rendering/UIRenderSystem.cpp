@@ -1,6 +1,5 @@
 #include "UIRenderSystem.hpp"
 
-#include "RenderService.hpp"
 #include "glm/ext/matrix_float4x4.hpp"
 
 #include <locale>
@@ -36,8 +35,6 @@ UIRenderSystem::UIRenderSystem(
 	config.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	config.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
 	createPipeline(renderPass, config);
-
-	renderService = std::make_unique<RenderService>(device, *pool, *materialSetLayout);
 }
 
 void UIRenderSystem::createUILayouts() {

@@ -1,4 +1,4 @@
-#include "GPUTexture.hpp"
+#include "Texture.hpp"
 
 #include <stdexcept>
 
@@ -43,7 +43,7 @@ bool HasStencilComponent(VkFormat Format)
 }
 
 
-GPUTexture::GPUTexture(Device& device, Texture2D* texture, TextureFilter filter) : 
+Texture::Texture(Device& device, Texture2D* texture, TextureFilter filter) : 
 	device(device),
 	imageWidth(texture->width),
 	imageHeight(texture->height),
@@ -51,15 +51,15 @@ GPUTexture::GPUTexture(Device& device, Texture2D* texture, TextureFilter filter)
 	filter(filter),
 	channels((TextureChannels)texture->channels)
 {
-    createGPUTexture(texture);
+    createTexture(texture);
 }
 
-GPUTexture::~GPUTexture() {
-	device.allocate<GPUTexture>(this);
+Texture::~Texture() {
+	device.allocate<Texture>(this);
 }
 
 // Copied from the "3D Graphics Rendering Cookbook"
-void GPUTexture::imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout, VkImageLayout NewLayout, int layerCount)
+void Texture::imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout, VkImageLayout NewLayout, int layerCount)
 {
 	VkImageMemoryBarrier Barrier = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -130,7 +130,7 @@ void GPUTexture::imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout
 
 		sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	} /* Convert from updateable GPUTexture to shader read-only */
+	} /* Convert from updateable Texture to shader read-only */
 	else if (OldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && 
 		     NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
 		Barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -138,7 +138,7 @@ void GPUTexture::imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout
 
 		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	} /* Convert depth GPUTexture from undefined state to depth-stencil buffer */
+	} /* Convert depth Texture from undefined state to depth-stencil buffer */
 	else if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
 		Barrier.srcAccessMask = 0;
 		Barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
@@ -163,7 +163,7 @@ void GPUTexture::imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout
 
 		sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	} /* Convert from updateable GPUTexture to shader read-only */
+	} /* Convert from updateable Texture to shader read-only */
 	else if (OldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
 		Barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -177,7 +177,7 @@ void GPUTexture::imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout
 
 		sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		destinationStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	} /* Convert from updateable depth GPUTexture to shader read-only */
+	} /* Convert from updateable depth Texture to shader read-only */
 	else if (OldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
 		Barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -208,7 +208,7 @@ void GPUTexture::imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout
 		                 0, 0, NULL, 0, NULL, 1, &Barrier);
 }
 
-void GPUTexture::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, int layerCount)
+void Texture::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, int layerCount)
 {
     VkCommandBuffer m_copyCmdBuf = device.beginSingleTimeCommands();
 
@@ -217,7 +217,7 @@ void GPUTexture::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout ne
 	device.endSingleTimeCommands(m_copyCmdBuf);
 }
 
-void GPUTexture::createGPUTexture(Texture2D* texture) {
+void Texture::createTexture(Texture2D* texture) {
 	if(channels == TextureChannels::RGBA) 
 	{
 		format = VK_FORMAT_R8G8B8A8_SRGB;
@@ -234,16 +234,16 @@ void GPUTexture::createGPUTexture(Texture2D* texture) {
 	{
 		format = VK_FORMAT_R8G8_UNORM;
 	}
-	createGPUTextureFromData(texture->raw());
+	createTextureFromData(texture->raw());
 }
 
-void GPUTexture::createGPUTextureFromData(const void* pPixels)
+void Texture::createTextureFromData(const void* pPixels)
 {
 	// Step #1: create the image object and populate it with pixels
 	createImage();
 
 	int LayerCount = isCubemap ? 6 : 1;
-	updateGPUTextureImage(LayerCount, pPixels);
+	updateTextureImage(LayerCount, pPixels);
 
 	// Step #2: create the image view
 	VkImageAspectFlags AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -261,13 +261,13 @@ void GPUTexture::createGPUTextureFromData(const void* pPixels)
 	
 	VkSamplerAddressMode AddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
-	// Step #3: create the GPUTexture sampler
-	createGPUTextureSampler(MinFilter, MaxFilter, AddressMode);
+	// Step #3: create the Texture sampler
+	createTextureSampler(MinFilter, MaxFilter, AddressMode);
 
-	printf("GPUTexture from data created\n");
+	printf("Texture from data created\n");
 }
 
-void GPUTexture::createImage()
+void Texture::createImage()
 {
 	/*VkImageFormatProperties imageFormatProperties;
 	vkGetPhysicalDeviceImageFormatProperties(m_physDevices.Selected().m_physDevice,
@@ -299,7 +299,7 @@ void GPUTexture::createImage()
 }
 
 
-void GPUTexture::updateGPUTextureImage(int layerCount, const void* pPixels)
+void Texture::updateTextureImage(int layerCount, const void* pPixels)
 {
 	int BytesPerPixel = GetBytesPerTexFormat(format);
 
@@ -325,7 +325,7 @@ void GPUTexture::updateGPUTextureImage(int layerCount, const void* pPixels)
 	transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, layerCount);
 }
 
-void GPUTexture::createGPUTextureSampler(VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)
+void Texture::createTextureSampler(VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)
 {
 	VkSamplerCreateInfo SamplerInfo = {
 		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -352,7 +352,7 @@ void GPUTexture::createGPUTextureSampler(VkFilter MinFilter, VkFilter MaxFilter,
     } 
 }
 
-void GPUTexture::createImageView(VkImageAspectFlags AspectFlags) 
+void Texture::createImageView(VkImageAspectFlags AspectFlags) 
 {
 	VkImageViewCreateInfo viewInfo =
 	{

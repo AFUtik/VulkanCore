@@ -2,13 +2,14 @@
 
 #include "Fonts.hpp"
 
-#include "rendering/RenderService.hpp"
 #include "rendering/GlobalRenderSystem.hpp"
 
 //#include "gui/GUIContext.hpp"
 //#include "gui/GUIRendering.hpp"
 //#include "gui/GuiContext.hpp"
 #include "rendering/RenderSystem.hpp"
+#include "vk/Mesh.hpp"
+#include "vk/Texture.hpp"
 #include "window/Events.hpp"
 
 #include <memory>
@@ -24,8 +25,6 @@
 #include <stb_image.h>
 #include <iostream>
 
-using namespace myvk;
-
 Engine::Engine() : camera(window.width, window.height, glm::dvec3(0, 0, 5), glm::radians(90.0f)), frameInfo(0, 0.0f, VK_NULL_HANDLE) {
 	Events::init(window.window);
 }
@@ -35,7 +34,7 @@ Engine::~Engine() {
 }
 
 void Engine::run() {
-	Renderer renderer(window, device);
+	myvk::Renderer renderer(window, device);
 
 	//VkDescriptorImageInfo imageInfo;
 	//if(model->texture) {
@@ -64,10 +63,7 @@ void Engine::run() {
 	
 	//guiRenderer->fetchContext();
 
-	GlobalRenderSystem renderSystem(device, renderer.getSwapChainRenderPass(), renderer.getDescriptorPool(), frameInfo);
-	RenderService* service = renderSystem.getRenderService();
-
-	RenderObject renderObj;
+	myvk::GlobalRenderSystem renderSystem(device, renderer.getSwapChainRenderPass(), renderer.getDescriptorPool(), frameInfo);
 
 	Mesh mesh;
 	mesh.vertices.push_back({1.0f, 1.0f, 0.0f,   1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
@@ -82,14 +78,15 @@ void Engine::run() {
 	mesh.indices.push_back(3);
 	mesh.indices.push_back(0);
 
-	HandleContainer container(service);
-	Material mat;
-	mat.albedo = std::make_shared<Texture2D>(absolutePath+"resources/img/tuff.png");
-	mat.albedoFilter = TextureFilter::Nearest;
-
-	renderObj.mesh = service->createMeshHandle(&mesh, container);
-	renderObj.material = service->createMaterialHandle(&mat, container);
-	Handle<RenderObject> obj_h = service->registerRenderObject(std::move(renderObj), container);
+	myvk::Mesh vkMesh = myvk::Mesh(device);
+	vkMesh.update(mesh.vertices, mesh.indices);
+	
+	Texture2D texture(absolutePath+"resources/img/tuff.png");
+	myvk::Material vkMat = myvk::Material(
+		*renderer.getDescriptorPool(), 
+		*renderSystem.getMaterialSetLayout(), 
+		std::make_shared<myvk::Texture>(device, &texture)
+	);
 
 	Events::toggle_cursor(&window);
 	double lastTime = glfwGetTime();
@@ -147,9 +144,11 @@ void Engine::run() {
 
 				camera.update();
 
-				service->render(obj_h, glm::mat4(1.0f));
-				renderSystem.renderGlobal(&camera);
-				//uiRenderSystem.render();
+				renderSystem.render(
+					&vkMesh, 
+					&vkMat, 
+					glm::mat4(1.0f), 
+					&camera);
 
 				renderer.endSwapChainRenderPass(commandBuffer);
 				renderer.endFrame();

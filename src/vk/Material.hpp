@@ -3,19 +3,19 @@
 #include "Descriptors.hpp"
 #include "Device.hpp"
 
-#include "GPUTexture.hpp"
+#include "Texture.hpp"
 
 #include <memory>
 
 namespace myvk {
 
-class GPUMaterial {
+class Material {
 public:
-    GPUMaterial(DescriptorPoolManager& pool,
-                DescriptorSetLayout& layout,
-                std::shared_ptr<GPUTexture> albedo);
+    Material(DescriptorPoolManager& pool,
+             DescriptorSetLayout& layout,
+             std::shared_ptr<Texture> albedo);
 
-    void create(std::shared_ptr<GPUTexture> albedo);
+    void create(std::shared_ptr<Texture> albedo);
                 
     void bind(VkCommandBuffer commandBuffer, VkPipelineLayout layout, int frame) const;
 private:
@@ -24,7 +24,7 @@ private:
     
     std::vector<DescriptorSetData> descriptorSets;
 
-    std::shared_ptr<GPUTexture> albedo;
+    std::shared_ptr<Texture> albedo;
 };
 
 }
