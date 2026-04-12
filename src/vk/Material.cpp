@@ -2,14 +2,12 @@
 
 namespace myvk {
 
-Material::Material(DescriptorPoolManager& pool,
-                   DescriptorSetLayout& layout,
-                   std::shared_ptr<Texture> albedo) : pool(pool), layout(layout), albedo(albedo)
+Material::Material(DescriptorPoolManager& pool, DescriptorSetLayout& layout) : pool(pool), layout(layout)
 {
-   create(albedo);
+
 }
 
-void Material::create(std::shared_ptr<Texture> albedo) 
+void Material::create(Texture* albedo) 
 {
     VkDescriptorImageInfo imageInfo;
 	if(albedo) {
@@ -18,12 +16,10 @@ void Material::create(std::shared_ptr<Texture> albedo)
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 
-    descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-	for(int i = 0; i < descriptorSets.size(); i++) {
-		DescriptorWriter(layout, pool)
-			.writeImage(0, &imageInfo)
-			.build(descriptorSets[i]);
-	}
+	DescriptorWriter(layout, pool)
+		.writeImage(0, &imageInfo)
+		.build(descriptorSet);
+	
 }
 
 void Material::bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, int frame) const {
@@ -33,7 +29,7 @@ void Material::bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayo
         pipelineLayout,
         1,
         1,
-        &descriptorSets[frame].set,
+        &descriptorSet.set,
         0,
 	    nullptr);
 }

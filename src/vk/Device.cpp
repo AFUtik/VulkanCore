@@ -595,7 +595,7 @@ namespace myvk {
     void Device::createDeletionQueues(uint64_t amount) {deletionQueues.resize(amount);}
 
     template<>
-    void Device::allocate<Buffer>(Buffer* resource) 
+    void Device::free<Buffer>(Buffer* resource) 
     {
         struct DeletionInfo {
             VkBuffer buffer;
@@ -610,7 +610,7 @@ namespace myvk {
     }
 
     template<>
-    void Device::allocate<Texture>(Texture* resource) {
+    void Device::free<Texture>(Texture* resource) {
         struct DeletionInfo {
             VkSampler sampler;
             VkImageView view;
@@ -629,7 +629,7 @@ namespace myvk {
     }
 
     template<>
-    void Device::allocate<DescriptorSetLayout>(DescriptorSetLayout* resource) {
+    void Device::free<DescriptorSetLayout>(DescriptorSetLayout* resource) {
         deletionQueues[frame_index].push_function(
             [device = this->device_, layout = resource->descriptorSetLayout] {
                 vkDestroyDescriptorSetLayout(device, layout, nullptr);
@@ -638,7 +638,7 @@ namespace myvk {
     }
 
     template<>
-    void Device::allocate<DescriptorPoolManager>(DescriptorPoolManager* resource) {
+    void Device::free<DescriptorPoolManager>(DescriptorPoolManager* resource) {
         deletionQueues[frame_index].push_function(
             [device = this->device_, pools = resource->descriptorPools] {
                 for(VkDescriptorPool pool : pools) {

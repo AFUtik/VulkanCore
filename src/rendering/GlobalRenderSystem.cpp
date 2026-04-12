@@ -1,10 +1,12 @@
 #include "GlobalRenderSystem.hpp"
 
 #include "../vk/Renderer.hpp"
+#include "../vk/RenderTarget.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace myvk {
 
-GlobalRenderSystem::GlobalRenderSystem(Renderer& renderer) : RenderSystem(renderer)
+GlobalRenderSystem::GlobalRenderSystem(Renderer& renderer, VkRenderPass renderPass) : RenderSystem(renderer)
 {
     createGlobalLayouts();
     createPipelineLayout(layouts);
@@ -12,7 +14,7 @@ GlobalRenderSystem::GlobalRenderSystem(Renderer& renderer) : RenderSystem(render
 	PipelineConfigInfo config{};
 	Pipeline::defaultPipelineConfigInfo(config);
 
-	createPipeline(renderer.getSwapChainRenderPass(), config);
+	createPipeline(renderPass, config);
 }
 
 void GlobalRenderSystem::createGlobalLayouts() {

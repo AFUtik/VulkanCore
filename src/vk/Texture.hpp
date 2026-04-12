@@ -5,29 +5,46 @@
 
 #include "../model/Texture.hpp"
 
-#include <vma/vk_mem_alloc.h>
-
 namespace myvk {
     class Texture {
     public:
-        Texture(Device& device, Texture2D* texture, TextureFilter filter = TextureFilter::Linear);
+        Texture(
+            Texture2D* texture, 
+            TextureFilter filter = TextureFilter::Linear);
         ~Texture();
 
         Texture(const Texture&) = delete;
 		Texture& operator=(const Texture&) = delete;
 
-        VkSampler getSampler() {return sampler;}
+        VkSampler   getSampler() {return sampler;}
         VkImageView getView() {return view;}
-    private:
-        void imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout, VkImageLayout NewLayout, int layerCount);
         
-        void transitionImageLayout(VkImageLayout OldLayout, VkImageLayout NewLayout, int LayerCount);
-
+        static void imageMemBarrier(
+            VkImage image,
+            VkFormat format,
+            VkCommandBuffer CmdBuf,
+            VkImageLayout OldLayout, 
+            VkImageLayout NewLayout, 
+            int layerCount);
+            
+        static void transitionImageLayout(
+            Device& device,
+            VkImage image,
+            VkFormat format,
+            VkImageLayout OldLayout, 
+            VkImageLayout NewLayout, 
+            int LayerCount);
+        
+        static void createTextureSampler(
+            Device& device, 
+            VkSampler& sampler, 
+            VkFilter MinFilter, 
+            VkFilter MaxFilter, 
+            VkSamplerAddressMode AddressMode);
+    private:
 		void updateTextureImage(int layerCount, const void* pPixels);
 
 		void createImageView(VkImageAspectFlags AspectFlags);
-
-		void createTextureSampler(VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode);
 
 		void createImage();
 
@@ -48,7 +65,8 @@ namespace myvk {
         VkImageView view;
         VkSampler sampler;
         VkImageLayout imageLayout;
-        Device& device;
+
+        Device& device = Device::instance();
 
         friend class Device;
     };

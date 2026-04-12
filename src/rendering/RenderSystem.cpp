@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 #define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+
 #include <glm/glm.hpp>
 #include <iostream>
 
@@ -74,12 +74,15 @@ void RenderSystem::createPipeline(VkRenderPass renderPass ,PipelineConfigInfo& p
 		pipelineConfig);
 }
 
-void RenderSystem::render(Mesh* mesh, Material* mat, const glm::mat4& model, Camera* camera) {
+void RenderSystem::setProjview(const glm::mat4& projview) {
 	const FrameInfo& frame = renderer.frameInfo();
 
-	ubo.projview = camera->getProjviewProspective();
-	uniforms[frame.frameIndex]->writeToBuffer(&ubo);
+	uniforms[frame.frameIndex]->writeToBuffer(&projview);
 	uniforms[frame.frameIndex]->flush();
+}
+
+void RenderSystem::render(Mesh* mesh, Material* mat, const glm::mat4& model) {
+	const FrameInfo& frame = renderer.frameInfo();
 
 	pipeline->bind(frame.commandBuffer);
 	vkCmdBindDescriptorSets(

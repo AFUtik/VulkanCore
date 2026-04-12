@@ -3,8 +3,8 @@
 Camera::Camera(int width, int height, dvec3 position, float fov) : width(width), height(height), originPosition(position), fov(fov), rotation(1.0f) {
 	updateVectors();
 
-	ortho = glm::ortho(0.0f, (float)width,
-           					 (float)height, 0.0f,   // если хочешь origin сверху
+	ortho = glm::ortho(0.0f, 320.0f,
+           					 180.0f, 0.0f,
            					 -100.0f, 100.0f);
 }
 

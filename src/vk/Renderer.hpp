@@ -25,6 +25,7 @@ namespace myvk {
 		bool isFrameInProgress() const { return isFrameStarted; }
 
 		DescriptorPoolManager* getDescriptorPool() { return descriptorPoolManager.get(); }
+		SwapChain* getSwapChain() {return swapchain.get();}
 
 		VkCommandBuffer getCurrentCommandBuffer() const { 
 			assert(isFrameStarted && "Cannot get command buffer when frame not in progress");
@@ -39,13 +40,10 @@ namespace myvk {
 		void beginFrame();
 		void endFrame();
 
-		void beginSwapChainRenderPassLowResolution(VkCommandBuffer commandBuffer);
-		void endSwapChainRenderPassLowResolution  (VkCommandBuffer commandBuffer);
-
 		void beginSwapChainRenderPass();
 		void endSwapChainRenderPass  ();
 
-		const FrameInfo& frameInfo() const {return frame;}
+		FrameInfo& frameInfo() {return frame;}
 	private:
 		void createCommandBuffers();
 		void recreateSwapChain();
@@ -57,7 +55,6 @@ namespace myvk {
 		FrameInfo frame;
 
 		std::unique_ptr<SwapChain> swapchain;
-		//std::unique_ptr<SwapChain> lowresSwapchain;
 
 		std::vector<VkCommandBuffer> commandBuffers;
 

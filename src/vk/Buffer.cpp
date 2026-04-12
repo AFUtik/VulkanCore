@@ -54,7 +54,7 @@ Buffer::~Buffer() {
 
   if (buffer == VK_NULL_HANDLE) return;
 
-  device.allocate<Buffer>(this);
+  device.free<Buffer>(this);
 
   //vkDestroyBuffer(device.device(), buffer, nullptr);
   //vkFreeMemory(device.device(), memory, nullptr);

@@ -10,12 +10,11 @@
 #include <stdexcept>
 
 namespace myvk {
-    SwapChain::SwapChain(Device& deviceRef, VkExtent2D extent) : device{ deviceRef }, windowExtent{ extent } {
+    SwapChain::SwapChain(VkExtent2D extent) : windowExtent{ extent } {
         init();
     }
 
-    SwapChain::SwapChain(Device& deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous) : 
-        device{ deviceRef }, 
+    SwapChain::SwapChain(VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous) : 
         windowExtent{ windowExtent }, 
         oldSwapChain{ previous } 
     {

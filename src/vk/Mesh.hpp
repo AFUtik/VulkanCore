@@ -27,8 +27,6 @@ private:
 	
 	void createBuffers(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 	void updateBuffers(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
-
-	friend class RenderSystem;
 public:
 	Mesh(Device& device, uint32_t flags = (CreateWithReserve | CreateOnGPUMemory));
 	~Mesh() {};

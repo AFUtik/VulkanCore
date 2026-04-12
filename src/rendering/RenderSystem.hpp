@@ -20,7 +20,7 @@ struct GlobalUbo {
 
 namespace myvk {
 
-	class Renderer; 
+	class Renderer;
 
 	class RenderSystem {
 	public:
@@ -30,11 +30,12 @@ namespace myvk {
 		RenderSystem(const RenderSystem&) = delete;
 		RenderSystem& operator=(const RenderSystem&) = delete;
 
+		void setProjview(const glm::mat4& projview);
+
 		virtual void render(
 			Mesh* mesh, 
 			Material* mat, 
-			const glm::mat4& model,
-			Camera* camera);
+			const glm::mat4& model);
 
 		inline DescriptorSetLayout* getMaterialSetLayout() {
 			return materialSetLayout.get();
@@ -43,7 +44,7 @@ namespace myvk {
 		void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts);
 		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
 
-		const Renderer& renderer; 
+		Renderer& renderer; 
 		Device& device = Device::instance();
 
 		std::unique_ptr<Pipeline> pipeline;

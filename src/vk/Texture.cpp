@@ -43,8 +43,7 @@ bool HasStencilComponent(VkFormat Format)
 }
 
 
-Texture::Texture(Device& device, Texture2D* texture, TextureFilter filter) : 
-	device(device),
+Texture::Texture(Texture2D* texture, TextureFilter filter) : 
 	imageWidth(texture->width),
 	imageHeight(texture->height),
 	imageChannels(texture->channels),
@@ -55,11 +54,18 @@ Texture::Texture(Device& device, Texture2D* texture, TextureFilter filter) :
 }
 
 Texture::~Texture() {
-	device.allocate<Texture>(this);
+	device.free<Texture>(this);
 }
 
 // Copied from the "3D Graphics Rendering Cookbook"
-void Texture::imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout, VkImageLayout NewLayout, int layerCount)
+void Texture::imageMemBarrier(
+	VkImage image,
+	VkFormat format,
+
+	VkCommandBuffer CmdBuf, 
+	VkImageLayout OldLayout, 
+	VkImageLayout NewLayout, 
+	int layerCount)
 {
 	VkImageMemoryBarrier Barrier = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -208,11 +214,17 @@ void Texture::imageMemBarrier(VkCommandBuffer CmdBuf, VkImageLayout OldLayout, V
 		                 0, 0, NULL, 0, NULL, 1, &Barrier);
 }
 
-void Texture::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, int layerCount)
+void Texture::transitionImageLayout(
+	Device& device, 
+	VkImage image,
+    VkFormat format,
+	VkImageLayout oldLayout, 
+	VkImageLayout newLayout, 
+	int layerCount)
 {
     VkCommandBuffer m_copyCmdBuf = device.beginSingleTimeCommands();
 
-	imageMemBarrier(m_copyCmdBuf, oldLayout, newLayout, layerCount);
+	imageMemBarrier(image, format, m_copyCmdBuf, oldLayout, newLayout, layerCount);
 
 	device.endSingleTimeCommands(m_copyCmdBuf);
 }
@@ -262,9 +274,7 @@ void Texture::createTextureFromData(const void* pPixels)
 	VkSamplerAddressMode AddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
 	// Step #3: create the Texture sampler
-	createTextureSampler(MinFilter, MaxFilter, AddressMode);
-
-	printf("Texture from data created\n");
+	createTextureSampler(device, sampler, MinFilter, MaxFilter, AddressMode);
 }
 
 void Texture::createImage()
@@ -318,14 +328,14 @@ void Texture::updateTextureImage(int layerCount, const void* pPixels)
 	stagingBuffer.writeToBuffer(pPixels, imageSize);
 	stagingBuffer.unmap();
 
-	transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layerCount);
+	transitionImageLayout(device, image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layerCount);
 
 	device.copyBufferToImage(stagingBuffer.getBuffer(), image, imageWidth, imageHeight, layerCount);
 	
-	transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, layerCount);
+	transitionImageLayout(device, image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, layerCount);
 }
 
-void Texture::createTextureSampler(VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)
+void Texture::createTextureSampler(Device& device, VkSampler& sampler, VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)
 {
 	VkSamplerCreateInfo SamplerInfo = {
 		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,

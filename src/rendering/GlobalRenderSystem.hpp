@@ -3,15 +3,15 @@
 #include "RenderSystem.hpp"
 
 class Camera;
-class Renderer;
 
 namespace myvk {
+    class RenderTarget;
+    class Renderer;
 
-class GlobalRenderSystem : public RenderSystem {
-private:
-    void createGlobalLayouts();
-public:
-    GlobalRenderSystem(Renderer& renderer);
-};
-
+    class GlobalRenderSystem : public RenderSystem {
+    private:
+        void createGlobalLayouts();
+    public:
+        GlobalRenderSystem(Renderer& renderer, VkRenderPass renderPass);
+    };
 }

@@ -11,20 +11,17 @@ namespace myvk {
 
 class Material {
 public:
-    Material(DescriptorPoolManager& pool,
-             DescriptorSetLayout& layout,
-             std::shared_ptr<Texture> albedo);
+    Material(DescriptorPoolManager& pool, DescriptorSetLayout& layout);
 
-    void create(std::shared_ptr<Texture> albedo);
-                
+    void create(Texture* albedo);
+    
     void bind(VkCommandBuffer commandBuffer, VkPipelineLayout layout, int frame) const;
+
+    DescriptorSetData& getDescriptorSetData() {return descriptorSet;}
 private:
     DescriptorPoolManager& pool;
     DescriptorSetLayout& layout;
-    
-    std::vector<DescriptorSetData> descriptorSets;
-
-    std::shared_ptr<Texture> albedo;
+    DescriptorSetData descriptorSet;
 };
 
 }

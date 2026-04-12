@@ -1,6 +1,5 @@
 #pragma once
 
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm/ext/vector_double3.hpp"
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
@@ -128,6 +127,7 @@ public:
 	void rotate(float x, float y, float z);
 
 	void update();
+    void clear();
 
 	const mat4& getProjviewProspective();
     const mat4& getProjviewOrtho();

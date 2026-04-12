@@ -120,7 +120,7 @@ namespace myvk {
         }
 
         // Device Allocation //
-        template <typename T> void allocate(T* resource);
+        template <typename T> void free(T* resource);
 
         VkPhysicalDeviceProperties properties;
     private:

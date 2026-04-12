@@ -56,7 +56,7 @@ DescriptorSetLayout::~DescriptorSetLayout() {
   if (descriptorSetLayout == VK_NULL_HANDLE)
         return;
 
-  device.allocate<DescriptorSetLayout>(this);
+  device.free<DescriptorSetLayout>(this);
   
   descriptorSetLayout = VK_NULL_HANDLE;
 }
@@ -96,7 +96,7 @@ DescriptorPoolManager::DescriptorPoolManager(
 }
  
 DescriptorPoolManager::~DescriptorPoolManager() {
-  device.allocate<DescriptorPoolManager>(this);
+  device.free<DescriptorPoolManager>(this);
 }
 
 void DescriptorPoolManager::allocateNewPool() {

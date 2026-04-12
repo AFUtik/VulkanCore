@@ -11,8 +11,8 @@ namespace myvk {
     public:
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
-        SwapChain(Device& deviceRef, VkExtent2D windowExtent);
-        SwapChain(Device& deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
+        SwapChain(VkExtent2D windowExtent);
+        SwapChain(VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
         ~SwapChain();
 
         void init();
@@ -72,7 +72,6 @@ namespace myvk {
 
         std::shared_ptr<SwapChain> oldSwapChain;
 
-        Device& device;
         VkExtent2D windowExtent;
 
         VkSwapchainKHR swapChain;
@@ -82,5 +81,7 @@ namespace myvk {
         std::vector<VkFence> inFlightFences;
         std::vector<VkFence> imagesInFlight;
         size_t currentFrame = 0;
+        
+        Device& device = Device::instance();
     };
 }  // namespace lve
