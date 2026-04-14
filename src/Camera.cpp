@@ -1,89 +1,97 @@
 #include "Camera.hpp"
 
-Camera::Camera(int width, int height, dvec3 position, float fov) : width(width), height(height), originPosition(position), fov(fov), rotation(1.0f) {
-	updateVectors();
+// Camera Ortho
 
-	ortho = glm::ortho(0.0f, 320.0f,
-           					 180.0f, 0.0f,
-           					 -100.0f, 100.0f);
+CameraOrtho::CameraOrtho(int width, int height, float minZ, float maxZ) : Camera(width, height), minZ(minZ), maxZ(maxZ) 
+{
+	updateProjection();						  
 }
 
-void Camera::set(const glm::dvec3& p) {
-	originPosition = p;
+void CameraOrtho::updateView() {
+	glm::vec2 snapped = glm::floor(position * zoom) / zoom;
+	this->view = glm::translate(Mat4(1.0f), -glm::vec3(snapped, 0.0f));
 }
 
-void Camera::updateVectors() {
-	x_dir = dvec3(rotation * vec4(1, 0, 0, 1));
-	y_dir = dvec3(rotation * vec4(0, 1, 0, 1));
-	z_dir = dvec3(rotation * vec4(0, 0, -1, 1));
+void CameraOrtho::updateProjection() {
+	this->projection = glm::ortho(0.0f, width / zoom,
+           					      height / zoom, 0.0f,
+           					      minZ, maxZ);
 }
 
-void Camera::rotate(float x, float y, float z) {
-	rotation = glm::rotate(rotation, z, vec3(0, 0, 1));
-	rotation = glm::rotate(rotation, y, vec3(0, 1, 0));
-	rotation = glm::rotate(rotation, x, vec3(1, 0, 0));
-
-	updateVectors();
+void CameraOrtho::setZoom(float zoom) {
+	this->zoom = zoom;
+	updateProjection();
 }
 
-void Camera::translate(const glm::dvec3& dp) {
-	originPosition += dp;
+void CameraOrtho::addZoom(float delta) {
+	float oldZoom = zoom;
+    zoom += delta;
+
+    glm::vec3 screenCenter = {
+        width * 0.5f,
+        height * 0.5f, 0.0f
+    };
+
+    glm::vec3 before = position + screenCenter / oldZoom;
+    glm::vec3 after  = position + screenCenter / zoom;
+
+    position += (before - after);
+
+    updateProjection();
+    updateView();
 }
 
-void Camera::update() {
-	originRebase();
+// Camera Prospective
 
-	view = glm::lookAt(
-		offsetPosition,
-		offsetPosition + z_dir,
+CameraProspective::CameraProspective(
+        int width, 
+        int height, 
+        float fov,
+        float min,
+        float max) : Camera(width, height), fov(fov), min(min), max(max) 
+{
+	updateProjection();
+};
+
+void CameraProspective::updateProjection() {
+	this->projection = glm::perspective(
+		fov,
+		((float)width / (float)height) * zoom,
+		min,
+		max
+	);
+}
+
+void CameraProspective::updateView() {
+	this->view = glm::lookAt(
+		position,
+		position + z_dir,
 		y_dir
 	);
-
-	proj = glm::perspective(
-		fov,
-		(float)width / (float)height,
-		0.1f,
-		1000.0f
-	);
-
-	prospective = proj * view;
-	if(frustum_flag) frustum.update(prospective);
 }
 
-const mat4& Camera::getProjviewProspective() {
-	return prospective;
+void CameraProspective::setZoom(float zoom) {
+	this->zoom = zoom;
+	updateProjection();
 }
 
-const mat4& Camera::getProjviewOrtho() {
-	return ortho;
+void CameraProspective::addZoom(float delta) {
+	this->zoom += delta;
+	updateProjection();
 }
 
-/*
-mat4 Camera::getProjection() {
-	float aspect = (float)width / (float)height;
-	return glm::perspective(fov, aspect, 0.1f, 1000.0f);
+void CameraProspective::updateVectors() {
+	x_dir = Vec3(rotation * Vec4(1, 0, 0, 1));
+	y_dir = Vec3(rotation * Vec4(0, 1, 0, 1));
+	z_dir = Vec3(rotation * Vec4(0, 0, -1, 1));
 }
 
-mat4 Camera::getView() {
-	return glm::lookAt(offsetPosition, offsetPosition + z_dir, y_dir);
-}*/
+void CameraProspective::rotate(scalar x, scalar y, scalar z) {
+	rotation = Mat4(1.0f);
+	rotation = glm::rotate(rotation, z, Vec3(0, 0, 1));
+	rotation = glm::rotate(rotation, y, Vec3(0, 1, 0));
+	rotation = glm::rotate(rotation, x, Vec3(1, 0, 0));
 
-vec3 Camera::getViewDir() {
-	vec3 forward = -vec3(view[0][2], view[1][2], view[2][2]);
-	return glm::normalize(forward);
+	updateVectors();
 }
 
-dvec3 Camera::getRebaseShift() {
-	return glm::trunc((originPosition - accumulatedShift) / REBASE_GRANULARITY) * REBASE_GRANULARITY;
-}
-
-void Camera::originRebase() {
-	dvec3 shift = getRebaseShift();
-	if (shift == dvec3(0.0)) {
-		offsetPosition = originPosition - accumulatedShift;
-		rebased_dirty = false;
-		return;
-	}
-	accumulatedShift += shift;
-	rebased_dirty = true;
-}

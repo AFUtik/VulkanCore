@@ -93,7 +93,7 @@ private:
     VkDescriptorPoolCreateFlags poolFlags; 
     std::vector<VkDescriptorPool> descriptorPools;
     std::vector<VkDescriptorPoolSize> poolSizes;
-    VkDescriptorPool freePool;
+    VkDescriptorPool freePool = VK_NULL_HANDLE;
     
     friend class Device; 
     friend class DescriptorWriter;

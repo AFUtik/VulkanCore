@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <numbers>
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -35,9 +36,12 @@
 #define WIDTH 1920
 #define HEIGHT 1080
 
-Engine::Engine() : camera(0, 0, glm::dvec3(0, 0, 5), glm::radians(90.0f)) {
+#define RENDER_WIDTH 1920
+#define RENDER_HEIGHT 1080
+
+Engine::Engine() : camera(RENDER_WIDTH, RENDER_HEIGHT) 
+{
 	Window::instance().init(WIDTH, HEIGHT, "Vulkan Engine");
-	camera.setWidth(WIDTH); camera.setHeight(HEIGHT);
 
 	Events::init();
 }
@@ -48,9 +52,7 @@ void Engine::run() {
 	Window& window = Window::instance();
 
 	myvk::Renderer renderer;
-	myvk::RenderTarget renderTarget(renderer.getSwapChain(), VkExtent2D{320, 180});
-
-	
+	myvk::RenderTarget renderTarget(renderer.getSwapChain(), VkExtent2D{RENDER_WIDTH, RENDER_HEIGHT});
 
 	//VkDescriptorImageInfo imageInfo;
 	//if(model->texture) {
@@ -79,11 +81,13 @@ void Engine::run() {
 	
 	//guiRenderer->fetchContext();
 
-	myvk::GlobalRenderSystem renderSystem(renderer, renderer.getSwapChainRenderPass());
+	
+	//myvk::GlobalRenderSystem screenRenderSystem(renderer, renderer.getSwapChainRenderPass());
+	myvk::GlobalRenderSystem mainRenderSystem  (renderer, renderer.getSwapChainRenderPass());
 
 	renderTarget.createFramebufferTexture(
 		renderer.getDescriptorPool(), 
-		renderSystem.getMaterialSetLayout()
+		mainRenderSystem.getMaterialSetLayout()
 	);
 
 	std::unique_ptr<uint8_t[]> whitePixel = std::make_unique<uint8_t[]>(4);
@@ -96,27 +100,39 @@ void Engine::run() {
 	myvk::Texture  vkDefaultTex(&defaultTex, TextureFilter::Nearest);
 	myvk::Material vkDefaultMat(
 		*renderer.getDescriptorPool(),
-		*renderSystem.getMaterialSetLayout()
+		*mainRenderSystem.getMaterialSetLayout()
 	);
 	vkDefaultMat.create(&vkDefaultTex);
 
 	Mesh mesh;
-	mesh.vertices.push_back({ 16.0f, 16.0f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f});
-	mesh.vertices.push_back({ 16.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f});
-	mesh.vertices.push_back({ 0.0f,  0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f});
 
-	mesh.indices.push_back(0);
-	mesh.indices.push_back(1);
-	mesh.indices.push_back(2);
+	int segments = 32;
+	float radius = 50.0f;
+
+	mesh.vertices.push_back({0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f});
+	for (int i = 0; i <= segments; i++) {
+		float angle = i * 2.0f * std::numbers::pi / segments;
+		float x = cos(angle) * radius;
+		float y = sin(angle) * radius;
+
+		mesh.vertices.push_back({x, y, 0.0f, 0.0f, 0.0f, 0.0, 0.0f, 1.0f, 1.0f});
+	}
+	for (int i = 1; i <= segments; i++) {
+		mesh.indices.push_back(0);
+		mesh.indices.push_back(i);
+		mesh.indices.push_back(i + 1);
+	}
 
 	myvk::Mesh vkMesh = myvk::Mesh(myvk::Device::instance());
+
 	vkMesh.update(mesh.vertices, mesh.indices);
+	vkMesh.mode = myvk::RenderModes::Solid;
 
 	Mesh screenMesh;
-	screenMesh.vertices.push_back({320.0f,  180.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	screenMesh.vertices.push_back({320.0f,  0.0f, 0.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	screenMesh.vertices.push_back({0.0f,    0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	screenMesh.vertices.push_back({0.0f,    180.0f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	screenMesh.vertices.push_back({1.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	screenMesh.vertices.push_back({1.0f,  -1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	screenMesh.vertices.push_back({-1.0f,  -1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	screenMesh.vertices.push_back({-1.0f,  1.0f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
 
 	screenMesh.indices.push_back(0);
 	screenMesh.indices.push_back(1);
@@ -133,23 +149,22 @@ void Engine::run() {
 	
 	myvk::Material vkMat = myvk::Material(
 		*renderer.getDescriptorPool(),
-		*renderSystem.getMaterialSetLayout());
+		*mainRenderSystem.getMaterialSetLayout());
 	vkMat.create(&vkTex);
 
 	Events::toggle_cursor();
 	double lastTime = glfwGetTime();
 	double timeAccu = 0.0f;
 	const double target_fps = 60.0;
-	const double H = 1.0f / target_fps;
-	const double speed = 2.0;
+	const scalar H = 1.0f / target_fps;
+	const scalar speed = 40.0;
 	float camX = 0.0f;
 	float camY = 0.0f;
 
 	float angle = 0;
-	float scale = 0;
+	float scale = 1;
 
 	glm::mat4 model = glm::mat4(1.0f);
-	
 
 	while (!window.isShouldClose()) {
 		double currentTime = glfwGetTime();
@@ -162,77 +177,73 @@ void Engine::run() {
 			//guiRenderer->syncAll();
 
 			if (Events::pressed(GLFW_KEY_W)) {
-				camera.translate(camera.zdir() * H * speed);
+				camera.translate(Vec3(0.0, 1.0, 0.0) * H * speed);
 			}
 			if (Events::pressed(GLFW_KEY_S)) {
-				camera.translate(-camera.zdir() * H * speed);
+				camera.translate(Vec3(0.0, -1.0, 0.0) * H * speed);
 			}
 			if (Events::pressed(GLFW_KEY_D)) {
-				camera.translate(camera.xdir() * H * speed);
+				camera.translate(Vec3(1.0, 0.0, 0.0) * H * speed);
 			}
 			if (Events::pressed(GLFW_KEY_A)) {
-				camera.translate(-camera.xdir() * H * speed);
+				camera.translate(Vec3(-1.0, 0.0, 0.0) * H * speed);
 			}
-			if (Events::pressed(GLFW_KEY_R)) {
-				angle += 0.5f;
-				model = glm::mat4(1.0f);
-				model = glm::translate(model, glm::vec3(160.0f, 90.0f, 0.0f));
-				model = glm::rotate(
-					model,
-					glm::radians(angle),
-					glm::vec3(0.0f, 0.0f, 1.0f)
-				);
+			if (Events::pressed(GLFW_KEY_G)) {
+				camera.addZoom(0.01f);
+				
 			}
-			if (Events::pressed(GLFW_KEY_R)) {
-				scale += 0.01f;
-				model = glm::scale(model, glm::vec3(scale, scale, scale));
+			if (Events::pressed(GLFW_KEY_H)) {
+				camera.addZoom(-0.01f);
 			}
+
 			if (Events::jpressed(GLFW_KEY_TAB)) {
 				Events::toggle_cursor();
 			}
 
+			/*
 			if (Events::_cursor_locked) {
 				camY += -Events::deltaY / Window::getHeight() * 2;
 				camX += -Events::deltaX / Window::getHeight() * 2;
 
-				if (camY < -radians(89.0f)) {
-					camY = -radians(89.0f);
+				if (camY < -glm::radians(89.0f)) {
+					camY = -glm::radians(89.0f);
 				}
-				if (camY > radians(89.0f)) {
-					camY = radians(89.0f);
+				if (camY > glm::radians(89.0f)) {
+					camY = glm::radians(89.0f);
 				}
-
-				camera.setRotation(glm::mat4(1.0f));
 				camera.rotate(-camY, camX, 0);
 			}
+			*/
 
-			camera.update();
+			camera.updateView();
 
 			renderer.beginFrame();
 
+			/*
 			// Render Target //
 			renderTarget.beginRenderPass(renderer.frameInfo());
 
-			renderSystem.render(
+			mainRenderSystem.setProjview(camera.getProjview());
+			mainRenderSystem.render(
 				&vkMesh,
 				&vkDefaultMat, 
 				model);
 
 			renderTarget.endRenderPass(renderer.frameInfo());
+			*/
 			
 			// SwapChain Renderer //
 
 			renderer.beginSwapChainRenderPass();
-			
-			renderSystem.render(
-				&vkMeshScreen,
-				renderTarget.getFramebufferTexture(renderer.frameInfo()),
-				glm::mat4(1.0f));
+
+			mainRenderSystem.setProjview(camera.getProjview());
+			mainRenderSystem.render(
+				&vkMesh,
+				&vkDefaultMat, 
+				model);
 
 			renderer.endSwapChainRenderPass();
-			
-			renderSystem.setProjview(camera.getProjviewOrtho());
-
+	
 			renderer.endFrame();
 			
 			timeAccu -= H;

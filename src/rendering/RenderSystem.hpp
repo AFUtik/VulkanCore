@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <vector>
+#include <array>
 
 const std::string absolutePath = "C:\\cplusplus\\VulkanRender\\VulkanRender\\";
 
@@ -47,8 +48,11 @@ namespace myvk {
 		Renderer& renderer; 
 		Device& device = Device::instance();
 
+		std::unique_ptr<Pipeline> pipelineLineMode;
 		std::unique_ptr<Pipeline> pipeline;
 		VkPipelineLayout pipelineLayout;
+
+		
 
 		GlobalUbo ubo{};
 

@@ -32,6 +32,12 @@ namespace myvk {
             vkDestroyFramebuffer(device.device(), framebuffer, nullptr);
         }
 
+        for(int i = 0; i < images.size(); i++) {
+            if(screenTextures[i]) {
+                vkDestroySampler(device.device(), screenSamplers[i], nullptr);
+            }
+        }
+
         vkDestroyRenderPass(device.device(), renderPass, nullptr);
     }
 
@@ -139,7 +145,7 @@ namespace myvk {
         colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         VkAttachmentReference colorAttachmentRef = {};
         colorAttachmentRef.attachment = 0;
@@ -256,6 +262,14 @@ namespace myvk {
     }
     
     void RenderTarget::beginRenderPass(FrameInfo& frame) {
+        Texture::imageMemBarrier(
+            images[frame.frameIndex], 
+            imageFormat, 
+            frame.commandBuffer, 
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
+            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 
+            1);
+
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass  = getRenderPass();
@@ -286,6 +300,5 @@ namespace myvk {
 
     void RenderTarget::endRenderPass(FrameInfo& frame) {
         vkCmdEndRenderPass(frame.commandBuffer); 
-
     }
 }

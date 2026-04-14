@@ -5,6 +5,7 @@
 #include "../vk/Pipeline.hpp"
 #include "../vk/Texture.hpp"
 #include "../model/Mesh.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <memory>
 #include <stdexcept>
@@ -65,13 +66,23 @@ void RenderSystem::createPipelineLayout(const std::vector<VkDescriptorSetLayout>
 void RenderSystem::createPipeline(VkRenderPass renderPass ,PipelineConfigInfo& pipelineConfig) {
 	assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
-	pipelineConfig.renderPass = renderPass;
+	pipelineConfig.renderPass     = renderPass;
 	pipelineConfig.pipelineLayout = pipelineLayout;
 	pipeline = std::make_unique<Pipeline>(
 		device,
 		absolutePath + "resources/shaders/shader.vert.spv",
 		absolutePath + "resources/shaders/shader.frag.spv",
 		pipelineConfig);
+	
+	PipelineConfigInfo newInfo = pipelineConfig;
+
+	newInfo.rasterizationInfo.polygonMode = VK_POLYGON_MODE_LINE;
+	newInfo.inputAssemblyInfo.topology    = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+	pipelineLineMode = std::make_unique<Pipeline>(
+		device,
+		absolutePath + "resources/shaders/shader.vert.spv",
+		absolutePath + "resources/shaders/shader.frag.spv",
+		newInfo);
 }
 
 void RenderSystem::setProjview(const glm::mat4& projview) {
@@ -83,8 +94,17 @@ void RenderSystem::setProjview(const glm::mat4& projview) {
 
 void RenderSystem::render(Mesh* mesh, Material* mat, const glm::mat4& model) {
 	const FrameInfo& frame = renderer.frameInfo();
-
-	pipeline->bind(frame.commandBuffer);
+	switch(mesh->mode) {
+		case RenderModes::Solid: {
+			pipeline->bind(frame.commandBuffer);
+			break;
+		}
+		case RenderModes::Line: {
+			pipelineLineMode->bind(frame.commandBuffer);
+			break;
+		}
+	}
+	
 	vkCmdBindDescriptorSets(
 		frame.commandBuffer,
 		VK_PIPELINE_BIND_POINT_GRAPHICS,

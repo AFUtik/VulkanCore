@@ -12,6 +12,11 @@ enum MeshBufferFlags : uint32_t {
 	CreateOnGPUMemory
 };
 
+enum RenderModes {
+	Solid,
+	Line
+};
+
 class Mesh {
 private:
 	Device& device;
@@ -28,6 +33,8 @@ private:
 	void createBuffers(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 	void updateBuffers(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 public:
+	RenderModes mode = RenderModes::Solid;
+
 	Mesh(Device& device, uint32_t flags = (CreateWithReserve | CreateOnGPUMemory));
 	~Mesh() {};
 

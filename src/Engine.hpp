@@ -29,5 +29,5 @@ public:
 
 	void run();
 private:
-	Camera camera;
+	CameraOrtho camera;
 };
