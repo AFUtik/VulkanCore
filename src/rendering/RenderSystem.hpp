@@ -49,10 +49,9 @@ namespace myvk {
 		Device& device = Device::instance();
 
 		std::unique_ptr<Pipeline> pipelineLineMode;
+		std::unique_ptr<Pipeline> pipelineWireframeMode;
 		std::unique_ptr<Pipeline> pipeline;
 		VkPipelineLayout pipelineLayout;
-
-		
 
 		GlobalUbo ubo{};
 

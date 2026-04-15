@@ -74,15 +74,21 @@ void RenderSystem::createPipeline(VkRenderPass renderPass ,PipelineConfigInfo& p
 		absolutePath + "resources/shaders/shader.frag.spv",
 		pipelineConfig);
 	
-	PipelineConfigInfo newInfo = pipelineConfig;
 
-	newInfo.rasterizationInfo.polygonMode = VK_POLYGON_MODE_LINE;
-	newInfo.inputAssemblyInfo.topology    = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+	pipelineConfig.rasterizationInfo.polygonMode = VK_POLYGON_MODE_LINE;
+	pipelineWireframeMode = std::make_unique<Pipeline>(
+		device,
+		absolutePath + "resources/shaders/shader.vert.spv",
+		absolutePath + "resources/shaders/shader.frag.spv",
+		pipelineConfig);
+
+	pipelineConfig.rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	pipelineConfig.inputAssemblyInfo.topology    = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 	pipelineLineMode = std::make_unique<Pipeline>(
 		device,
 		absolutePath + "resources/shaders/shader.vert.spv",
 		absolutePath + "resources/shaders/shader.frag.spv",
-		newInfo);
+		pipelineConfig);
 }
 
 void RenderSystem::setProjview(const glm::mat4& projview) {
@@ -101,6 +107,10 @@ void RenderSystem::render(Mesh* mesh, Material* mat, const glm::mat4& model) {
 		}
 		case RenderModes::Line: {
 			pipelineLineMode->bind(frame.commandBuffer);
+			break;
+		}
+		case RenderModes::Wireframe: {
+			pipelineWireframeMode->bind(frame.commandBuffer);
 			break;
 		}
 	}

@@ -11,3 +11,8 @@ using Vec4 = glm::vec<4, scalar, glm::defaultp>;
 
 using Mat3 = glm::mat<3, 3, scalar, glm::defaultp>;
 using Mat4 = glm::mat<4, 4, scalar, glm::defaultp>;
+
+struct AABB 
+{
+    Vec3 min, max; 
+};

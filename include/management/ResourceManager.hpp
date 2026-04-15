@@ -200,7 +200,7 @@ private:
         u32 id = invalid;
     };
 
-    SerialSparseSet<T, u32> resources;
+    Freelist<T, u32> resources;
     std::vector<Reference> references; // counter, resource_id //
     T default_resource;
 

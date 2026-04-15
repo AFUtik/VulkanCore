@@ -6,8 +6,8 @@
 #include <memory>
 
 namespace myvk {
-    RenderTarget::RenderTarget(SwapChain* swapchain, VkExtent2D extent) : extentTarget(extent) {
-        imageFormat = swapchain->getSwapChainImageFormat();
+    RenderTarget::RenderTarget(VkFormat imageFormat, VkExtent2D extent, Color clearColor) : extentTarget(extent), clearColor(clearColor) {
+        this->imageFormat = imageFormat;
         
         createImages();
         createRenderPass();
@@ -266,7 +266,7 @@ namespace myvk {
             images[frame.frameIndex], 
             imageFormat, 
             frame.commandBuffer, 
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
+            VK_IMAGE_LAYOUT_UNDEFINED, 
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 
             1);
 
@@ -279,7 +279,7 @@ namespace myvk {
         renderPassInfo.renderArea.extent = getExtent();
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = { 0.6f, 0.6f, 0.6f, 1.0f };
+        clearValues[0].color = {clearColor.r, clearColor.g, clearColor.b, clearColor.a };
         clearValues[1].depthStencil = { 1.0f, 0 };
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();

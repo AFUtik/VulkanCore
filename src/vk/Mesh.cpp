@@ -5,34 +5,42 @@
 #include <stdexcept>
 #include <iostream>
 
+uint32_t nextPow2(uint32_t x) {
+    if (x == 0) return 1;
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x++;
+    return x;
+}
+
 namespace myvk {
-	Mesh::Mesh(Device& device, uint32_t flags) : device(device), flags(flags) {}
-
-    void Mesh::createBuffers(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
-		if(!vertices.capacity()) {
-			throw std::runtime_error("Failed to create gpu buffer: instance data is empty.");
-		}
-
+    void Mesh::createBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices) {
 		vertexCount = static_cast<uint32_t>(vertices.size());
-		indexCount = static_cast<uint32_t>(indices.size());
+		indexCount  = static_cast<uint32_t>(indices.size());
 
 		bool recreateVertexBuffer = vertexCount > reservedVertexBufferSize;
+
 		if(recreateVertexBuffer) {
-			reservedVertexBufferSize = (flags & MeshBufferFlags::CreateWithReserve) ? 
-				(uint32_t)vertices.capacity() : 
+			reservedVertexBufferSize = (flags & MeshFlags::Reserve) ? 
+				nextPow2(vertexCount) : 
 				(uint32_t)vertices.size();
 		}
+
 		bool recreateIndexBuffer  = indexCount > reservedIndexBufferSize;
 		if(recreateIndexBuffer) {
-			reservedIndexBufferSize = (flags & MeshBufferFlags::CreateWithReserve) ? 
-				(uint32_t)indices.capacity() : 
+			reservedIndexBufferSize = (flags & MeshFlags::Reserve) ? 
+				nextPow2(indexCount) : 
 				(uint32_t)indices.size();
 		}
 
 		// VertexBuffer creation //
 		if(vertexCount >= 3) {
 			VkDeviceSize bufferSize = sizeof(vertices[0]) * reservedVertexBufferSize;
-			if(flags & MeshBufferFlags::CreateOnGPUMemory) { // GPU MEMORY
+			if(flags & MeshFlags::GPUMemory) { // GPU MEMORY
 				Buffer stagingBuffer(
 					device,
 					bufferSize,
@@ -76,9 +84,8 @@ namespace myvk {
 		
 		// IndexBuffer creation //
 		if(indexCount) {
-			hasIndexBuffer = true;
 			VkDeviceSize bufferSize = sizeof(indices[0]) * reservedIndexBufferSize;
-			if(flags & MeshBufferFlags::CreateOnGPUMemory) { // GPU MEMORY
+			if(flags & MeshFlags::GPUMemory) { // GPU MEMORY
 				Buffer stagingBuffer(
 					device,
 					bufferSize,
@@ -118,28 +125,106 @@ namespace myvk {
 				indexBuffer->unmap();
 			}
 		}
-		uploaded = true;
 	}
 
-	void Mesh::update(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
-		createBuffers(vertices, indices);
+	void Mesh::updateBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices) {
+		vertexCount = static_cast<uint32_t>(vertices.size());
+		indexCount  = static_cast<uint32_t>(indices.size());
+
+		if (vertexCount > reservedVertexBufferSize || indexCount  > reservedIndexBufferSize)
+		{
+			createBuffers(vertices, indices);
+			return;
+		}
+
+		if (vertexCount >= 3)
+		{
+			VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
+
+			if (flags & MeshFlags::GPUMemory)
+			{
+				// staging buffer
+				Buffer stagingBuffer(
+					device,
+					bufferSize,
+					1,
+					VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					VMA_MEMORY_USAGE_CPU_ONLY
+				);
+
+				stagingBuffer.map();
+				stagingBuffer.writeToBuffer(vertices.data(), bufferSize);
+				stagingBuffer.unmap();
+
+				device.copyBuffer(
+					stagingBuffer.getBuffer(),
+					vertexBuffer->getBuffer(),
+					bufferSize
+				);
+			}
+			else
+			{
+				vertexBuffer->map();
+				vertexBuffer->writeToBuffer(vertices.data(), bufferSize);
+				vertexBuffer->unmap();
+			}
+		}
+
+		if (indexCount)
+		{
+			VkDeviceSize bufferSize = sizeof(indices[0]) * indexCount;
+
+			if (flags & MeshFlags::GPUMemory)
+			{
+				Buffer stagingBuffer(
+					device,
+					bufferSize,
+					1,
+					VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					VMA_MEMORY_USAGE_CPU_ONLY
+				);
+
+				stagingBuffer.map();
+				stagingBuffer.writeToBuffer(indices.data(), bufferSize);
+				stagingBuffer.unmap();
+
+				device.copyBuffer(
+					stagingBuffer.getBuffer(),
+					indexBuffer->getBuffer(),
+					bufferSize
+				);
+			}
+			else
+			{
+				indexBuffer->map();
+				indexBuffer->writeToBuffer(indices.data(), bufferSize);
+				indexBuffer->unmap();
+			}
+		}
+	}
+	
+	
+	void Mesh::bind(VkCommandBuffer commandBuffer) const {
+		VkBuffer buffers[] = { 
+			vertexBuffer->getBuffer(),
+			instanceBuffer->getBuffer()
+		};
+		VkDeviceSize offsets[] = { 0, 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 2, buffers, offsets);
+		if (indexBuffer) vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
 	}
 
 	void Mesh::draw(VkCommandBuffer commandBuffer) const {
-		if (hasIndexBuffer) {
-			vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+		if (indexBuffer) {
+			vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, 0);
 		} else {
-			vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+			vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, 0);
 		}
 	}
 
-	void Mesh::bind(VkCommandBuffer commandBuffer) const {
-		VkBuffer buffers[] = { vertexBuffer->getBuffer() };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
-		if (hasIndexBuffer) vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
-	}
-
+	
 	std::vector<VkVertexInputBindingDescription> Mesh::getBindingDescriptions() {
 		std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
 		bindingDescriptions[0].binding = 0;

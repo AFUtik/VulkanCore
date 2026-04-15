@@ -8,12 +8,13 @@
 #include <vector>
 #include <memory>
 
+#include "Color.hpp"
+
 namespace myvk {
     struct FrameInfo;
-    struct TextureView;
 
     struct RenderTarget {
-        RenderTarget(SwapChain* swapchain, VkExtent2D extent);
+        RenderTarget(VkFormat swapchain, VkExtent2D extent, Color clearColor);
         ~RenderTarget();
 
         VkFramebuffer getFrameBuffer(int index) { return framebuffers[index]; }
@@ -46,6 +47,8 @@ namespace myvk {
 
         VkFormat imageFormat;
         VkFormat depthFormat;
+
+        Color clearColor;
         
         std::vector<VkImage>       depthImages;
         std::vector<VmaAllocation> depthImageAllocs;

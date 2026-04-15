@@ -3,7 +3,7 @@
 #include <array>
 #include <vector>
 #include <limits>
-#include <vcruntime_typeinfo.h>
+#include <memory>
 
 using u64 = std::size_t;
 
@@ -72,72 +72,109 @@ private:
     u64 _size = 0;
 };
 
-template<
-    typename T,
-    typename I 
-> 
-class Freelist 
-{
+template<typename T, typename I = uint32_t>
+class Freelist {
 public:
     static constexpr I invalid = std::numeric_limits<I>::max();
 
-    Freelist() {
-        vec.reserve(256);
-        next.reserve(256);
+    Freelist(I capacity = 256)
+        : capacity(capacity)
+    {
+        data = std::unique_ptr<T[]>(new T[capacity]);
+        next = std::unique_ptr<I[]>(new I[capacity]);
+
+        for (I i = 0; i < capacity; i++) next[i] = invalid;
     }
 
-    inline I push(T&& object) {
+    Freelist(const Freelist&) = delete;
+    Freelist& operator=(const Freelist&) = delete;
+
+    I push(T&& object) {
         I index = obtain_free_index();
-        if (index == _size) {
-            vec.emplace_back(std::forward<T>(object));
-            next.emplace_back(invalid);
-            _size++;
-        } else {
-            vec[index] = std::forward<T>(object);
+        ensure_capacity_if_needed(index);
+
+        data[index] = std::move(object);
+
+        if (index == size_) {
+            size_++;
         }
+
         return index;
     }
 
-    inline I push(T& object) {
+    I push(const T& object) {
         I index = obtain_free_index();
-        if (index == _size) {
-            vec.emplace_back(std::move(object));
-            next.emplace_back(invalid);
-            _size++;
-        } else {
-            vec[index] = std::move(object);
+        ensure_capacity_if_needed(index);
+
+        data[index] = object;
+
+        if (index == size_) {
+            size_++;
         }
+
         return index;
     }
 
-    inline void erase(I index) {
-        assert(index < _size);
-        vec[index] = T{};
+    void erase(I index) {
+        assert(index < size_);
+
+        data[index] = T{};
         next[index] = free_head;
         free_head = index;
     }
 
-    inline T& operator[](u64 index) {
-        return vec[index];
+    T& operator[](I index) {
+        return data[index];
     }
 
-    inline const T& operator[](u64 index) const {
-        return vec[index];
+    const T& operator[](I index) const {
+        return data[index];
     }
 
-    inline u64 size() {return _size;}
-
-    inline u64 obtain_free_index() {
-        if (free_head != invalid) { 
-            uint32_t idx = free_head; 
-            free_head = next[idx]; 
-            return idx;
-        } 
-        return _size; 
+    I size() const {
+        return size_;
     }
+
 private:
-    std::vector<T> vec;
-    std::vector<I> next;
-    u64 free_head = invalid;
-    u64 _size = 0;
+    std::unique_ptr<T[]> data;
+    std::unique_ptr<I[]> next;
+
+    I capacity = 0;
+    I size_ = 0;
+
+    I free_head = invalid;
+
+    I obtain_free_index() {
+        if (free_head != invalid) {
+            I idx = free_head;
+            free_head = next[idx];
+            return idx;
+        }
+        return size_;
+    }
+
+    void ensure_capacity_if_needed(I index) {
+        if (index < capacity) return;
+
+        grow(capacity * 2);
+    }
+
+    void grow(I newCapacity) {
+        std::unique_ptr<T[]> newData(new T[newCapacity]);
+        std::unique_ptr<I[]> newNext(new I[newCapacity]);
+
+        for (I i = 0; i < capacity; i++) {
+            newData[i] = std::move(data[i]);
+            newNext[i] = next[i];
+        }
+
+        for (I i = capacity; i < newCapacity; i++) {
+            newNext[i] = invalid;
+        }
+
+        data = std::move(newData);
+        next = std::move(newNext);
+
+        capacity = newCapacity;
+    }
 };

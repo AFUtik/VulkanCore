@@ -36,10 +36,10 @@
 #define WIDTH 1920
 #define HEIGHT 1080
 
-#define RENDER_WIDTH 1920
-#define RENDER_HEIGHT 1080
+#define RENDER_WIDTH 320
+#define RENDER_HEIGHT 180
 
-Engine::Engine() : camera(RENDER_WIDTH, RENDER_HEIGHT) 
+Engine::Engine() : camera(RENDER_WIDTH, RENDER_HEIGHT, -100.0f, 100.0f) 
 {
 	Window::instance().init(WIDTH, HEIGHT, "Vulkan Engine");
 
@@ -52,7 +52,10 @@ void Engine::run() {
 	Window& window = Window::instance();
 
 	myvk::Renderer renderer;
-	myvk::RenderTarget renderTarget(renderer.getSwapChain(), VkExtent2D{RENDER_WIDTH, RENDER_HEIGHT});
+	myvk::RenderTarget renderTarget(
+		renderer.getSwapChain()->getSwapChainImageFormat(), 
+		VkExtent2D{RENDER_WIDTH, RENDER_HEIGHT},
+		Color(0.3f, 0.3f, 0.3f));
 
 	//VkDescriptorImageInfo imageInfo;
 	//if(model->texture) {
@@ -82,8 +85,8 @@ void Engine::run() {
 	//guiRenderer->fetchContext();
 
 	
-	//myvk::GlobalRenderSystem screenRenderSystem(renderer, renderer.getSwapChainRenderPass());
-	myvk::GlobalRenderSystem mainRenderSystem  (renderer, renderer.getSwapChainRenderPass());
+	myvk::GlobalRenderSystem screenRenderSystem(renderer, renderer.getSwapChainRenderPass());
+	myvk::GlobalRenderSystem mainRenderSystem  (renderer, renderTarget.getRenderPass());
 
 	renderTarget.createFramebufferTexture(
 		renderer.getDescriptorPool(), 
@@ -106,7 +109,7 @@ void Engine::run() {
 
 	Mesh mesh;
 
-	int segments = 32;
+	int segments = 16;
 	float radius = 50.0f;
 
 	mesh.vertices.push_back({0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f});
@@ -123,10 +126,23 @@ void Engine::run() {
 		mesh.indices.push_back(i + 1);
 	}
 
-	myvk::Mesh vkMesh = myvk::Mesh(myvk::Device::instance());
+	Mesh greenMesh;
+	greenMesh.vertices = mesh.vertices;
+	greenMesh.indices  = mesh.indices;
+	for(auto& vert : greenMesh.vertices) 
+	{
+		vert.r = 0.0f;
+		vert.g = 1.0f;
+		vert.b = 0.0f;
+	}
 
+	myvk::Mesh vkMesh = myvk::Mesh(myvk::Device::instance());
 	vkMesh.update(mesh.vertices, mesh.indices);
 	vkMesh.mode = myvk::RenderModes::Solid;
+
+	myvk::Mesh vkGreenMesh = myvk::Mesh(myvk::Device::instance());
+	vkGreenMesh.update(greenMesh.vertices, greenMesh.indices);
+	vkGreenMesh.mode = myvk::RenderModes::Wireframe;
 
 	Mesh screenMesh;
 	screenMesh.vertices.push_back({1.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
@@ -164,8 +180,10 @@ void Engine::run() {
 	float angle = 0;
 	float scale = 1;
 
-	glm::mat4 model = glm::mat4(1.0f);
+	glm::mat4 model      = glm::translate(glm::mat4(1.0f), Vec3(0, 0.0f, -1.0f));
+	glm::mat4 greenModel = glm::translate(glm::mat4(1.0f), Vec3(0, 0.0f, 0.0f));
 
+	camera.translate(Vec3(0.0f, 0.0f, 10.0f));
 	while (!window.isShouldClose()) {
 		double currentTime = glfwGetTime();
 		double frameTime = currentTime - lastTime;
@@ -219,28 +237,32 @@ void Engine::run() {
 
 			renderer.beginFrame();
 
-			/*
 			// Render Target //
 			renderTarget.beginRenderPass(renderer.frameInfo());
 
 			mainRenderSystem.setProjview(camera.getProjview());
+
 			mainRenderSystem.render(
 				&vkMesh,
 				&vkDefaultMat, 
 				model);
 
+			mainRenderSystem.render(
+				&vkGreenMesh,
+				&vkDefaultMat, 
+				greenModel);
+
 			renderTarget.endRenderPass(renderer.frameInfo());
-			*/
 			
 			// SwapChain Renderer //
 
 			renderer.beginSwapChainRenderPass();
 
-			mainRenderSystem.setProjview(camera.getProjview());
-			mainRenderSystem.render(
-				&vkMesh,
-				&vkDefaultMat, 
-				model);
+			screenRenderSystem.setProjview(glm::mat4(1.0f));
+			screenRenderSystem.render(
+				&vkMeshScreen,
+				renderTarget.getFramebufferTexture(renderer.frameInfo()),
+				glm::mat4(1.0f));
 
 			renderer.endSwapChainRenderPass();
 	
