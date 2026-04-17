@@ -123,11 +123,18 @@ void Engine::run() {
 		mesh.indices.push_back(i + 1);
 	}
 
-	myvk::Mesh vkMesh = myvk::Mesh(myvk::Device::instance());
+	std::vector<myvk::InstanceData> instances(16);
+	for(int i = 0; i < 16; i++) {
+		instances[i].model = glm::translate(
+			glm::mat4(1.0f),
+			glm::vec3(100.0f * i, 0.0f, 0.0f)
+		);
+	}
 
-	vkMesh.update(mesh.vertices, mesh.indices);
-	vkMesh.mode = myvk::RenderModes::Solid;
-
+	myvk::Mesh vkMesh = myvk::Mesh();
+	vkMesh.updateBuffers(mesh.vertices, mesh.indices);
+	vkMesh.updateInstanceBuffer(instances);
+	
 	Mesh screenMesh;
 	screenMesh.vertices.push_back({1.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
 	screenMesh.vertices.push_back({1.0f,  -1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
@@ -141,8 +148,8 @@ void Engine::run() {
 	screenMesh.indices.push_back(3);
 	screenMesh.indices.push_back(0);
 
-	myvk::Mesh vkMeshScreen = myvk::Mesh(myvk::Device::instance());
-	vkMeshScreen.update(screenMesh.vertices, screenMesh.indices);
+	//myvk::Mesh vkMeshScreen = myvk::Mesh();
+	//vkMeshScreen.updateBuffers(screenMesh.vertices, screenMesh.indices);
 
 	Texture2D texture(absolutePath+"resources/img/tuff.png");
 	myvk::Texture vkTex(&texture, TextureFilter::Nearest);

@@ -33,7 +33,7 @@ public:
     VkDescriptorBufferInfo descriptorInfoForIndex(int index);
     VkResult invalidateIndex(int index);
 
-    VkBuffer getBuffer() const { return buffer; }
+   VkBuffer getBuffer() const { return buffer; }
     void* getMappedMemory() const { return mapped; }
     uint32_t getInstanceCount() const { return instanceCount; }
     VkDeviceSize getInstanceSize() const { return instanceSize; }

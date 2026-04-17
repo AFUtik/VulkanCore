@@ -94,17 +94,8 @@ void RenderSystem::setProjview(const glm::mat4& projview) {
 
 void RenderSystem::render(Mesh* mesh, Material* mat, const glm::mat4& model) {
 	const FrameInfo& frame = renderer.frameInfo();
-	switch(mesh->mode) {
-		case RenderModes::Solid: {
-			pipeline->bind(frame.commandBuffer);
-			break;
-		}
-		case RenderModes::Line: {
-			pipelineLineMode->bind(frame.commandBuffer);
-			break;
-		}
-	}
-	
+	pipeline->bind(frame.commandBuffer);
+
 	vkCmdBindDescriptorSets(
 		frame.commandBuffer,
 		VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -114,19 +105,8 @@ void RenderSystem::render(Mesh* mesh, Material* mat, const glm::mat4& model) {
 		&descriptorSets[frame.frameIndex].set,
 		0, nullptr
 	);
-
-	vkCmdPushConstants(
-		frame.commandBuffer,
-		pipelineLayout,
-		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		0,
-		sizeof(PushConstantData),
-		&model
-	);
-
-	mesh->bind(frame.commandBuffer);
-	mat->bind(frame.commandBuffer, pipelineLayout, frame.frameIndex);
-
+	
+	mat->bind (frame.commandBuffer, pipelineLayout, frame.frameIndex);
 	mesh->draw(frame.commandBuffer);
 }
 
