@@ -6,6 +6,8 @@
 
 #include "../model/Vertex.hpp"
 
+#include "management/ResourceManager.hpp"
+
 #include <span>
 
 namespace myvk {
@@ -46,7 +48,7 @@ private:
 	uint32_t instanceCount = 0;
 	uint32_t flags = GPUMemory | CPUMemoryInstanceBuffer | Solid | Opaque;
 public:
-	Mesh() {};
+	Mesh();
 	~Mesh() {};
 
 	Mesh(const Mesh&) = delete;
@@ -63,10 +65,12 @@ public:
 	void updateInstanceBuffer(std::span<InstanceData> instances);
 	
 	void draw(VkCommandBuffer commandBuffer) const;
-	void bind(VkCommandBuffer commandBuffer) const;
 
 	static std::vector<VkVertexInputBindingDescription>   getBindingDescriptions();
 	static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
 };
+
+struct MeshResources : public ResourceManager<Mesh> {};
+using MeshHandle = MeshResources::ReferencedResource;
 
 }

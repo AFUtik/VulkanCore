@@ -22,6 +22,11 @@ inline uint32_t nextPow2(uint32_t v) {
 }
 
 namespace myvk {
+	Mesh::Mesh() {
+		InstanceData data[1];
+		createInstanceBuffer(data);
+	}
+
     void Mesh::createBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices) {
 		Device& device = Device::instance();
 
@@ -34,6 +39,7 @@ namespace myvk {
 		// VertexBuffer creation //
 		if(vertexCount >= 3) {
 			VkDeviceSize bufferSize = sizeof(vertices[0]) * reservedVertexBufferSize;
+			VkDeviceSize copySize   = sizeof(vertices[0]) * vertexCount;
 			if(flags & MeshFlags::GPUMemory) { // GPU MEMORY
 				Buffer stagingBuffer(
 					device,
@@ -44,7 +50,7 @@ namespace myvk {
 					VMA_MEMORY_USAGE_CPU_ONLY
 				);
 				stagingBuffer.map();
-				stagingBuffer.writeToBuffer(vertices.data(), bufferSize);
+				stagingBuffer.writeToBuffer(vertices.data(), copySize);
 				stagingBuffer.unmap();
 				
 

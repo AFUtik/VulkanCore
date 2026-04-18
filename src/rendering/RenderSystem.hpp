@@ -8,6 +8,7 @@
 #include "../vk/Material.hpp"
 #include "../vk/Pipeline.hpp"
 #include "../vk/FrameInfo.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <memory>
 #include <vector>
@@ -41,6 +42,10 @@ namespace myvk {
 		inline DescriptorSetLayout* getMaterialSetLayout() {
 			return materialSetLayout.get();
 		}
+
+		inline VkPipelineLayout getPipelineLayout() {
+			return pipelineLayout;
+		}
 	protected:
 		void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts);
 		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
@@ -52,14 +57,12 @@ namespace myvk {
 		std::unique_ptr<Pipeline> pipeline;
 		VkPipelineLayout pipelineLayout;
 
-		
-
 		GlobalUbo ubo{};
 
 		DescriptorPoolManager* descriptorPool;
 		std::unique_ptr<DescriptorSetLayout> setLayout;
 		std::unique_ptr<DescriptorSetLayout> materialSetLayout;
-		std::vector<DescriptorSetData> descriptorSets;
+		std::vector<VkDescriptorSet> descriptorSets;
 		std::vector<VkDescriptorSetLayout> layouts;
 		std::vector<std::unique_ptr<Buffer>> uniforms;
 	};

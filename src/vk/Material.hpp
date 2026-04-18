@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Descriptors.hpp"
-#include "Device.hpp"
-
 #include "Texture.hpp"
+
+#include "management/ResourceManager.hpp"
 
 #include <memory>
 
@@ -11,17 +11,27 @@ namespace myvk {
 
 class Material {
 public:
-    Material(DescriptorPoolManager& pool, DescriptorSetLayout& layout);
+    Material() {};
 
-    void create(Texture* albedo);
+    void setAlbedo(std::unique_ptr<Texture> albedo);
     
-    void bind(VkCommandBuffer commandBuffer, VkPipelineLayout layout, int frame) const;
+    inline void setDescriptorPool(DescriptorPoolManager* manager) {pool = manager;  }
+    inline void setDescriptorLayout(DescriptorSetLayout* layout)  {this->layout = layout; }
+    inline void setPipelineLayout(VkPipelineLayout layout) {pipelineLayout = layout;}
+    
+    void bind(VkCommandBuffer commandBuffer) const;
 
-    DescriptorSetData& getDescriptorSetData() {return descriptorSet;}
+    VkDescriptorSet& getDescriptor() {return descriptor;}
 private:
-    DescriptorPoolManager& pool;
-    DescriptorSetLayout& layout;
-    DescriptorSetData descriptorSet;
+    std::unique_ptr<Texture> albedo;
+
+    DescriptorPoolManager* pool = nullptr;
+    DescriptorSetLayout* layout = nullptr;
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+    VkDescriptorSet descriptor      = VK_NULL_HANDLE;
 };
+
+struct MaterialResources : public ResourceManager<Material> {};
+using MaterialHandle = MaterialResources::ReferencedResource;
 
 }

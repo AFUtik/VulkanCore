@@ -121,31 +121,27 @@ void DescriptorPoolManager::allocateNewPool() {
     }
 }
 
-bool DescriptorPoolManager::allocateDescriptor(const VkDescriptorSetLayout descriptorSetLayout, DescriptorSetData &descriptor) {
+bool DescriptorPoolManager::allocateDescriptor(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) {
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = freePool;
     allocInfo.pSetLayouts = &descriptorSetLayout;
     allocInfo.descriptorSetCount = 1;
     
-    VkResult success = vkAllocateDescriptorSets(device.device(), &allocInfo, &descriptor.set);
+    VkResult success = vkAllocateDescriptorSets(device.device(), &allocInfo, &descriptor);
 
     if (success == VK_ERROR_OUT_OF_POOL_MEMORY) {
         allocateNewPool();
         allocInfo.descriptorPool = freePool;
-        success = vkAllocateDescriptorSets(device.device(), &allocInfo, &descriptor.set);
+        success = vkAllocateDescriptorSets(device.device(), &allocInfo, &descriptor);
 
         std::cout << "New Pool has been allocated." << std::endl;
     } 
     if(success != VK_SUCCESS) return false;
-
-    descriptor.pool = freePool;
-    descriptor.layout = descriptorSetLayout;
-
     return true;
 }
  
-void DescriptorPoolManager::freeDescriptors(std::vector<DescriptorSetData> &descriptors) const {
+void DescriptorPoolManager::freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const {
     /*
       vkFreeDescriptorSets(
       device.device(),
@@ -203,7 +199,7 @@ DescriptorWriter &DescriptorWriter::writeImage(uint32_t binding, VkDescriptorIma
   return *this;
 }
  
-bool DescriptorWriter::build(DescriptorSetData &set) {
+bool DescriptorWriter::build(VkDescriptorSet &set) {
   bool success = poolManager.allocateDescriptor(setLayout.getDescriptorSetLayout(), set);
   if (!success) {
     return false;
@@ -212,9 +208,9 @@ bool DescriptorWriter::build(DescriptorSetData &set) {
   return true;
 }
  
-void DescriptorWriter::overwrite(DescriptorSetData &set) {
+void DescriptorWriter::overwrite(VkDescriptorSet &set) {
   for (auto &write : writes) {
-    write.dstSet = set.set;
+    write.dstSet = set;
   }
   vkUpdateDescriptorSets(poolManager.device.device(), writes.size(), writes.data(), 0, nullptr);
 }

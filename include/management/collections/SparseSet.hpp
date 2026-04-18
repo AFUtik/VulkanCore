@@ -174,7 +174,7 @@ struct SerialSparseSet {
         size_t index = sparse[id];
         size_t last_index = _size - 1;
 
-        dense[index] = dense[last_index];
+        dense[index] = std::move(dense[last_index]);
         sparse[last_index] = index;
 
         _size--;

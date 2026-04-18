@@ -3,18 +3,18 @@
 #include "Device.hpp"
 #include "Buffer.hpp"
 
+#include "management/ResourceManager.hpp"
+
 #include "../model/Texture.hpp"
 
 namespace myvk {
     class Texture {
     public:
-        Texture(
-            Texture2D* texture, 
-            TextureFilter filter = TextureFilter::Linear);
+        Texture() {};
         ~Texture();
 
-        Texture(const Texture&) = delete;
-		Texture& operator=(const Texture&) = delete;
+        Texture(Texture&& other) noexcept;
+        Texture& operator=(Texture&& other) noexcept;
 
         VkSampler   getSampler() {return sampler;}
         VkImageView getView() {return view;}
@@ -41,6 +41,8 @@ namespace myvk {
             VkFilter MinFilter, 
             VkFilter MaxFilter, 
             VkSamplerAddressMode AddressMode);
+
+        void create(Texture2D* texture, TextureFilter filter = TextureFilter::Linear);
     private:
 		void updateTextureImage(int layerCount, const void* pPixels);
 
@@ -70,4 +72,5 @@ namespace myvk {
 
         friend class Device;
     };
+
 }

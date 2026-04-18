@@ -1,7 +1,5 @@
 #include "Engine.hpp"
-
-#include "Fonts.hpp"
-
+#include "Global.hpp"
 
 
 //#include "gui/GUIContext.hpp"
@@ -12,6 +10,7 @@
 #include "rendering/RenderSystem.hpp"
 #include "rendering/GlobalRenderSystem.hpp"
 
+#include "rendering/Renderer.hpp"
 #include "vk/Device.hpp"
 #include "vk/Material.hpp"
 #include "vk/Mesh.hpp"
@@ -50,59 +49,7 @@ Engine::~Engine() {}
 
 void Engine::run() {
 	Window& window = Window::instance();
-
-	myvk::Renderer renderer;
-	myvk::RenderTarget renderTarget(renderer.getSwapChain(), VkExtent2D{RENDER_WIDTH, RENDER_HEIGHT});
-
-	//VkDescriptorImageInfo imageInfo;
-	//if(model->texture) {
-	//	imageInfo.sampler = model->texture->getSampler();
-	//	imageInfo.imageView = model->texture->getView();
-	//	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	//}
-
-	FontHandler fontHandler;
-	fontHandler.createSample("Minecraft", absolutePath+"resources/fonts/minecraftRegular.otf");
-
-	//GUIContext guiContext(Rect{window.width, window.height});
-	//auto guiWindow = std::make_shared<GUIWindow>();
-	//guiWindow->window.width = 700;
-	//guiWindow->window.height = 500;
-	//guiWindow->pos.x = 200;
-	//guiWindow->pos.y = 200;
-	//guiWindow->footer.height = 30;
-	//guiContext.createWindow(guiWindow);
-	//
-	//GUIEventListener guiEventListener(&guiContext);
-
-	//UIRenderSystem uiRenderSystem(device, renderer.getSwapChainRenderPass(), renderer.getDescriptorPool(), frameInfo);
-	//std::shared_ptr<GUIRenderer> guiRenderer = std::make_shared<GUIRenderer>(&guiContext, &fontHandler);
-	//uiRenderSystem.registerRenderer(guiRenderer);
-	
-	//guiRenderer->fetchContext();
-
-	
-	//myvk::GlobalRenderSystem screenRenderSystem(renderer, renderer.getSwapChainRenderPass());
-	myvk::GlobalRenderSystem mainRenderSystem  (renderer, renderer.getSwapChainRenderPass());
-
-	renderTarget.createFramebufferTexture(
-		renderer.getDescriptorPool(), 
-		mainRenderSystem.getMaterialSetLayout()
-	);
-
-	std::unique_ptr<uint8_t[]> whitePixel = std::make_unique<uint8_t[]>(4);
-	whitePixel[0] = 255;
-	whitePixel[1] = 255;
-	whitePixel[2] = 255;
-	whitePixel[3] = 255;
-
-    Texture2D defaultTex(std::move(whitePixel), 1, 1, TextureChannels::RGBA);
-	myvk::Texture  vkDefaultTex(&defaultTex, TextureFilter::Nearest);
-	myvk::Material vkDefaultMat(
-		*renderer.getDescriptorPool(),
-		*mainRenderSystem.getMaterialSetLayout()
-	);
-	vkDefaultMat.create(&vkDefaultTex);
+	global.renderer = std::make_unique<Renderer>();
 
 	Mesh mesh;
 
@@ -122,18 +69,9 @@ void Engine::run() {
 		mesh.indices.push_back(i);
 		mesh.indices.push_back(i + 1);
 	}
-
-	std::vector<myvk::InstanceData> instances(16);
-	for(int i = 0; i < 16; i++) {
-		instances[i].model = glm::translate(
-			glm::mat4(1.0f),
-			glm::vec3(100.0f * i, 0.0f, 0.0f)
-		);
-	}
-
+	
 	myvk::Mesh vkMesh = myvk::Mesh();
 	vkMesh.updateBuffers(mesh.vertices, mesh.indices);
-	vkMesh.updateInstanceBuffer(instances);
 	
 	Mesh screenMesh;
 	screenMesh.vertices.push_back({1.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
@@ -152,12 +90,6 @@ void Engine::run() {
 	//vkMeshScreen.updateBuffers(screenMesh.vertices, screenMesh.indices);
 
 	Texture2D texture(absolutePath+"resources/img/tuff.png");
-	myvk::Texture vkTex(&texture, TextureFilter::Nearest);
-	
-	myvk::Material vkMat = myvk::Material(
-		*renderer.getDescriptorPool(),
-		*mainRenderSystem.getMaterialSetLayout());
-	vkMat.create(&vkTex);
 
 	Events::toggle_cursor();
 	double lastTime = glfwGetTime();
@@ -224,7 +156,7 @@ void Engine::run() {
 
 			camera.updateView();
 
-			renderer.beginFrame();
+			global.renderer->vkRenderer.beginFrame();
 
 			/*
 			// Render Target //
@@ -241,17 +173,17 @@ void Engine::run() {
 			
 			// SwapChain Renderer //
 
-			renderer.beginSwapChainRenderPass();
+			global.renderer->vkRenderer.beginSwapChainRenderPass();
 
-			mainRenderSystem.setProjview(camera.getProjview());
-			mainRenderSystem.render(
+			global.renderer->vkRenderSystem.setProjview(camera.getProjview());
+			global.renderer->vkRenderSystem.render(
 				&vkMesh,
-				&vkDefaultMat, 
+				&global.renderer->vkDefaultMat, 
 				model);
 
-			renderer.endSwapChainRenderPass();
+			global.renderer->vkRenderer.endSwapChainRenderPass();
 	
-			renderer.endFrame();
+			global.renderer->vkRenderer.endFrame();
 			
 			timeAccu -= H;
 		}
@@ -263,6 +195,7 @@ void Engine::run() {
 	}
 
 	vkDeviceWaitIdle(myvk::Device::instance().device());
+	global.renderer.reset();
 }
 
 /*

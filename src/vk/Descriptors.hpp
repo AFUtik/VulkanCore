@@ -44,13 +44,6 @@ private:
     friend class DescriptorWriter;
 };
 
-struct DescriptorSetData {
-    VkDescriptorPool pool;
-    VkDescriptorSetLayout layout;
-
-    VkDescriptorSet set = VK_NULL_HANDLE;
-};
-
 class DescriptorPoolManager {
 public:
     class Builder {
@@ -78,9 +71,9 @@ public:
     DescriptorPoolManager(const DescriptorPoolManager &) = delete;
     DescriptorPoolManager &operator=(const DescriptorPoolManager &) = delete;
     
-    bool allocateDescriptor(const VkDescriptorSetLayout descriptorSetLayout, DescriptorSetData &descriptor);
+    bool allocateDescriptor(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor);
     
-    void freeDescriptors(std::vector<DescriptorSetData> &descriptors) const;
+    void freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const;
 
     void resetPool();
 private:
@@ -106,8 +99,8 @@ class DescriptorWriter {
   DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
   DescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo *imageInfo);
  
-  bool build(DescriptorSetData &set);
-  void overwrite(DescriptorSetData &set);
+  bool build(VkDescriptorSet &set);
+  void overwrite(VkDescriptorSet &set);
  
  private:
   DescriptorSetLayout &setLayout;

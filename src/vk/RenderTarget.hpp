@@ -30,7 +30,7 @@ namespace myvk {
         void endRenderPass(FrameInfo& frame);
 
         Material* getFramebufferTexture(FrameInfo& frame);
-        void createFramebufferTexture(DescriptorPoolManager* desc_pool, DescriptorSetLayout* desc_layout);
+        void createFramebufferTexture(DescriptorPoolManager* desc_pool, DescriptorSetLayout* desc_layout, VkPipelineLayout pipelineLayout);
     private:
         void createImages();
         void createDepthResources();

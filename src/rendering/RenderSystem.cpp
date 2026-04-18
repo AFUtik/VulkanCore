@@ -102,11 +102,11 @@ void RenderSystem::render(Mesh* mesh, Material* mat, const glm::mat4& model) {
 		pipelineLayout,
 		0,
 		1,
-		&descriptorSets[frame.frameIndex].set,
+		&descriptorSets[frame.frameIndex],
 		0, nullptr
 	);
 	
-	mat->bind (frame.commandBuffer, pipelineLayout, frame.frameIndex);
+	mat->bind(frame.commandBuffer);
 	mesh->draw(frame.commandBuffer);
 }
 

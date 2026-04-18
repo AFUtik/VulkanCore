@@ -128,6 +128,8 @@ struct ResourceManager {
 
         // id can point to other object after destruction of ManagedResource. //
         inline u32 get_id_nosafe() const {return id;}
+
+        inline T& get() { return ResourceManager::instance().get(*this); }
     private:
         ReferencedResource(u32 id) : id(id) {
             ResourceManager::instance().create_reference(id);
@@ -161,6 +163,13 @@ struct ResourceManager {
     inline const SerialSparseSet<T, u32>& get_resources() 
     {
         return resources;
+    }
+
+    inline void allocateAll() {
+        for(auto& res : resources) 
+        {
+            res = T();
+        }
     }
     
     template <typename K, typename U>

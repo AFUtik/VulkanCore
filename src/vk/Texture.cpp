@@ -42,15 +42,15 @@ bool HasStencilComponent(VkFormat Format)
 		    (Format == VK_FORMAT_D24_UNORM_S8_UINT));
 }
 
-
-Texture::Texture(Texture2D* texture, TextureFilter filter) : 
-	imageWidth(texture->width),
-	imageHeight(texture->height),
-	imageChannels(texture->channels),
-	filter(filter),
-	channels((TextureChannels)texture->channels)
+void Texture::create(Texture2D* texture, TextureFilter filter) 
 {
-    createTexture(texture);
+	imageWidth  = texture->width;
+	imageHeight = texture->height;
+	imageChannels = texture->channels;
+	filter = filter;
+	channels = (TextureChannels)texture->channels;
+
+	createTexture(texture);
 }
 
 Texture::~Texture() {

@@ -41,12 +41,15 @@ namespace myvk {
         vkDestroyRenderPass(device.device(), renderPass, nullptr);
     }
 
-    void RenderTarget::createFramebufferTexture(DescriptorPoolManager* desc_pool, DescriptorSetLayout* desc_layout) {
+    void RenderTarget::createFramebufferTexture(DescriptorPoolManager* desc_pool, DescriptorSetLayout* desc_layout, VkPipelineLayout pipelineLayout) {
         screenTextures.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
         screenSamplers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
         for(int i = 0; i < images.size(); i++) {
-            screenTextures[i] = std::make_unique<Material>(*desc_pool, *desc_layout);
+            screenTextures[i] = std::make_unique<Material>();
+            screenTextures[i]->setDescriptorPool(desc_pool);
+            screenTextures[i]->setDescriptorLayout(desc_layout);
+            screenTextures[i]->setPipelineLayout(pipelineLayout);
             Texture::createTextureSampler(
                 device, 
                 screenSamplers[i],
@@ -61,7 +64,7 @@ namespace myvk {
             
             DescriptorWriter(*desc_layout, *desc_pool)
                 .writeImage(0, &imageInfo)
-                .build(screenTextures[i]->getDescriptorSetData());
+                .build(screenTextures[i]->getDescriptor());
         }
     }
 
