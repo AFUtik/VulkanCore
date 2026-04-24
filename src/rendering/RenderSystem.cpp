@@ -3,8 +3,9 @@
 #include "../vk/Renderer.hpp"
 #include "../vk/FrameInfo.hpp"
 #include "../vk/Pipeline.hpp"
-#include "../vk/Texture.hpp"
+#include "../vk/VkTexture.hpp"
 #include "../model/Mesh.hpp"
+#include "../Global.hpp"
 #include "vulkan/vulkan_core.h"
 
 #include <memory>
@@ -46,17 +47,19 @@ void RenderSystem::createEmptyMaterial() {
 */
 
 void RenderSystem::createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts_) {
+	/*
 	VkPushConstantRange pushConstantRange{};
 	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantRange.offset = 0;
 	pushConstantRange.size = sizeof(PushConstantData);
+	*/
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(layouts_.size());
 	pipelineLayoutInfo.pSetLayouts = layouts_.data();
-	pipelineLayoutInfo.pushConstantRangeCount = 1;
-	pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+	//pipelineLayoutInfo.pushConstantRangeCount = 1;
+	//pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 	if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) !=
 		VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout!");
@@ -70,19 +73,9 @@ void RenderSystem::createPipeline(VkRenderPass renderPass ,PipelineConfigInfo& p
 	pipelineConfig.pipelineLayout = pipelineLayout;
 	pipeline = std::make_unique<Pipeline>(
 		device,
-		absolutePath + "resources/shaders/shader.vert.spv",
-		absolutePath + "resources/shaders/shader.frag.spv",
+		RESOURCE_PATH + "shaders/shader.vert.spv",
+		RESOURCE_PATH + "shaders/shader.frag.spv",
 		pipelineConfig);
-	
-	PipelineConfigInfo newInfo = pipelineConfig;
-
-	newInfo.rasterizationInfo.polygonMode = VK_POLYGON_MODE_LINE;
-	newInfo.inputAssemblyInfo.topology    = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-	pipelineLineMode = std::make_unique<Pipeline>(
-		device,
-		absolutePath + "resources/shaders/shader.vert.spv",
-		absolutePath + "resources/shaders/shader.frag.spv",
-		newInfo);
 }
 
 void RenderSystem::setProjview(const glm::mat4& projview) {

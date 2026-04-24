@@ -7,7 +7,6 @@
 #include "RenderSystem.hpp"
 #include "GlobalRenderSystem.hpp"
 
-
 #include <unordered_map>
 
 struct Renderer 

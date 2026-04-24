@@ -16,9 +16,9 @@ void Renderer::createDefaultMaterial()
 	whitePixel[2] = 255;
 	whitePixel[3] = 255;
 
-    Texture2D defaultTex(std::move(whitePixel), 1, 1, TextureChannels::RGBA);
+    Texture defaultTex(std::move(whitePixel), 1, 1, TextureChannels::RGBA);
 
-    auto vkDefaultTex = std::make_unique<myvk::Texture>();
+    auto vkDefaultTex = std::make_unique<myvk::VkTexture>();
 	vkDefaultTex->create(&defaultTex);
     
     vkDefaultMat.setDescriptorPool(vkRenderer.getDescriptorPool());

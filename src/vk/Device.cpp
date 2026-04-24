@@ -6,7 +6,7 @@
 #include <unordered_set>
 
 #include "Buffer.hpp"
-#include "Texture.hpp"
+#include "VkTexture.hpp"
 #include "Descriptors.hpp"
 
 #include "VkWindow.hpp"
@@ -610,7 +610,7 @@ namespace myvk {
     }
 
     template<>
-    void Device::free<Texture>(Texture* resource) {
+    void Device::free<VkTexture>(VkTexture* resource) {
         struct DeletionInfo {
             VkSampler sampler;
             VkImageView view;

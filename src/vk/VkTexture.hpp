@@ -5,16 +5,16 @@
 
 #include "management/ResourceManager.hpp"
 
-#include "../model/Texture.hpp"
+#include "texture/Texture.hpp"
 
 namespace myvk {
-    class Texture {
+    class VkTexture {
     public:
-        Texture() {};
-        ~Texture();
+        VkTexture() {};
+        ~VkTexture();
 
-        Texture(Texture&& other) noexcept;
-        Texture& operator=(Texture&& other) noexcept;
+        VkTexture(VkTexture&& other) noexcept;
+        VkTexture& operator=(VkTexture&& other) noexcept;
 
         VkSampler   getSampler() {return sampler;}
         VkImageView getView() {return view;}
@@ -42,7 +42,7 @@ namespace myvk {
             VkFilter MaxFilter, 
             VkSamplerAddressMode AddressMode);
 
-        void create(Texture2D* texture, TextureFilter filter = TextureFilter::Linear);
+        void create(Texture* texture, TextureFilter filter = TextureFilter::Linear);
     private:
 		void updateTextureImage(int layerCount, const void* pPixels);
 
@@ -52,7 +52,7 @@ namespace myvk {
 
         void createTextureFromData(const void* pPixels);
 
-		void createTexture(Texture2D* texture);
+		void createTexture(Texture* texture);
 
         bool isCubemap = false;
         int imageWidth, imageHeight, imageChannels;

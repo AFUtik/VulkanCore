@@ -2,7 +2,7 @@
 
 namespace myvk {
 
-void Material::setAlbedo(std::unique_ptr<Texture> albedo) 
+void Material::setAlbedo(std::unique_ptr<VkTexture> albedo) 
 {
     VkDescriptorImageInfo imageInfo;
 	imageInfo.sampler   = albedo->getSampler();

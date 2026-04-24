@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Descriptors.hpp"
-#include "Texture.hpp"
+#include "VkTexture.hpp"
 
 #include "management/ResourceManager.hpp"
 
@@ -13,7 +13,7 @@ class Material {
 public:
     Material() {};
 
-    void setAlbedo(std::unique_ptr<Texture> albedo);
+    void setAlbedo(std::unique_ptr<VkTexture> albedo);
     
     inline void setDescriptorPool(DescriptorPoolManager* manager) {pool = manager;  }
     inline void setDescriptorLayout(DescriptorSetLayout* layout)  {this->layout = layout; }
@@ -23,7 +23,7 @@ public:
 
     VkDescriptorSet& getDescriptor() {return descriptor;}
 private:
-    std::unique_ptr<Texture> albedo;
+    std::unique_ptr<VkTexture> albedo;
 
     DescriptorPoolManager* pool = nullptr;
     DescriptorSetLayout* layout = nullptr;

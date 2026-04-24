@@ -1,4 +1,4 @@
-#include "Texture.hpp"
+#include "VkTexture.hpp"
 
 #include <stdexcept>
 
@@ -42,7 +42,7 @@ bool HasStencilComponent(VkFormat Format)
 		    (Format == VK_FORMAT_D24_UNORM_S8_UINT));
 }
 
-void Texture::create(Texture2D* texture, TextureFilter filter) 
+void VkTexture::create(Texture* texture, TextureFilter filter) 
 {
 	imageWidth  = texture->width;
 	imageHeight = texture->height;
@@ -53,12 +53,12 @@ void Texture::create(Texture2D* texture, TextureFilter filter)
 	createTexture(texture);
 }
 
-Texture::~Texture() {
-	device.free<Texture>(this);
+VkTexture::~VkTexture() {
+	device.free<VkTexture>(this);
 }
 
 // Copied from the "3D Graphics Rendering Cookbook"
-void Texture::imageMemBarrier(
+void VkTexture::imageMemBarrier(
 	VkImage image,
 	VkFormat format,
 
@@ -214,7 +214,7 @@ void Texture::imageMemBarrier(
 		                 0, 0, NULL, 0, NULL, 1, &Barrier);
 }
 
-void Texture::transitionImageLayout(
+void VkTexture::transitionImageLayout(
 	Device& device, 
 	VkImage image,
     VkFormat format,
@@ -229,7 +229,7 @@ void Texture::transitionImageLayout(
 	device.endSingleTimeCommands(m_copyCmdBuf);
 }
 
-void Texture::createTexture(Texture2D* texture) {
+void VkTexture::createTexture(Texture* texture) {
 	if(channels == TextureChannels::RGBA) 
 	{
 		format = VK_FORMAT_R8G8B8A8_SRGB;
@@ -249,7 +249,7 @@ void Texture::createTexture(Texture2D* texture) {
 	createTextureFromData(texture->raw());
 }
 
-void Texture::createTextureFromData(const void* pPixels)
+void VkTexture::createTextureFromData(const void* pPixels)
 {
 	// Step #1: create the image object and populate it with pixels
 	createImage();
@@ -277,7 +277,7 @@ void Texture::createTextureFromData(const void* pPixels)
 	createTextureSampler(device, sampler, MinFilter, MaxFilter, AddressMode);
 }
 
-void Texture::createImage()
+void VkTexture::createImage()
 {
 	/*VkImageFormatProperties imageFormatProperties;
 	vkGetPhysicalDeviceImageFormatProperties(m_physDevices.Selected().m_physDevice,
@@ -309,7 +309,7 @@ void Texture::createImage()
 }
 
 
-void Texture::updateTextureImage(int layerCount, const void* pPixels)
+void VkTexture::updateTextureImage(int layerCount, const void* pPixels)
 {
 	int BytesPerPixel = GetBytesPerTexFormat(format);
 
@@ -335,7 +335,7 @@ void Texture::updateTextureImage(int layerCount, const void* pPixels)
 	transitionImageLayout(device, image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, layerCount);
 }
 
-void Texture::createTextureSampler(Device& device, VkSampler& sampler, VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)
+void VkTexture::createTextureSampler(Device& device, VkSampler& sampler, VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)
 {
 	VkSamplerCreateInfo SamplerInfo = {
 		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -362,7 +362,7 @@ void Texture::createTextureSampler(Device& device, VkSampler& sampler, VkFilter 
     } 
 }
 
-void Texture::createImageView(VkImageAspectFlags AspectFlags) 
+void VkTexture::createImageView(VkImageAspectFlags AspectFlags) 
 {
 	VkImageViewCreateInfo viewInfo =
 	{

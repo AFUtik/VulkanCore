@@ -1,6 +1,6 @@
 #include "RenderTarget.hpp"
 #include "FrameInfo.hpp"
-#include "Texture.hpp"
+#include "texture/Texture.hpp"
 
 #include <array>
 #include <memory>
@@ -50,7 +50,7 @@ namespace myvk {
             screenTextures[i]->setDescriptorPool(desc_pool);
             screenTextures[i]->setDescriptorLayout(desc_layout);
             screenTextures[i]->setPipelineLayout(pipelineLayout);
-            Texture::createTextureSampler(
+            VkTexture::createTextureSampler(
                 device, 
                 screenSamplers[i],
                 VK_FILTER_NEAREST,
@@ -265,7 +265,7 @@ namespace myvk {
     }
     
     void RenderTarget::beginRenderPass(FrameInfo& frame) {
-        Texture::imageMemBarrier(
+        VkTexture::imageMemBarrier(
             images[frame.frameIndex], 
             imageFormat, 
             frame.commandBuffer, 

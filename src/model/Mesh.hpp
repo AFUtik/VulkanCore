@@ -25,6 +25,7 @@ public:
 	Mesh& operator=(const Mesh&) = delete;
 };
 
+/*
 class TextMesh : public Mesh {
     Text* text = nullptr;
     Font* font = nullptr;
@@ -39,6 +40,7 @@ public:
 
     void build();
 };
+*/
 
 class MeshTools {
 public:

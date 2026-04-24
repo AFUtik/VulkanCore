@@ -6,18 +6,21 @@
 //#include "gui/GUIRendering.hpp"
 //#include "gui/GuiContext.hpp"
 #include "glm/ext/matrix_transform.hpp"
-#include "model/Texture.hpp"
 #include "rendering/RenderSystem.hpp"
 #include "rendering/GlobalRenderSystem.hpp"
 
 #include "rendering/Renderer.hpp"
+#include "texture/Texture.hpp"
+#include "texture/TextureAtlas.hpp"
 #include "vk/Device.hpp"
 #include "vk/Material.hpp"
 #include "vk/Mesh.hpp"
 #include "vk/RenderTarget.hpp"
-#include "vk/Texture.hpp"
+#include "vk/VkTexture.hpp"
 #include "window/Events.hpp"
 #include "window/Window.hpp"
+
+#include "model/Mesh.hpp"
 
 #include <memory>
 #include <string>
@@ -50,6 +53,26 @@ Engine::~Engine() {}
 void Engine::run() {
 	Window& window = Window::instance();
 	global.renderer = std::make_unique<Renderer>();
+
+	Tileset tileset(RESOURCE_PATH+"img/tileset.png", 16, 16, 1);
+	TextureUtils::save(&tileset.texture, RESOURCE_PATH+"img/paddedTileset.png");
+
+	AtlasBuilder& atlasBuilder = global.atlasBuilder;
+	atlasBuilder.reserve(64);
+	atlasBuilder.setPadding(1);
+
+	Texture stone(RESOURCE_PATH+"img/stone.png");
+	Texture tuff (RESOURCE_PATH+"img/tuff.png");
+	Texture sand (RESOURCE_PATH+"img/sand.png");
+
+	TextureAtlas atlas;
+	atlas.texture = Texture(64, 64, TextureChannels::RGBA);
+
+	atlasBuilder.pack(&atlas, &stone, "stone");
+	atlasBuilder.pack(&atlas, &tuff,  "tuff");
+	atlasBuilder.pack(&atlas, &sand,  "sand");
+	atlasBuilder.build(&atlas);
+	TextureUtils::save(&atlas.texture, RESOURCE_PATH+"img/atlas.png");
 
 	Mesh mesh;
 
@@ -89,7 +112,7 @@ void Engine::run() {
 	//myvk::Mesh vkMeshScreen = myvk::Mesh();
 	//vkMeshScreen.updateBuffers(screenMesh.vertices, screenMesh.indices);
 
-	Texture2D texture(absolutePath+"resources/img/tuff.png");
+	
 
 	Events::toggle_cursor();
 	double lastTime = glfwGetTime();

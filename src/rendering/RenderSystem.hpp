@@ -2,7 +2,6 @@
 
 #include "../FreeList.hpp"
 #include "../Camera.hpp"
-#include "../model/MeshObject.hpp"
 
 #include "../vk/Mesh.hpp"
 #include "../vk/Material.hpp"
@@ -13,8 +12,6 @@
 #include <memory>
 #include <vector>
 #include <array>
-
-const std::string absolutePath = "C:\\cplusplus\\VulkanRender\\VulkanRender\\";
 
 struct GlobalUbo {
 	glm::mat4 projview{1.f};

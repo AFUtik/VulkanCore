@@ -1,13 +1,10 @@
 #include "Mesh.hpp"
-#include "../Fonts.hpp"
-#include "freetype/ftimage.h"
 
-#include <iostream>
-#include <string_view>
-
+/*
 TextMesh::TextMesh(Text* text, Font* font) : Mesh(512), text(text), font(font) {
     buildVertices();
 }
+
 
 void TextMesh::buildVertices() {
     vertices.clear();
@@ -57,9 +54,11 @@ void TextMesh::buildVertices() {
     meshContent = content;
 }
 
+
 void TextMesh::build() {
     buildVertices(); 
 }
+*/
 
 void MeshTools::createQuad(Mesh* mesh, Quad& quad)
 {
