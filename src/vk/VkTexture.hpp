@@ -10,7 +10,10 @@
 namespace myvk {
     class VkTexture {
     public:
+        VkTexture(Texture* texture, TextureFilter filter = TextureFilter::Linear);
+
         VkTexture() {};
+
         ~VkTexture();
 
         VkTexture(VkTexture&& other) noexcept;

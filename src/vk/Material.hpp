@@ -9,15 +9,16 @@
 
 namespace myvk {
 
+class RenderSystem;
+class Renderer;
+
 class Material {
 public:
     Material() {};
 
+    void setRenderSystem(RenderSystem* system);
+
     void setAlbedo(std::unique_ptr<VkTexture> albedo);
-    
-    inline void setDescriptorPool(DescriptorPoolManager* manager) {pool = manager;  }
-    inline void setDescriptorLayout(DescriptorSetLayout* layout)  {this->layout = layout; }
-    inline void setPipelineLayout(VkPipelineLayout layout) {pipelineLayout = layout;}
     
     void bind(VkCommandBuffer commandBuffer) const;
 

@@ -11,6 +11,7 @@
 namespace myvk {
     struct FrameInfo;
     struct TextureView;
+    class RenderSystem;
 
     struct RenderTarget {
         RenderTarget(SwapChain* swapchain, VkExtent2D extent);
@@ -30,7 +31,7 @@ namespace myvk {
         void endRenderPass(FrameInfo& frame);
 
         Material* getFramebufferTexture(FrameInfo& frame);
-        void createFramebufferTexture(DescriptorPoolManager* desc_pool, DescriptorSetLayout* desc_layout, VkPipelineLayout pipelineLayout);
+        void createFramebufferTexture(RenderSystem* system);
     private:
         void createImages();
         void createDepthResources();

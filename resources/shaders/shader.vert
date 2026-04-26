@@ -5,6 +5,7 @@ layout(location = 1) in vec2 uv;
 layout(location = 2) in vec4 color;
 
 layout(location = 3) in mat4 model; // Instance Binding
+layout(location = 7) in vec3 instance_color;
 
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec2 texCoord;
@@ -14,7 +15,7 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
 } ubo;
 
 void main() {
-	fragColor = color;
+	fragColor = color * vec4(instance_color, 1.0f);
 	texCoord  = uv; 
 	gl_Position = ubo.projview * model * vec4(v_pos, 1.0f);
 }

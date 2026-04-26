@@ -1,4 +1,5 @@
 #include "Engine.hpp"
+#include "Color.hpp"
 #include "Global.hpp"
 
 
@@ -6,13 +7,12 @@
 //#include "gui/GUIRendering.hpp"
 //#include "gui/GuiContext.hpp"
 #include "glm/ext/matrix_transform.hpp"
-#include "rendering/RenderSystem.hpp"
-#include "rendering/GlobalRenderSystem.hpp"
 
 #include "rendering/Renderer.hpp"
 #include "texture/Texture.hpp"
 #include "texture/TextureAtlas.hpp"
 #include "vk/Device.hpp"
+#include "vk/FrameInfo.hpp"
 #include "vk/Material.hpp"
 #include "vk/Mesh.hpp"
 #include "vk/RenderTarget.hpp"
@@ -38,9 +38,6 @@
 #define WIDTH 1920
 #define HEIGHT 1080
 
-#define RENDER_WIDTH 1920
-#define RENDER_HEIGHT 1080
-
 Engine::Engine() : camera(RENDER_WIDTH, RENDER_HEIGHT) 
 {
 	Window::instance().init(WIDTH, HEIGHT, "Vulkan Engine");
@@ -53,66 +50,7 @@ Engine::~Engine() {}
 void Engine::run() {
 	Window& window = Window::instance();
 	global.renderer = std::make_unique<Renderer>();
-
-	Tileset tileset(RESOURCE_PATH+"img/tileset.png", 16, 16, 1);
-	TextureUtils::save(&tileset.texture, RESOURCE_PATH+"img/paddedTileset.png");
-
-	AtlasBuilder& atlasBuilder = global.atlasBuilder;
-	atlasBuilder.reserve(64);
-	atlasBuilder.setPadding(1);
-
-	Texture stone(RESOURCE_PATH+"img/stone.png");
-	Texture tuff (RESOURCE_PATH+"img/tuff.png");
-	Texture sand (RESOURCE_PATH+"img/sand.png");
-
-	TextureAtlas atlas;
-	atlas.texture = Texture(64, 64, TextureChannels::RGBA);
-
-	atlasBuilder.pack(&atlas, &stone, "stone");
-	atlasBuilder.pack(&atlas, &tuff,  "tuff");
-	atlasBuilder.pack(&atlas, &sand,  "sand");
-	atlasBuilder.build(&atlas);
-	TextureUtils::save(&atlas.texture, RESOURCE_PATH+"img/atlas.png");
-
-	Mesh mesh;
-
-	int segments = 32;
-	float radius = 50.0f;
-
-	mesh.vertices.push_back({0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f});
-	for (int i = 0; i <= segments; i++) {
-		float angle = i * 2.0f * std::numbers::pi / segments;
-		float x = cos(angle) * radius;
-		float y = sin(angle) * radius;
-
-		mesh.vertices.push_back({x, y, 0.0f, 0.0f, 0.0f, 0.0, 0.0f, 1.0f, 1.0f});
-	}
-	for (int i = 1; i <= segments; i++) {
-		mesh.indices.push_back(0);
-		mesh.indices.push_back(i);
-		mesh.indices.push_back(i + 1);
-	}
-	
-	myvk::Mesh vkMesh = myvk::Mesh();
-	vkMesh.updateBuffers(mesh.vertices, mesh.indices);
-	
-	Mesh screenMesh;
-	screenMesh.vertices.push_back({1.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	screenMesh.vertices.push_back({1.0f,  -1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	screenMesh.vertices.push_back({-1.0f,  -1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	screenMesh.vertices.push_back({-1.0f,  1.0f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-
-	screenMesh.indices.push_back(0);
-	screenMesh.indices.push_back(1);
-	screenMesh.indices.push_back(2);
-	screenMesh.indices.push_back(2);
-	screenMesh.indices.push_back(3);
-	screenMesh.indices.push_back(0);
-
-	//myvk::Mesh vkMeshScreen = myvk::Mesh();
-	//vkMeshScreen.updateBuffers(screenMesh.vertices, screenMesh.indices);
-
-	
+	//global.assets.load();
 
 	Events::toggle_cursor();
 	double lastTime = glfwGetTime();
@@ -127,7 +65,7 @@ void Engine::run() {
 	float scale = 1;
 
 	glm::mat4 model = glm::mat4(1.0f);
-
+	
 	while (!window.isShouldClose()) {
 		double currentTime = glfwGetTime();
 		double frameTime = currentTime - lastTime;
@@ -178,35 +116,7 @@ void Engine::run() {
 			*/
 
 			camera.updateView();
-
-			global.renderer->vkRenderer.beginFrame();
-
-			/*
-			// Render Target //
-			renderTarget.beginRenderPass(renderer.frameInfo());
-
-			mainRenderSystem.setProjview(camera.getProjview());
-			mainRenderSystem.render(
-				&vkMesh,
-				&vkDefaultMat, 
-				model);
-
-			renderTarget.endRenderPass(renderer.frameInfo());
-			*/
-			
-			// SwapChain Renderer //
-
-			global.renderer->vkRenderer.beginSwapChainRenderPass();
-
-			global.renderer->vkRenderSystem.setProjview(camera.getProjview());
-			global.renderer->vkRenderSystem.render(
-				&vkMesh,
-				&global.renderer->vkDefaultMat, 
-				model);
-
-			global.renderer->vkRenderer.endSwapChainRenderPass();
-	
-			global.renderer->vkRenderer.endFrame();
+			global.renderer->render(camera);
 			
 			timeAccu -= H;
 		}

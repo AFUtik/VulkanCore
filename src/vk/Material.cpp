@@ -1,5 +1,8 @@
 #include "Material.hpp"
 
+#include "Renderer.hpp"
+#include "RenderSystem.hpp"
+
 namespace myvk {
 
 void Material::setAlbedo(std::unique_ptr<VkTexture> albedo) 
@@ -14,6 +17,13 @@ void Material::setAlbedo(std::unique_ptr<VkTexture> albedo)
 		.build(descriptor);
 	
     this->albedo = std::move(albedo);
+}
+
+void Material::setRenderSystem(RenderSystem* system) 
+{
+    pool = system->getDescriptorPool();
+    layout = system->getMaterialSetLayout();
+    pipelineLayout = system->getPipelineLayout();
 }
 
 void Material::bind(VkCommandBuffer commandBuffer) const {

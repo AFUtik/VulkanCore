@@ -1,6 +1,6 @@
 #include "RenderTarget.hpp"
 #include "FrameInfo.hpp"
-#include "texture/Texture.hpp"
+#include "RenderSystem.hpp"
 
 #include <array>
 #include <memory>
@@ -41,15 +41,14 @@ namespace myvk {
         vkDestroyRenderPass(device.device(), renderPass, nullptr);
     }
 
-    void RenderTarget::createFramebufferTexture(DescriptorPoolManager* desc_pool, DescriptorSetLayout* desc_layout, VkPipelineLayout pipelineLayout) {
+    void RenderTarget::createFramebufferTexture(RenderSystem* system) {
         screenTextures.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
         screenSamplers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
         for(int i = 0; i < images.size(); i++) {
             screenTextures[i] = std::make_unique<Material>();
-            screenTextures[i]->setDescriptorPool(desc_pool);
-            screenTextures[i]->setDescriptorLayout(desc_layout);
-            screenTextures[i]->setPipelineLayout(pipelineLayout);
+            screenTextures[i]->setRenderSystem(system);
+
             VkTexture::createTextureSampler(
                 device, 
                 screenSamplers[i],
@@ -62,7 +61,7 @@ namespace myvk {
             imageInfo.imageView = imageViews[i];
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             
-            DescriptorWriter(*desc_layout, *desc_pool)
+            DescriptorWriter(*system->getMaterialSetLayout(), *system->getDescriptorPool())
                 .writeImage(0, &imageInfo)
                 .build(screenTextures[i]->getDescriptor());
         }
@@ -282,7 +281,7 @@ namespace myvk {
         renderPassInfo.renderArea.extent = getExtent();
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = { 0.6f, 0.6f, 0.6f, 1.0f };
+        clearValues[0].color = { 0.001f, 0.001f, 0.001f, 1.0f };
         clearValues[1].depthStencil = { 1.0f, 0 };
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();

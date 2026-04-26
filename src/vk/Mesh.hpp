@@ -33,6 +33,7 @@ enum RenderQueueFlags {
 
 struct alignas(16) InstanceData {
 	Mat4 model = Mat4(1.0f);
+	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
 };
 
 class Mesh {

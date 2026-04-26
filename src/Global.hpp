@@ -1,18 +1,17 @@
 #pragma once
 
+#include "game/GameContext.hpp"
 #include "rendering/Renderer.hpp"
-
-#include "texture/TextureAtlas.hpp"
-#include "texture/Tileset.hpp"
+#include "Assets.hpp"
 
 struct Global
 {
-    AtlasBuilder atlasBuilder;
-
-    std::vector<std::unique_ptr<TextureAtlas>> atlases;
-    std::unordered_map<std::string, uint32_t> atlasMap;
+    GameContext gameCtx;
+    Assets assets;
 
     std::unique_ptr<Renderer> renderer;
+
+    void loadAssets();
 
     void shutdown();
 
@@ -20,5 +19,3 @@ struct Global
 };
 
 static Global global;
-
-const std::string RESOURCE_PATH = "C:\\cplusplus\\VulkanRender\\VulkanRender\\resources\\";

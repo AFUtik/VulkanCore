@@ -1,40 +1,72 @@
 #include "Renderer.hpp"
-#include <memory>
+#include "../Camera.hpp"
+
+#include "../model/Mesh.hpp"
+#include "PlanetRenderer.hpp"
 
 Renderer::Renderer()
     : vkRenderer(), 
-      vkRenderSystem(vkRenderer, vkRenderer.getSwapChainRenderPass())
+      vkRenderTarget(vkRenderer.getSwapChain(), {RENDER_WIDTH, RENDER_HEIGHT}),
+      vkScreenRenderSystem(vkRenderer),
+      vkPlanetRenderSystem(vkRenderer, vkRenderTarget),
+      planetRenderer(*this)
 {
-    createDefaultMaterial();
+    vkRenderTarget.createFramebufferTexture(&vkScreenRenderSystem);
+    createVkMeshScreen();
 }
 
-void Renderer::createDefaultMaterial() 
-{
-    std::unique_ptr<uint8_t[]> whitePixel = std::make_unique<uint8_t[]>(4);
-	whitePixel[0] = 255;
-	whitePixel[1] = 255;
-	whitePixel[2] = 255;
-	whitePixel[3] = 255;
+void Renderer::createVkMeshScreen()
+{ 
+    Mesh screenMesh;
+	screenMesh.vertices.push_back({1.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	screenMesh.vertices.push_back({1.0f,  -1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	screenMesh.vertices.push_back({-1.0f,  -1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	screenMesh.vertices.push_back({-1.0f,  1.0f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
 
-    Texture defaultTex(std::move(whitePixel), 1, 1, TextureChannels::RGBA);
+	screenMesh.indices.push_back(0);
+	screenMesh.indices.push_back(1);
+	screenMesh.indices.push_back(2);
+	screenMesh.indices.push_back(2);
+	screenMesh.indices.push_back(3);
+	screenMesh.indices.push_back(0);
+	vkMeshScreen.updateBuffers(screenMesh.vertices, screenMesh.indices);
+}
 
-    auto vkDefaultTex = std::make_unique<myvk::VkTexture>();
-	vkDefaultTex->create(&defaultTex);
+void Renderer::render(Camera& camera)
+{  
+	vkRenderer.beginFrame();
+    auto& frame = vkRenderer.frameInfo();
     
-    vkDefaultMat.setDescriptorPool(vkRenderer.getDescriptorPool());
-	vkDefaultMat.setDescriptorLayout(vkRenderSystem.getMaterialSetLayout());
-	vkDefaultMat.setPipelineLayout(vkRenderSystem.getPipelineLayout());
-    vkDefaultMat.setAlbedo(std::move(vkDefaultTex));
-}
+    RenderState state {
+        frame, 
+        camera.getProjview()
+    };
+			
+    // BaseRenderSystem //
+	vkRenderTarget.beginRenderPass(frame);
 
-myvk::MaterialHandle Renderer::materialInstance() 
-{
-    myvk::MaterialHandle handle = myvk::MaterialResources::instance().create<myvk::MaterialHandle>(myvk::Material());
-    myvk::Material& mat = handle.get();
+    planetRenderer.submit(renderQueue);
+    for(RenderBatch& batch : renderQueue.batchQueue)
+    {
+       vkPlanetRenderSystem.render(
+            state,
+            batch.mesh, 
+            batch.material);
+    }
+    renderQueue.batchQueue.clear();
+    
+	vkRenderTarget.endRenderPass(frame);
+		
+    
+	// SwapChain Render //
+	vkRenderer.beginSwapChainRenderPass();
+    
+    state.projview = glm::mat4(1.0f);
+	vkScreenRenderSystem.render(
+        state,
+		&vkMeshScreen, 
+        vkRenderTarget.getFramebufferTexture(frame));
 
-    mat.setDescriptorPool(vkRenderer.getDescriptorPool());
-	mat.setDescriptorLayout(vkRenderSystem.getMaterialSetLayout());
-	mat.setPipelineLayout(vkRenderSystem.getPipelineLayout());
-
-    return handle;
+	vkRenderer.endSwapChainRenderPass();
+	vkRenderer.endFrame();
 }

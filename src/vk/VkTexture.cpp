@@ -4,6 +4,11 @@
 
 namespace myvk {
 
+VkTexture::VkTexture(Texture* texture, TextureFilter filter) 
+{
+	create(texture, filter);
+};
+
 int GetBytesPerTexFormat(VkFormat Format)
 {
 	switch (Format)

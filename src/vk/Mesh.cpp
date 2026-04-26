@@ -1,6 +1,7 @@
 #include "Mesh.hpp"
 #include "Scalar.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <cmath>
 #include <cstdint>
@@ -309,7 +310,7 @@ namespace myvk {
 	}
 
 	std::vector<VkVertexInputAttributeDescription> Mesh::getAttributeDescriptions() {
-		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(7);
+		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(8);
 
 		size_t location = 0;
 		attributeDescriptions[0].binding = 0;
@@ -349,6 +350,11 @@ namespace myvk {
 		attributeDescriptions[6].location = 6;
 		attributeDescriptions[6].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
 		attributeDescriptions[6].offset   = sizeof(glm::vec4) * 3;
+
+		attributeDescriptions[7].binding  = 1;
+		attributeDescriptions[7].location = 7;
+		attributeDescriptions[7].format   = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[7].offset   = sizeof(glm::vec4) * 4;
 
 		return attributeDescriptions;
 	}
