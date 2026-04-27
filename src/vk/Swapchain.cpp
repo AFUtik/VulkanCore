@@ -1,4 +1,5 @@
-#include "Swapchain.hpp"
+#include "vk/Swapchain.hpp"
+#include "vk/Device.hpp"
 
 // std
 #include <array>
@@ -6,15 +7,18 @@
 #include <cstring>
 #include <iostream>
 #include <limits>
-#include <set>
 #include <stdexcept>
 
 namespace myvk {
-    SwapChain::SwapChain(VkExtent2D extent) : windowExtent{ extent } {
+    SwapChain::SwapChain(VkExtent2D extent) : 
+        device(Device::instance()), 
+        windowExtent{ extent } 
+    {
         init();
     }
 
     SwapChain::SwapChain(VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous) : 
+        device(Device::instance()),
         windowExtent{ windowExtent }, 
         oldSwapChain{ previous } 
     {

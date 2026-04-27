@@ -1,31 +1,16 @@
 #include "Engine.hpp"
-#include "Color.hpp"
 #include "Global.hpp"
 
-
-//#include "gui/GUIContext.hpp"
-//#include "gui/GUIRendering.hpp"
-//#include "gui/GuiContext.hpp"
-#include "glm/ext/matrix_transform.hpp"
-
 #include "rendering/Renderer.hpp"
-#include "texture/Texture.hpp"
-#include "texture/TextureAtlas.hpp"
 #include "vk/Device.hpp"
-#include "vk/FrameInfo.hpp"
-#include "vk/Material.hpp"
-#include "vk/Mesh.hpp"
+
 #include "vk/RenderTarget.hpp"
 #include "vk/VkTexture.hpp"
 #include "window/Events.hpp"
 #include "window/Window.hpp"
 
-#include "model/Mesh.hpp"
-
 #include <memory>
-#include <string>
 #include <thread>
-#include <numbers>
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -33,7 +18,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <stb_image.h>
-#include <iostream>
 
 #define WIDTH 1920
 #define HEIGHT 1080

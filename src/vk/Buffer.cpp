@@ -5,8 +5,8 @@
  * https://github.com/SaschaWillems/Vulkan/blob/master/base/VulkanBuffer.h
  */
 
-#include "Buffer.hpp"
-#include "Device.hpp"
+#include "vk/Buffer.hpp"
+#include "vk/Device.hpp"
 
 // std
 #include <cassert>

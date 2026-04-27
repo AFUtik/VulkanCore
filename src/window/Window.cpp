@@ -1,6 +1,6 @@
-#include <iostream>
+#include "window/Window.hpp"
 
-#include "Window.hpp"
+#include <iostream>
 
 Window::~Window() {
 	if (window) {

@@ -1,6 +1,6 @@
 #pragma once 
 
-#include "../vk/Mesh.hpp"
+#include "vk/Mesh.hpp"
 
 namespace myvk {
     class Material;

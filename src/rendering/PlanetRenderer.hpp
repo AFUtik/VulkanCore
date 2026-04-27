@@ -2,7 +2,7 @@
 
 #include "RenderState.hpp"
 
-#include "../vk/Mesh.hpp"
+#include "vk/Mesh.hpp"
 
 struct Renderer;
 struct RenderQueue;

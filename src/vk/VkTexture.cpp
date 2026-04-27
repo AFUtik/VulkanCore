@@ -1,12 +1,18 @@
-#include "VkTexture.hpp"
+#include "vk/VkTexture.hpp"
+#include "vk/Device.hpp"
+#include "vk/Buffer.hpp"
 
 #include <stdexcept>
 
 namespace myvk {
 
-VkTexture::VkTexture(Texture* texture, TextureFilter filter) 
+VkTexture::VkTexture(
+	const uint8_t* pixels, 
+    uint32_t width, uint32_t height,
+    uint32_t channels, 
+    TextureFilter filter) : device(Device::instance()), imageWidth(width), imageHeight(height), channels(channels)
 {
-	create(texture, filter);
+	createTexture(pixels, channels, filter);
 };
 
 int GetBytesPerTexFormat(VkFormat Format)
@@ -41,226 +47,33 @@ int GetBytesPerTexFormat(VkFormat Format)
 	return 0;
 }
 
-bool HasStencilComponent(VkFormat Format)
-{
-	return ((Format == VK_FORMAT_D32_SFLOAT_S8_UINT) || 
-		    (Format == VK_FORMAT_D24_UNORM_S8_UINT));
-}
-
-void VkTexture::create(Texture* texture, TextureFilter filter) 
-{
-	imageWidth  = texture->width;
-	imageHeight = texture->height;
-	imageChannels = texture->channels;
-	filter = filter;
-	channels = (TextureChannels)texture->channels;
-
-	createTexture(texture);
-}
-
 VkTexture::~VkTexture() {
 	device.free<VkTexture>(this);
 }
 
-// Copied from the "3D Graphics Rendering Cookbook"
-void VkTexture::imageMemBarrier(
-	VkImage image,
-	VkFormat format,
-
-	VkCommandBuffer CmdBuf, 
-	VkImageLayout OldLayout, 
-	VkImageLayout NewLayout, 
-	int layerCount)
-{
-	VkImageMemoryBarrier Barrier = {
-		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-		.pNext = NULL,
-		.srcAccessMask = 0,
-		.dstAccessMask = 0,
-		.oldLayout = OldLayout,
-		.newLayout = NewLayout,
-		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-		.image = image,
-		.subresourceRange = VkImageSubresourceRange {
-			.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-			.baseMipLevel = 0,
-			.levelCount = 1,
-			.baseArrayLayer = 0,
-			.layerCount = (uint32_t)layerCount
-		}
-	};
-
-	VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_NONE;
-	VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_NONE;
-
-	if (NewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ||
-		(format == VK_FORMAT_D16_UNORM) ||
-		(format == VK_FORMAT_X8_D24_UNORM_PACK32) ||
-		(format == VK_FORMAT_D32_SFLOAT) ||
-		(format ==  VK_FORMAT_S8_UINT) ||
-		(format == VK_FORMAT_D16_UNORM_S8_UINT) ||
-		(format == VK_FORMAT_D24_UNORM_S8_UINT))
-	{
-		Barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-		if (HasStencilComponent(format)) {
-			Barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-		}
-	}
-	else {
-		Barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	}
-
-	if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-		Barrier.srcAccessMask = 0;
-		Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
-	else if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_GENERAL) {
-		Barrier.srcAccessMask = 0;
-		Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
-
-	if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && 
-		NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-		Barrier.srcAccessMask = 0;
-		Barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	} /* Convert back from read-only to updateable */
-	else if (OldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-		Barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		Barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	} /* Convert from updateable Texture to shader read-only */
-	else if (OldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && 
-		     NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-		Barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	} /* Convert depth Texture from undefined state to depth-stencil buffer */
-	else if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
-		Barrier.srcAccessMask = 0;
-		Barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	} /* Wait for render pass to complete */
-	else if (OldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-		Barrier.srcAccessMask = 0; // VK_ACCESS_SHADER_READ_BIT;
-		Barrier.dstAccessMask = 0;
-		/*
-				sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		///		destinationStage = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-				destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		*/
-		sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	} /* Convert back from read-only to color attachment */
-	else if (OldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-		Barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		Barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	} /* Convert from updateable Texture to shader read-only */
-	else if (OldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-		Barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	} /* Convert back from read-only to depth attachment */
-	else if (OldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
-		Barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		Barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	} /* Convert from updateable depth Texture to shader read-only */
-	else if (OldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-		Barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
-	else if (OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-		Barrier.srcAccessMask = 0;
-		Barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	} 
-	else if (OldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
-		Barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		Barrier.dstAccessMask = 0;
-
-		sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		destinationStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	}
-	else {
-		printf("Unknown Barrier case\n");
-		exit(1);
-	}
-
-	vkCmdPipelineBarrier(CmdBuf, sourceStage, destinationStage, 
-		                 0, 0, NULL, 0, NULL, 1, &Barrier);
-}
-
-void VkTexture::transitionImageLayout(
-	Device& device, 
-	VkImage image,
-    VkFormat format,
-	VkImageLayout oldLayout, 
-	VkImageLayout newLayout, 
-	int layerCount)
-{
-    VkCommandBuffer m_copyCmdBuf = device.beginSingleTimeCommands();
-
-	imageMemBarrier(image, format, m_copyCmdBuf, oldLayout, newLayout, layerCount);
-
-	device.endSingleTimeCommands(m_copyCmdBuf);
-}
-
-void VkTexture::createTexture(Texture* texture) {
-	if(channels == TextureChannels::RGBA) 
+void VkTexture::createTexture(const uint8_t* pixels, uint32_t channels, TextureFilter filter) {
+	if(channels == 4) 
 	{
 		format = VK_FORMAT_R8G8B8A8_SRGB;
 	} 
-	else if(channels == TextureChannels::RGB) 
+	else if(channels == 3) 
 	{
 		format = VK_FORMAT_R8G8B8_SRGB;
 	}
-	else if(channels == TextureChannels::Grayscale) 
-	{
-		format = VK_FORMAT_R8_UNORM;
-	}
-	else if (channels == TextureChannels::GrayscaleAlpha) 
+	else if (channels == 2) 
 	{
 		format = VK_FORMAT_R8G8_UNORM;
 	}
-	createTextureFromData(texture->raw());
-}
-
-void VkTexture::createTextureFromData(const void* pPixels)
-{
+	else if(channels == 1) 
+	{
+		format = VK_FORMAT_R8_UNORM;
+	}
+	
 	// Step #1: create the image object and populate it with pixels
 	createImage();
 
 	int LayerCount = isCubemap ? 6 : 1;
-	updateTextureImage(LayerCount, pPixels);
+	updateTextureImage(LayerCount, pixels);
 
 	// Step #2: create the image view
 	VkImageAspectFlags AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -279,7 +92,7 @@ void VkTexture::createTextureFromData(const void* pPixels)
 	VkSamplerAddressMode AddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
 	// Step #3: create the Texture sampler
-	createTextureSampler(device, sampler, MinFilter, MaxFilter, AddressMode);
+	createTextureSampler(sampler, MinFilter, MaxFilter, AddressMode);
 }
 
 void VkTexture::createImage()
@@ -333,14 +146,14 @@ void VkTexture::updateTextureImage(int layerCount, const void* pPixels)
 	stagingBuffer.writeToBuffer(pPixels, imageSize);
 	stagingBuffer.unmap();
 
-	transitionImageLayout(device, image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layerCount);
+	device.transitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layerCount);
 
 	device.copyBufferToImage(stagingBuffer.getBuffer(), image, imageWidth, imageHeight, layerCount);
 	
-	transitionImageLayout(device, image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, layerCount);
+	device.transitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, layerCount);
 }
 
-void VkTexture::createTextureSampler(Device& device, VkSampler& sampler, VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)
+void VkTexture::createTextureSampler(VkSampler& sampler, VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)
 {
 	VkSamplerCreateInfo SamplerInfo = {
 		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -387,7 +200,7 @@ void VkTexture::createImageView(VkImageAspectFlags AspectFlags)
 	};
 
 	// Managing image view channels //
-	if(channels == TextureChannels::RGBA || channels == TextureChannels::RGB) {
+	if(channels == 4 || channels == 3) {
 		viewInfo.components = {
 			.r = VK_COMPONENT_SWIZZLE_IDENTITY,
 			.g = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -395,7 +208,7 @@ void VkTexture::createImageView(VkImageAspectFlags AspectFlags)
 			.a = VK_COMPONENT_SWIZZLE_IDENTITY
 		};
 	}
-	else if(channels == TextureChannels::Grayscale) {
+	else if(channels == 1) {
 		viewInfo.components = {
 			.r = VK_COMPONENT_SWIZZLE_ONE,
 			.g = VK_COMPONENT_SWIZZLE_ONE,
@@ -403,7 +216,7 @@ void VkTexture::createImageView(VkImageAspectFlags AspectFlags)
 			.a = VK_COMPONENT_SWIZZLE_R
 		};
 	}
-	else if(channels == TextureChannels::GrayscaleAlpha) {
+	else if(channels == 2) {
 		viewInfo.components = {
 			.r = VK_COMPONENT_SWIZZLE_R,
 			.g = VK_COMPONENT_SWIZZLE_R,

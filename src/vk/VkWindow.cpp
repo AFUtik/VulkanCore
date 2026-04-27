@@ -1,4 +1,5 @@
-#include "VkWindow.hpp"
+#include "vk/VkWindow.hpp"
+#include "window/Window.hpp"
 
 #include <stdexcept>
 

@@ -1,5 +1,6 @@
-#include "Pipeline.hpp"
-#include "Mesh.hpp"
+#include "vk/Pipeline.hpp"
+#include "vk/Device.hpp"
+#include "vk/Mesh.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -7,10 +8,9 @@
 
 namespace myvk {
 	Pipeline::Pipeline(
-		Device& device,
 		const std::string& vertFilepath,
 		const std::string& fragFilepath,
-		const PipelineConfigInfo& configInfo) : device(device)
+		const PipelineConfigInfo& configInfo) : device(Device::instance())
 	{
 		createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
 	}

@@ -2,8 +2,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include "../window/Window.hpp"
-
 namespace myvk {
 
 struct VkWindow {

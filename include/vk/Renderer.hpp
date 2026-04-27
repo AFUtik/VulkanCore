@@ -1,18 +1,22 @@
 #pragma once
 
-#include "../window/Window.hpp"
-
-#include "Device.hpp"
-#include "Pipeline.hpp"
-#include "Swapchain.hpp"
-#include "Descriptors.hpp"
 #include "FrameInfo.hpp"
 
 #include <memory>
 #include <vector>
 #include <cassert>
 
+struct VkRenderPass_T;
+using VkRenderPass = VkRenderPass_T*;
+
+class Window;
+
 namespace myvk {
+	class SwapChain;
+	class DescriptorPoolManager;
+
+	struct Device;
+
 	class Renderer {
 	public:
 		Renderer();
@@ -21,7 +25,7 @@ namespace myvk {
 		Renderer(const Renderer&) = delete;
 		Renderer& operator=(const Renderer&) = delete;
 
-		VkRenderPass getSwapChainRenderPass() { return swapchain->getRenderPass(); }
+		VkRenderPass getSwapChainRenderPass();
 		bool isFrameInProgress() const { return isFrameStarted; }
 
 		DescriptorPoolManager* getDescriptorPool() { return descriptorPoolManager.get(); }
@@ -49,8 +53,8 @@ namespace myvk {
 		void recreateSwapChain();
 		void freeCommandBuffers();
 
-		Window& window = Window::instance();
-		Device& device = Device::instance();
+		Device& device;
+		Window& window;
 
 		FrameInfo frame;
 

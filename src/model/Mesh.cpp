@@ -1,4 +1,4 @@
-#include "Mesh.hpp"
+#include "model/Mesh.hpp"
 
 /*
 TextMesh::TextMesh(Text* text, Font* font) : Mesh(512), text(text), font(font) {

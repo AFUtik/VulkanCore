@@ -1,10 +1,7 @@
-#include "RenderSystem.hpp"
-
-#include "../vk/Renderer.hpp"
-#include "../vk/FrameInfo.hpp"
-#include "../vk/Pipeline.hpp"
-#include "../vk/RenderTarget.hpp"
-#include "vulkan/vulkan_core.h"
+#include "vk/RenderSystem.hpp"
+#include "vk/Device.hpp"
+#include "vk/Renderer.hpp"
+#include "vk/Pipeline.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -15,7 +12,7 @@
 
 namespace myvk {
 
-RenderSystem::RenderSystem(Renderer& renderer) : descriptorPool(renderer.getDescriptorPool()) {}
+RenderSystem::RenderSystem(Renderer& renderer) : device(Device::instance()), descriptorPool(renderer.getDescriptorPool()) {}
 
 RenderSystem::~RenderSystem() {
 	vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
@@ -38,7 +35,6 @@ void RenderSystem::createPipeline(VkRenderPass renderPass ,PipelineConfigInfo& p
 	pipelineConfig.renderPass     = renderPass;
 	pipelineConfig.pipelineLayout = pipelineLayout;
 	pipeline = std::make_unique<Pipeline>(
-		device,
 		"C:/cplusplus/VulkanRender/VulkanRender/resources/shaders/shader.vert.spv",
 		"C:/cplusplus/VulkanRender/VulkanRender/resources/shaders/shader.frag.spv",
 		pipelineConfig);

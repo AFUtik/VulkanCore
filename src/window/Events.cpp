@@ -1,5 +1,5 @@
-#include "Events.hpp"
-#include "Window.hpp"
+#include "window/Events.hpp"
+#include "window/Window.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>

@@ -1,12 +1,20 @@
-#include "RenderTarget.hpp"
-#include "FrameInfo.hpp"
-#include "RenderSystem.hpp"
+#include "vk/RenderTarget.hpp"
+#include "vk/Device.hpp"
+#include "vk/Swapchain.hpp"
+#include "vk/VkTexture.hpp"
+#include "vk/Descriptors.hpp"
+#include "vk/FrameInfo.hpp"
+#include "vk/Material.hpp"
+#include "vk/RenderSystem.hpp"
 
 #include <array>
-#include <memory>
+#include <stdexcept>
 
 namespace myvk {
-    RenderTarget::RenderTarget(SwapChain* swapchain, VkExtent2D extent) : extentTarget(extent) {
+    RenderTarget::RenderTarget(SwapChain* swapchain, VkExtent2D extent) : 
+        device(Device::instance()),
+        extentTarget(extent) 
+    {
         imageFormat = swapchain->getSwapChainImageFormat();
         
         createImages();
@@ -49,12 +57,29 @@ namespace myvk {
             screenTextures[i] = std::make_unique<Material>();
             screenTextures[i]->setRenderSystem(system);
 
-            VkTexture::createTextureSampler(
-                device, 
-                screenSamplers[i],
-                VK_FILTER_NEAREST,
-                VK_FILTER_NEAREST,
-                VK_SAMPLER_ADDRESS_MODE_REPEAT);
+            VkSamplerCreateInfo SamplerInfo = {
+                .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+                .pNext = nullptr,
+                .flags = 0,
+                .magFilter = VK_FILTER_NEAREST,
+                .minFilter = VK_FILTER_NEAREST,
+                .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+                .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                .mipLodBias = 0.0f,
+                .anisotropyEnable = VK_FALSE,
+                .maxAnisotropy = 1,
+                .compareEnable = VK_FALSE,
+                .compareOp = VK_COMPARE_OP_ALWAYS,
+                .minLod = 0.0f,
+                .maxLod = 0.0f,
+                .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+                .unnormalizedCoordinates = VK_FALSE
+            };
+            if(vkCreateSampler(device.device(), &SamplerInfo, VK_NULL_HANDLE, &screenSamplers[i]) != VK_SUCCESS) {
+                throw std::runtime_error("Failed to create image sampler");
+            } 
             
             VkDescriptorImageInfo imageInfo;
             imageInfo.sampler   = screenSamplers[i];
@@ -264,7 +289,7 @@ namespace myvk {
     }
     
     void RenderTarget::beginRenderPass(FrameInfo& frame) {
-        VkTexture::imageMemBarrier(
+        device.imageMemBarrier(
             images[frame.frameIndex], 
             imageFormat, 
             frame.commandBuffer, 

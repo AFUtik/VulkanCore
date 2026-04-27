@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Device.hpp"
-
+#include <vulkan/vulkan.h>
 
 #include <vector>
 #include <string>
 
 namespace myvk {
+	class Device;
+
 	struct PipelineConfigInfo {
 		VkPipelineViewportStateCreateInfo viewportInfo;
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
@@ -25,10 +26,10 @@ namespace myvk {
 	class Pipeline {
 	public:
 		Pipeline(
-			Device& device,
 			const std::string& vertFilepath,
 			const std::string& fragFilepath,
 			const PipelineConfigInfo &configInfo);
+
 		~Pipeline();
 
 		void bind(VkCommandBuffer commandBuffer);

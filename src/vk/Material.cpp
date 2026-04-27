@@ -1,7 +1,7 @@
-#include "Material.hpp"
-
-#include "Renderer.hpp"
-#include "RenderSystem.hpp"
+#include "vk/Material.hpp"
+#include "vk/VkTexture.hpp"
+#include "vk/Descriptors.hpp"
+#include "vk/RenderSystem.hpp"
 
 namespace myvk {
 

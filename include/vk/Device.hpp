@@ -1,12 +1,11 @@
 #pragma once
 
 #include <vma/vk_mem_alloc.h>
+#include <vulkan/vulkan.h>
 
-#include <string>
 #include <vector>
 #include <deque>
 #include <functional>
-#include <mutex>
 
 namespace myvk {
     struct DeletionQueue
@@ -108,6 +107,21 @@ namespace myvk {
             VkMemoryPropertyFlags properties,
             VkImage& image,
             VmaAllocation& allocation);
+
+        void imageMemBarrier(
+            VkImage image,
+            VkFormat format,
+            VkCommandBuffer CmdBuf,
+            VkImageLayout OldLayout, 
+            VkImageLayout NewLayout, 
+            int layerCount);
+            
+        void transitionImageLayout(
+            VkImage image,
+            VkFormat format,
+            VkImageLayout OldLayout, 
+            VkImageLayout NewLayout, 
+            int LayerCount);
             
         void createDeletionQueues(uint64_t amount);
             

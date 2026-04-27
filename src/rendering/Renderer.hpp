@@ -4,8 +4,8 @@
 
 #include "PlanetRenderer.hpp"
 
-#include "../vk/Renderer.hpp"
-#include "../vk/RenderTarget.hpp"
+#include "vk/Renderer.hpp"
+#include "vk/RenderTarget.hpp"
 
 #include "RenderState.hpp"
 #include "RenderQueue.hpp"

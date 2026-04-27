@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Device.hpp"
-#include "Swapchain.hpp"
+#include <vulkan/vulkan.h>
+#include <vma/vk_mem_alloc.h>
 
 namespace myvk {
+
+class Device;
 
 class Buffer {
 public:
@@ -47,7 +49,7 @@ private:
     Device& device;
     void* mapped = nullptr;
     VkBuffer buffer = VK_NULL_HANDLE;
-    VmaAllocation vmaAllocation; // VMA ALLOCATOR
+    VmaAllocation vmaAllocation;
 
     VkDeviceSize bufferSize;
     uint32_t instanceCount;

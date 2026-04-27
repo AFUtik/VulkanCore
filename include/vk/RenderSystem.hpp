@@ -1,18 +1,28 @@
 #pragma once
 
-#include "../vk/Mesh.hpp"
-#include "../vk/Material.hpp"
-#include "../vk/Pipeline.hpp"
-#include "../vk/FrameInfo.hpp"
-#include "../vk/Descriptors.hpp"
-
 #include <memory>
 #include <vector>
-#include <array>
+
+struct VkPipelineLayout_T;
+using VkPipelineLayout = VkPipelineLayout_T*;
+
+struct VkRenderPass_T;
+using VkRenderPass = VkRenderPass_T*;
+
+struct VkDescriptorSetLayout_T;
+using VkDescriptorSetLayout = VkDescriptorSetLayout_T*;
 
 namespace myvk {
+	class Device;
+
 	class Renderer;
 	class RenderTarget;
+
+	class DescriptorPoolManager;
+	class DescriptorSetLayout;
+
+	struct PipelineConfigInfo;
+	class  Pipeline;
 
 	class RenderSystem {
 	public:
@@ -31,12 +41,12 @@ namespace myvk {
 	protected:
 		void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts);
 		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
-
-		Device& device = Device::instance();
+		
+		DescriptorPoolManager* descriptorPool;
 
 		std::unique_ptr<Pipeline> pipeline;
 		VkPipelineLayout pipelineLayout;
-
-		DescriptorPoolManager* descriptorPool;
+		
+		Device& device;
 	};
 }

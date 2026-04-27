@@ -1,7 +1,7 @@
 #include "Renderer.hpp"
 #include "../Camera.hpp"
 
-#include "../model/Mesh.hpp"
+#include "model/Mesh.hpp"
 #include "PlanetRenderer.hpp"
 
 Renderer::Renderer()

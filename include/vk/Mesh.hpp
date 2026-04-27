@@ -1,16 +1,17 @@
 #pragma once
 
-#include "Buffer.hpp"
-#include "Device.hpp"
-#include "Scalar.hpp"
-
 #include "../model/Vertex.hpp"
 
-#include "management/ResourceManager.hpp"
-
 #include <span>
+#include <memory>
+#include <vector>
+
+#include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
 
 namespace myvk {
+
+class Buffer;
 
 enum MeshFlags {
 	CPUMemory               = 1 << 0,
@@ -32,7 +33,7 @@ enum RenderQueueFlags {
 };
 
 struct alignas(16) InstanceData {
-	Mat4 model = Mat4(1.0f);
+	glm::mat4 model = glm::mat4(1.0f);
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
 };
 
@@ -50,7 +51,7 @@ private:
 	uint32_t flags = GPUMemory | CPUMemoryInstanceBuffer | Solid | Opaque;
 public:
 	Mesh();
-	~Mesh() {};
+	~Mesh();
 
 	Mesh(const Mesh&) = delete;
 	Mesh& operator=(const Mesh&) = delete;
@@ -71,7 +72,7 @@ public:
 	static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
 };
 
-struct MeshResources : public ResourceManager<Mesh> {};
-using MeshHandle = MeshResources::ReferencedResource;
+//struct MeshResources : public ResourceManager<Mesh> {};
+//using MeshHandle = MeshResources::ReferencedResource;
 
 }

@@ -1,17 +1,21 @@
 #pragma once
 
-#include "Swapchain.hpp"
-#include "Descriptors.hpp"
-#include "Material.hpp"
+#include <vulkan/vulkan.h>
 
-#include <string>
 #include <vector>
 #include <memory>
 
+struct VmaAllocation_T;
+using VmaAllocation = VmaAllocation_T*;
+
 namespace myvk {
+    class Device;
+
     struct FrameInfo;
-    struct TextureView;
-    class RenderSystem;
+
+    class SwapChain;
+    class RenderSystem; 
+    class Material;
 
     struct RenderTarget {
         RenderTarget(SwapChain* swapchain, VkExtent2D extent);
@@ -40,7 +44,7 @@ namespace myvk {
 
         VkFormat findDepthFormat();
     
-        Device& device = Device::instance();
+        Device& device;
         
         VkRenderPass renderPass;
         VkExtent2D extentTarget;

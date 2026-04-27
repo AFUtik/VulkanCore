@@ -1,13 +1,15 @@
 #pragma once
- 
-#include "Device.hpp"
- 
+
 // std
 #include <memory>
 #include <unordered_map>
 #include <vector>
+
+#include <vulkan/vulkan.h>
  
 namespace myvk {
+
+class Device;
  
 class DescriptorSetLayout {
 public:
@@ -99,8 +101,8 @@ class DescriptorWriter {
   DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
   DescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo *imageInfo);
  
-  bool build(VkDescriptorSet &set);
-  void overwrite(VkDescriptorSet &set);
+  bool build(VkDescriptorSet& set);
+  void overwrite(VkDescriptorSet& set);
  
  private:
   DescriptorSetLayout &setLayout;

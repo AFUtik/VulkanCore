@@ -1,15 +1,17 @@
-#include "Renderer.hpp"
-#include "Swapchain.hpp"
-#include "Device.hpp"
-#include "VkWindow.hpp"
-#include "vulkan/vulkan_core.h"
+#include "vk/Renderer.hpp"
+#include "vk/Device.hpp"
+#include "vk/Descriptors.hpp"
+#include "vk/Swapchain.hpp"
+#include "vk/VkWindow.hpp"
 
 #include <stdexcept>
 #include <array>
 
-using namespace myvk;
+#include "window/Window.hpp"
 
-Renderer::Renderer() {
+namespace myvk {
+
+Renderer::Renderer() : device(Device::instance()), window(Window::instance()) {
 	recreateSwapChain();
 	createCommandBuffers();
 	descriptorPoolManager = DescriptorPoolManager::Builder(device)
@@ -22,6 +24,11 @@ Renderer::Renderer() {
 Renderer::~Renderer() {
 
 	freeCommandBuffers();
+}
+
+VkRenderPass Renderer::getSwapChainRenderPass() 
+{ 
+	return swapchain->getRenderPass(); 
 }
 
 void Renderer::createCommandBuffers() {
@@ -154,4 +161,6 @@ void Renderer::endSwapChainRenderPass() {
 	assert(isFrameStarted && "Can't call endSwapChainRenderPass while already in progress");
 	assert(frame.commandBuffer == getCurrentCommandBuffer() && "can't end render pass on command buffer from a different frame");
 	vkCmdEndRenderPass(frame.commandBuffer);
+}
+
 }

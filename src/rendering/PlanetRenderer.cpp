@@ -1,10 +1,13 @@
 #include "PlanetRenderer.hpp"
+#include "Renderer.hpp"
 
-#include "../Global.hpp"
-#include "../model/Mesh.hpp"
-#include "Color.hpp"
+#include "model/Mesh.hpp"
 #include "RenderQueue.hpp"
+
+#include "Color.hpp"
 #include <numbers>
+
+#include <glm/ext.hpp>
 
 PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer)
 {

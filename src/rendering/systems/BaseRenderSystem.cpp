@@ -1,9 +1,19 @@
 #include "BaseRenderSystem.hpp"
 
-#include "../../vk/Renderer.hpp"
-#include "../../vk/RenderTarget.hpp"
+#include "vk/Device.hpp"
+#include "vk/Buffer.hpp"
+#include "vk/Renderer.hpp"
+#include "vk/RenderTarget.hpp"
+#include "vk/Pipeline.hpp"
+#include "vk/Swapchain.hpp"
+#include "vk/Descriptors.hpp"
+#include "vk/VkTexture.hpp"
+#include "vk/Material.hpp"
+#include "vk/Mesh.hpp"
 
 #include "../RenderState.hpp"
+
+#include "texture/Texture.hpp"
 
 namespace myvk 
 {
@@ -35,6 +45,8 @@ BaseRenderSystem::BaseRenderSystem(Renderer& renderer, RenderTarget& target) : R
     
     createDefaultMaterial();
 }
+
+BaseRenderSystem::~BaseRenderSystem() = default;
 
 void BaseRenderSystem::createLayouts() 
 {
@@ -81,7 +93,11 @@ void BaseRenderSystem::createDefaultMaterial()
 
     Texture defaultTex(std::move(whitePixel), 1, 1, TextureChannels::RGBA);
     defaultMaterial->setRenderSystem(this);
-    defaultMaterial->setAlbedo(std::make_unique<myvk::VkTexture>(&defaultTex));
+    defaultMaterial->setAlbedo(
+		std::make_unique<myvk::VkTexture>(
+			defaultTex.raw(), defaultTex.width, defaultTex.height, defaultTex.height, TextureFilter::Nearest
+		)
+	);
 }
 
 Material* BaseRenderSystem::getDefaultMaterial()

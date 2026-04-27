@@ -1,14 +1,24 @@
 #pragma once
 
-#include "../../vk/RenderSystem.hpp"
+#include "vk/RenderSystem.hpp"
+
+#include <glm/glm.hpp>
 
 struct RenderState;
+
+struct VkDescriptorSet_T; 
+using VkDescriptorSet = VkDescriptorSet_T*;
 
 namespace myvk
 {
 
+class Buffer;
+
 class Renderer;
 class RenderTarget;
+
+class Material;
+class Mesh;
 
 struct Ubo {glm::mat4 projview{1.f};};
 
@@ -17,6 +27,8 @@ class BaseRenderSystem : public RenderSystem
 public: 
     BaseRenderSystem(Renderer& renderer);
     BaseRenderSystem(Renderer& renderer, RenderTarget& target);
+
+    ~BaseRenderSystem();
 
 	Material* getDefaultMaterial();
 

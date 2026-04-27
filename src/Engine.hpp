@@ -1,17 +1,6 @@
 #pragma once
 
-#include "window/Events.hpp"
-#include "window/Window.hpp"
-
-#include "vk/Renderer.hpp"
-#include "vk/FrameInfo.hpp"
-#include "vk/Descriptors.hpp"
-#include "vk/Buffer.hpp"
-
 #include "Camera.hpp"
-
-#include <memory>
-#include <vector>
 
 class Engine {
 public:

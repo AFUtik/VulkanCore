@@ -1,12 +1,16 @@
 #pragma once
 
-#include "Device.hpp"
+#include <vulkan/vulkan.h> 
 
-#include <string>
 #include <vector>
 #include <memory>
 
+struct VmaAllocation_T;
+using VmaAllocation = VmaAllocation_T*;
+
 namespace myvk {
+    class Device;
+
     class SwapChain {
     public:
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
@@ -82,6 +86,6 @@ namespace myvk {
         std::vector<VkFence> imagesInFlight;
         size_t currentFrame = 0;
         
-        Device& device = Device::instance();
+        Device& device;
     };
 }  // namespace lve

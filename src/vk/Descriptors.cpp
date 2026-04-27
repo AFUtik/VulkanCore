@@ -1,4 +1,5 @@
-#include "Descriptors.hpp"
+#include "vk/Descriptors.hpp"
+#include "vk/Device.hpp"
 
 // std
 #include <cassert>
@@ -199,7 +200,7 @@ DescriptorWriter &DescriptorWriter::writeImage(uint32_t binding, VkDescriptorIma
   return *this;
 }
  
-bool DescriptorWriter::build(VkDescriptorSet &set) {
+bool DescriptorWriter::build(VkDescriptorSet& set) {
   bool success = poolManager.allocateDescriptor(setLayout.getDescriptorSetLayout(), set);
   if (!success) {
     return false;
@@ -208,7 +209,7 @@ bool DescriptorWriter::build(VkDescriptorSet &set) {
   return true;
 }
  
-void DescriptorWriter::overwrite(VkDescriptorSet &set) {
+void DescriptorWriter::overwrite(VkDescriptorSet& set) {
   for (auto &write : writes) {
     write.dstSet = set;
   }

@@ -1,12 +1,6 @@
-#include "Mesh.hpp"
-#include "Scalar.hpp"
-#include "glm/ext/matrix_transform.hpp"
-#include "vulkan/vulkan_core.h"
-
-#include <cmath>
-#include <cstdint>
-#include <stdexcept>
-#include <iostream>
+#include "vk/Mesh.hpp"
+#include "vk/Device.hpp"
+#include "vk/Buffer.hpp"
 
 inline uint32_t nextPow2(uint32_t v) {
     if (v == 0) return 1;
@@ -27,6 +21,8 @@ namespace myvk {
 		InstanceData data[1];
 		createInstanceBuffer(data);
 	}
+
+	Mesh::~Mesh() = default;
 
     void Mesh::createBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices) {
 		Device& device = Device::instance();
