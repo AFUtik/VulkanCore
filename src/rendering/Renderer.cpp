@@ -1,8 +1,9 @@
-#include "Renderer.hpp"
-#include "../Camera.hpp"
+#include "rendering/Renderer.hpp"
+#include "rendering/renderers/PlanetRenderer.hpp"
 
+#include "Camera.hpp"
 #include "model/Mesh.hpp"
-#include "PlanetRenderer.hpp"
+#include "vk/Mesh.hpp"
 
 Renderer::Renderer()
     : vkRenderer(), 
@@ -51,7 +52,8 @@ void Renderer::render(Camera& camera)
        vkPlanetRenderSystem.render(
             state,
             batch.mesh, 
-            batch.material);
+            batch.material,
+            batch.instances);
     }
     renderQueue.batchQueue.clear();
     
@@ -65,7 +67,8 @@ void Renderer::render(Camera& camera)
 	vkScreenRenderSystem.render(
         state,
 		&vkMeshScreen, 
-        vkRenderTarget.getFramebufferTexture(frame));
+        vkRenderTarget.getFramebufferTexture(frame),
+        { myvk::InstanceData{} });
 
 	vkRenderer.endSwapChainRenderPass();
 	vkRenderer.endFrame();

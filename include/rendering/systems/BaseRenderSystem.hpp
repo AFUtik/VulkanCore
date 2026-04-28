@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vk/Descriptors.hpp"
+#include "vk/Mesh.hpp"
 #include "vk/RenderSystem.hpp"
 
 #include <glm/glm.hpp>
@@ -20,7 +22,7 @@ class RenderTarget;
 class Material;
 class Mesh;
 
-struct Ubo {glm::mat4 projview{1.f};};
+struct GlobalUniformBuffer {glm::mat4 projview{1.f};};
 
 class BaseRenderSystem : public RenderSystem
 {
@@ -33,20 +35,28 @@ public:
 	Material* getDefaultMaterial();
 
     inline DescriptorSetLayout* getMaterialSetLayout() override {return materialSetLayout.get();}
-    void render(RenderState& state, Mesh* mesh, Material* mat);
+
+    void render(
+        RenderState& state, 
+        Mesh* mesh, 
+        Material* mat, 
+        const std::vector<myvk::InstanceData>& instances);
 private:
     void createLayouts();
     void createDefaultMaterial();
 
-    Ubo ubo;
+    GlobalUniformBuffer ubo;
+    
+    std::vector<VkDescriptorSet> descriptorSets;
+	std::vector<VkDescriptorSetLayout> layouts;
 
     std::unique_ptr<DescriptorSetLayout> setLayout;
 	std::unique_ptr<DescriptorSetLayout> materialSetLayout;
 
-	std::vector<VkDescriptorSet> descriptorSets;
-	std::vector<VkDescriptorSetLayout> layouts;
+	std::vector<std::unique_ptr<Buffer>> globalUniforms;
 
-	std::vector<std::unique_ptr<Buffer>> uniforms;
+    std::vector<std::unique_ptr<Buffer>> localInstanceSsbo;
+    std::vector<std::unique_ptr<Buffer>> stagingInstanceSsbo;
 
 	std::unique_ptr<Material> defaultMaterial;
 };

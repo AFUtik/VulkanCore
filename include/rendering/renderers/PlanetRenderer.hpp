@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RenderState.hpp"
+#include "../RenderState.hpp"
 
 #include "vk/Mesh.hpp"
 
@@ -15,4 +15,6 @@ struct PlanetRenderer
 private:
     Renderer& renderer;
     myvk::Mesh vkCircleMesh;
+
+    std::vector<myvk::InstanceData> instances;
 };

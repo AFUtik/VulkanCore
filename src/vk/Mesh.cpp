@@ -17,10 +17,7 @@ inline uint32_t nextPow2(uint32_t v) {
 }
 
 namespace myvk {
-	Mesh::Mesh() {
-		InstanceData data[1];
-		createInstanceBuffer(data);
-	}
+	Mesh::Mesh() {}
 
 	Mesh::~Mesh() = default;
 
@@ -194,92 +191,11 @@ namespace myvk {
 		}
 	}
 
-	void Mesh::createInstanceBuffer(std::span<InstanceData> instances) {
-		Device& device = Device::instance();
-
-		instanceCount = instances.size();
-		reservedInstanceBufferSize = nextPow2(instanceCount);
-
-		VkDeviceSize bufferSize = sizeof(instances[0]) * reservedInstanceBufferSize;
-		if(flags & MeshFlags::GPUMemoryInstanceBuffer) {
-				Buffer stagingBuffer(
-					device,
-					bufferSize,
-					1,
-					VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					VMA_MEMORY_USAGE_CPU_ONLY
-				);
-
-				stagingBuffer.map();
-				stagingBuffer.writeToBuffer(instances.data(), sizeof(instances[0]) * instanceCount);
-				stagingBuffer.unmap();
-
-				device.copyBuffer(
-					stagingBuffer.getBuffer(),
-					instanceBuffer->getBuffer(),
-					bufferSize
-				);
-		}
-		else 
-		{
-			instanceBuffer = std::make_unique<Buffer>(
-					device,
-					bufferSize,
-					1,
-					VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					VMA_MEMORY_USAGE_CPU_TO_GPU
-				);
-
-			instanceBuffer->map();
-			instanceBuffer->writeToBuffer(instances.data(), sizeof(instances[0]) * instanceCount);
-		}
-	}
-
-	void Mesh::updateInstanceBuffer(std::span<InstanceData> instances) 
-	{
-		Device& device = Device::instance();
-		instanceCount = instances.size();
-		
-		VkDeviceSize bufferSize = sizeof(instances[0]) * instanceCount;
-
-		if(instanceCount > reservedInstanceBufferSize) {
-			createInstanceBuffer(instances);
-			return;
-		}
-		else if(flags & MeshFlags::GPUMemoryInstanceBuffer)
-		{
-			Buffer stagingBuffer(
-				device,
-				bufferSize,
-				1,
-				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				VMA_MEMORY_USAGE_CPU_ONLY
-				);
-				
-			stagingBuffer.map();
-			stagingBuffer.writeToBuffer(instances.data(), bufferSize);
-			stagingBuffer.unmap();
-				
-			device.copyBuffer(
-				stagingBuffer.getBuffer(),
-				instanceBuffer->getBuffer(),
-				bufferSize
-			);
-		}
-		else 
-		{
-			instanceBuffer->writeToBuffer(instances.data(), bufferSize);
-		}
-	}
-
-	void Mesh::draw(VkCommandBuffer commandBuffer) const {
+	void Mesh::draw(VkCommandBuffer commandBuffer, size_t instanceCount) const {
 		// Bind Cmd
-		VkBuffer buffers[] = { vertexBuffer->getBuffer(), instanceBuffer->getBuffer() };
-		VkDeviceSize offsets[] = { 0, 0 };
-		vkCmdBindVertexBuffers(commandBuffer, 0, 2, buffers, offsets);
+		VkBuffer buffers[] = { vertexBuffer->getBuffer() };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 		if (indexBuffer) vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
 		// Draw Cmd 
@@ -291,22 +207,17 @@ namespace myvk {
 	}
 
 	std::vector<VkVertexInputBindingDescription> Mesh::getBindingDescriptions() {
-		std::vector<VkVertexInputBindingDescription> bindingDescriptions(2);
+		std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
 
 		bindingDescriptions[0].binding = 0;
 		bindingDescriptions[0].stride = sizeof(Vertex);
 		bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-		// Instance 
-		bindingDescriptions[1].binding = 1;
-		bindingDescriptions[1].stride = sizeof(InstanceData);
-		bindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-
 		return bindingDescriptions;
 	}
 
 	std::vector<VkVertexInputAttributeDescription> Mesh::getAttributeDescriptions() {
-		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(8);
+		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3);
 
 		size_t location = 0;
 		attributeDescriptions[0].binding = 0;
@@ -326,31 +237,6 @@ namespace myvk {
 		attributeDescriptions[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
 		attributeDescriptions[2].offset = offsetof(Vertex, r);
 		location++;
-
-		attributeDescriptions[3].binding = 1;
-		attributeDescriptions[3].location = 3;
-		attributeDescriptions[3].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-		attributeDescriptions[3].offset   = 0;
-
-		attributeDescriptions[4].binding = 1;
-		attributeDescriptions[4].location = 4;
-		attributeDescriptions[4].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-		attributeDescriptions[4].offset   = sizeof(glm::vec4);
-
-		attributeDescriptions[5].binding = 1;
-		attributeDescriptions[5].location = 5;
-		attributeDescriptions[5].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-		attributeDescriptions[5].offset   = sizeof(glm::vec4) * 2;
-
-		attributeDescriptions[6].binding = 1;
-		attributeDescriptions[6].location = 6;
-		attributeDescriptions[6].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-		attributeDescriptions[6].offset   = sizeof(glm::vec4) * 3;
-
-		attributeDescriptions[7].binding  = 1;
-		attributeDescriptions[7].location = 7;
-		attributeDescriptions[7].format   = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[7].offset   = sizeof(glm::vec4) * 4;
 
 		return attributeDescriptions;
 	}

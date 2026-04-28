@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <array>
 
+#include "vulkan/vulkan_core.h"
 #include "window/Window.hpp"
 
 namespace myvk {
@@ -15,9 +16,10 @@ Renderer::Renderer() : device(Device::instance()), window(Window::instance()) {
 	recreateSwapChain();
 	createCommandBuffers();
 	descriptorPoolManager = DescriptorPoolManager::Builder(device)
-		.setMaxSets(100)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 100)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100)
+		.setMaxSets(1024)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1024)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1)
 		.build();
 }
 

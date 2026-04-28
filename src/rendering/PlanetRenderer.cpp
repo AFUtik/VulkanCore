@@ -1,8 +1,8 @@
-#include "PlanetRenderer.hpp"
-#include "Renderer.hpp"
+#include "rendering/renderers/PlanetRenderer.hpp"
+#include "rendering/Renderer.hpp"
+#include "rendering/RenderQueue.hpp"
 
 #include "model/Mesh.hpp"
-#include "RenderQueue.hpp"
 
 #include "Color.hpp"
 #include <numbers>
@@ -30,14 +30,13 @@ PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer)
 		mesh.indices.push_back(i + 1);
 	}
 
-    myvk::InstanceData mats[16];
+    instances.resize(16);
 	for(int i = 0; i < 16; i++) {
-		mats[i].model = glm::translate(glm::mat4(1.0f), glm::vec3(i*100.0f, 0, 0));
-		mats[i].color = randomNiceColor();
+		instances[i].model = glm::translate(glm::mat4(1.0f), glm::vec3(i*100.0f, 0, 0));
+		instances[i].color = glm::vec4(randomNiceColor(), 1.0f);
 	}
 
 	vkCircleMesh.updateBuffers(mesh.vertices, mesh.indices);
-	vkCircleMesh.updateInstanceBuffer(mats);
 }
 
 void PlanetRenderer::submit(RenderQueue& queue)
@@ -45,7 +44,8 @@ void PlanetRenderer::submit(RenderQueue& queue)
     queue.batchQueue.push_back(
         {
             &vkCircleMesh,
-            renderer.vkPlanetRenderSystem.getDefaultMaterial()
+            renderer.vkPlanetRenderSystem.getDefaultMaterial(),
+			instances
         }
     );
 }

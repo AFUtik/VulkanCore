@@ -10,7 +10,7 @@ struct RenderBatch
 { 
     myvk::Mesh* mesh;
     myvk::Material* material;
-    //std::vector<myvk::InstanceData>& instances;
+    const std::vector<myvk::InstanceData> &instances;
 };
 
 struct RenderQueue

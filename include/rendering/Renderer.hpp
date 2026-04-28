@@ -1,8 +1,7 @@
 #pragma once 
 
+#include "renderers/PlanetRenderer.hpp"
 #include "systems/BaseRenderSystem.hpp"
-
-#include "PlanetRenderer.hpp"
 
 #include "vk/Renderer.hpp"
 #include "vk/RenderTarget.hpp"
