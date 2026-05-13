@@ -6,6 +6,7 @@
 #include "vk/FrameInfo.hpp"
 #include "vk/Material.hpp"
 #include "vk/RenderSystem.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <array>
 #include <stdexcept>
@@ -52,6 +53,7 @@ namespace myvk {
     void RenderTarget::createFramebufferTexture(RenderSystem* system) {
         screenTextures.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
         screenSamplers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+        
 
         for(int i = 0; i < images.size(); i++) {
             screenTextures[i] = std::make_unique<Material>();
@@ -289,14 +291,6 @@ namespace myvk {
     }
     
     void RenderTarget::beginRenderPass(FrameInfo& frame) {
-        device.imageMemBarrier(
-            images[frame.frameIndex], 
-            imageFormat, 
-            frame.commandBuffer, 
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
-            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 
-            1);
-
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass  = getRenderPass();

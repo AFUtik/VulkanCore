@@ -12,9 +12,9 @@
 #include "vk/Mesh.hpp"
 
 #include "rendering/RenderState.hpp"
+#include "rendering/RenderQueue.hpp"
 
 #include "texture/Texture.hpp"
-#include "vulkan/vulkan_core.h"
 
 namespace myvk 
 {
@@ -51,7 +51,7 @@ BaseRenderSystem::~BaseRenderSystem() = default;
 
 void BaseRenderSystem::createLayouts() 
 {
-	const size_t maxInstances = 2048;
+	const size_t maxInstances = 100000;
 
 	globalUniforms.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 	for(int i = 0; i < globalUniforms.size(); i++) {
@@ -71,23 +71,11 @@ void BaseRenderSystem::createLayouts()
 			device,
 			sizeof(myvk::InstanceData),
 			maxInstances,
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			VMA_MEMORY_USAGE_CPU_TO_GPU
 		);
 		stagingInstanceSsbo[i]->map();
-	}
-
-	localInstanceSsbo.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-	for (int i = 0; i < localInstanceSsbo.size(); i++) {
-		localInstanceSsbo[i] = std::make_unique<Buffer>(
-			device,
-			sizeof(myvk::InstanceData),
-			maxInstances,
-			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			VMA_MEMORY_USAGE_GPU_ONLY
-		);
 	}
 
 	setLayout = DescriptorSetLayout::Builder(device)
@@ -104,7 +92,7 @@ void BaseRenderSystem::createLayouts()
 	descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 	for(int i = 0; i < descriptorSets.size(); i++) {
 		auto bufferInfo = globalUniforms[i]->descriptorInfo();
-		auto instanceSsboInfo = localInstanceSsbo[i]->descriptorInfo();
+		auto instanceSsboInfo = stagingInstanceSsbo[i]->descriptorInfo();
 		DescriptorWriter(*setLayout, *descriptorPool)
 			.writeBuffer(0, &bufferInfo)
 			.writeBuffer(1, &instanceSsboInfo)
@@ -136,22 +124,11 @@ Material* BaseRenderSystem::getDefaultMaterial()
 	return defaultMaterial.get();
 }
 
-void BaseRenderSystem::render(
-	RenderState& state, 
-	Mesh* mesh, 
-	Material* mat, 
-	const std::vector<myvk::InstanceData>& instances) 
+void BaseRenderSystem::render(RenderState& state, RenderBatch& batch) 
 {
     auto& frame = state.frame;
 
-	const VkDeviceSize instanceSsboSize = sizeof(myvk::InstanceData) * instances.size();
-	stagingInstanceSsbo[frame.frameIndex]->writeToBuffer(instances.data(), instanceSsboSize);
-	device.copyBuffer(
-		stagingInstanceSsbo[frame.frameIndex]->getBuffer(),
-		localInstanceSsbo[frame.frameIndex]->getBuffer(),
-		instanceSsboSize
-	);
-
+	stagingInstanceSsbo[frame.frameIndex]->writeToBuffer(batch.instances, sizeof(myvk::InstanceData) * batch.instanceCount);
 	globalUniforms[frame.frameIndex]->writeToBuffer(&state.projview);
 
 	pipeline->bind(frame.commandBuffer);
@@ -166,8 +143,8 @@ void BaseRenderSystem::render(
 		0, nullptr
 	);
 	
-	mat->bind(frame.commandBuffer);
-	mesh->draw(frame.commandBuffer, instances.size());
+	batch.material->bind(frame.commandBuffer);
+	batch.mesh->draw(frame.commandBuffer, batch.instanceCount);
 }
 
 }

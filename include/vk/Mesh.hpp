@@ -52,6 +52,9 @@ public:
 	Mesh(const Mesh&) = delete;
 	Mesh& operator=(const Mesh&) = delete;
 
+	Mesh(Mesh&&) noexcept = default;
+    Mesh& operator=(Mesh&&) noexcept = default;
+
 	inline void setFlags(uint32_t flags)   {this->flags |= flags;}
 	inline void resetFlags(uint32_t flags) {this->flags  = flags;}
 	inline bool checkFlag(uint32_t flag) {return flags & flag;}

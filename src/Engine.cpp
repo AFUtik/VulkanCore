@@ -19,11 +19,16 @@
 
 #include <stb_image.h>
 
-#define WIDTH 1920
-#define HEIGHT 1080
+#include "game/PCManager.hpp"
+
+#define WIDTH 1720
+#define HEIGHT 880
 
 Engine::Engine() : camera(RENDER_WIDTH, RENDER_HEIGHT) 
 {
+	// Component Managers //
+	registerPlanetComponents();
+
 	Window::instance().init(WIDTH, HEIGHT, "Vulkan Engine");
 
 	Events::init();
@@ -106,7 +111,7 @@ void Engine::run() {
 		}
 		else {
 			double sleepTime = H - timeAccu;
-			std::this_thread::sleep_for(std::chrono::duration<double>(sleepTime));
+			//std::this_thread::sleep_for(std::chrono::duration<double>(sleepTime));
 		}
 		Events::pullEvents();
 	}

@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 struct RenderState;
+struct RenderBatch;
 
 struct VkDescriptorSet_T; 
 using VkDescriptorSet = VkDescriptorSet_T*;
@@ -36,12 +37,10 @@ public:
 
     inline DescriptorSetLayout* getMaterialSetLayout() override {return materialSetLayout.get();}
 
-    void render(
-        RenderState& state, 
-        Mesh* mesh, 
-        Material* mat, 
-        const std::vector<myvk::InstanceData>& instances);
-private:
+    void render(RenderState& state, RenderBatch& batch);
+protected:
+    BaseRenderSystem();
+    
     void createLayouts();
     void createDefaultMaterial();
 

@@ -146,11 +146,13 @@ void VkTexture::updateTextureImage(int layerCount, const void* pPixels)
 	stagingBuffer.writeToBuffer(pPixels, imageSize);
 	stagingBuffer.unmap();
 
-	device.transitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layerCount);
-
-	device.copyBufferToImage(stagingBuffer.getBuffer(), image, imageWidth, imageHeight, layerCount);
+	device.transitionImageLayout(image, format, imageLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layerCount);
 	
+	device.copyBufferToImage(stagingBuffer.getBuffer(), image, imageWidth, imageHeight, layerCount);
+
 	device.transitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, layerCount);
+
+	imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 void VkTexture::createTextureSampler(VkSampler& sampler, VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)

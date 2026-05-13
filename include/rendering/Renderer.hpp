@@ -2,6 +2,7 @@
 
 #include "renderers/PlanetRenderer.hpp"
 #include "systems/BaseRenderSystem.hpp"
+#include "systems/WireframeRenderSystem.hpp"
 
 #include "vk/Renderer.hpp"
 #include "vk/RenderTarget.hpp"
@@ -24,14 +25,19 @@ struct Renderer
 
     myvk::BaseRenderSystem vkScreenRenderSystem;
     myvk::BaseRenderSystem vkPlanetRenderSystem; 
+    myvk::WireframeRenderSystem vkWireframeRenderSystem;
 
     PlanetRenderer planetRenderer;
 
     RenderQueue renderQueue;
+    RenderQueue wireframeRenderQueue;
 
     myvk::Mesh vkMeshScreen;
 
     void render(Camera& camera);
+
+    RenderQueue& getRenderQueue() {return renderQueue;}
+    RenderQueue& getWireframeRenderQueue() {return wireframeRenderQueue;}
 private:
     void createVkMeshScreen();
 };

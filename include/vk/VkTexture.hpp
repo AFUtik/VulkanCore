@@ -1,5 +1,6 @@
 #pragma once
 
+#include "vulkan/vulkan_core.h"
 #include <vulkan/vulkan.h>
 
 struct VmaAllocation_T;
@@ -52,6 +53,7 @@ namespace myvk {
         VmaAllocation vmaAllocation  = VK_NULL_HANDLE;
         VkImageView view  = VK_NULL_HANDLE;
         VkSampler sampler  = VK_NULL_HANDLE;
+        VkImageLayout imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
         uint32_t imageWidth, imageHeight, channels;
         VkFormat format;

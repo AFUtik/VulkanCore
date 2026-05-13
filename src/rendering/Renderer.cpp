@@ -1,4 +1,5 @@
 #include "rendering/Renderer.hpp"
+#include "rendering/RenderQueue.hpp"
 #include "rendering/renderers/PlanetRenderer.hpp"
 
 #include "Camera.hpp"
@@ -10,6 +11,7 @@ Renderer::Renderer()
       vkRenderTarget(vkRenderer.getSwapChain(), {RENDER_WIDTH, RENDER_HEIGHT}),
       vkScreenRenderSystem(vkRenderer),
       vkPlanetRenderSystem(vkRenderer, vkRenderTarget),
+      vkWireframeRenderSystem(vkRenderer, vkRenderTarget),
       planetRenderer(*this)
 {
     vkRenderTarget.createFramebufferTexture(&vkScreenRenderSystem);
@@ -47,29 +49,23 @@ void Renderer::render(Camera& camera)
 	vkRenderTarget.beginRenderPass(frame);
 
     planetRenderer.submit(renderQueue);
-    for(RenderBatch& batch : renderQueue.batchQueue)
-    {
-       vkPlanetRenderSystem.render(
-            state,
-            batch.mesh, 
-            batch.material,
-            batch.instances);
-    }
+    for(RenderBatch& batch : renderQueue.batchQueue) vkPlanetRenderSystem.render(state, batch);
+    
     renderQueue.batchQueue.clear();
     
 	vkRenderTarget.endRenderPass(frame);
-		
     
 	// SwapChain Render //
 	vkRenderer.beginSwapChainRenderPass();
     
     state.projview = glm::mat4(1.0f);
-	vkScreenRenderSystem.render(
-        state,
-		&vkMeshScreen, 
+    myvk::InstanceData instance{};
+    RenderBatch screenBatch{
+        &vkMeshScreen, 
         vkRenderTarget.getFramebufferTexture(frame),
-        { myvk::InstanceData{} });
-
+        &instance,
+        1};
+	vkScreenRenderSystem.render(state, screenBatch);
 	vkRenderer.endSwapChainRenderPass();
 	vkRenderer.endFrame();
 }

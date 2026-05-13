@@ -16,7 +16,8 @@ struct InstanceData {
     mat4 model;
     vec4 color;
 };
-layout(std430,  binding = 1) buffer InstanceBuffer
+
+layout(set = 0, binding = 1, std430) readonly buffer InstanceBuffer
 {
 	InstanceData instances[];
 };

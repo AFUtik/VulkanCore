@@ -23,7 +23,7 @@ namespace myvk {
         oldSwapChain{ previous } 
     {
         init();
-        oldSwapChain = nullptr;
+        oldSwapChain.reset();
     }
 
 
@@ -108,7 +108,6 @@ namespace myvk {
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = buffers;
 
-        // ВАЖНО: сигналим семафор, привязанный к IMAGE, а не к FRAME
         VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[*imageIndex] };
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
