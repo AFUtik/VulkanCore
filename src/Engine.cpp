@@ -111,7 +111,7 @@ void Engine::run() {
 		}
 		else {
 			double sleepTime = H - timeAccu;
-			//std::this_thread::sleep_for(std::chrono::duration<double>(sleepTime));
+			std::this_thread::sleep_for(std::chrono::duration<double>(sleepTime));
 		}
 		Events::pullEvents();
 	}

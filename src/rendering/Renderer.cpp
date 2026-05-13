@@ -1,21 +1,38 @@
 #include "rendering/Renderer.hpp"
-#include "rendering/RenderQueue.hpp"
-#include "rendering/renderers/PlanetRenderer.hpp"
+#include "rendering/RenderState.hpp"
+
+#include "rendering/systems/BaseRenderSystem.hpp"
 
 #include "Camera.hpp"
 #include "model/Mesh.hpp"
+
 #include "vk/Mesh.hpp"
+#include "vk/Pipeline.hpp"
+#include "vulkan/vulkan_core.h"
 
 Renderer::Renderer()
     : vkRenderer(), 
       vkRenderTarget(vkRenderer.getSwapChain(), {RENDER_WIDTH, RENDER_HEIGHT}),
-      vkScreenRenderSystem(vkRenderer),
-      vkPlanetRenderSystem(vkRenderer, vkRenderTarget),
-      vkWireframeRenderSystem(vkRenderer, vkRenderTarget),
-      planetRenderer(*this)
+      planetRenderer(*this),
+      qtRenderer(*this)
 {
-    vkRenderTarget.createFramebufferTexture(&vkScreenRenderSystem);
+    vkScreenRenderSystem = std::make_unique<myvk::BaseRenderSystem>(vkRenderer);
+    vkPlanetRenderSystem = std::make_unique<myvk::BaseRenderSystem>(vkRenderer, vkRenderTarget);
+
+    myvk::PipelineConfigInfo config{};
+    myvk::Pipeline::defaultPipelineConfigInfo(config);
+    makeWireframeConfig(config);
+
+    vkWireframeRenderSystem = std::make_unique<myvk::BaseRenderSystem>(vkRenderer, vkRenderTarget, config);
+
+    vkRenderTarget.createFramebufferTexture(vkScreenRenderSystem.get());
     createVkMeshScreen();
+}
+
+void Renderer::makeWireframeConfig(myvk::PipelineConfigInfo& config)
+{
+    config.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    config.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 }
 
 void Renderer::createVkMeshScreen()
@@ -46,14 +63,19 @@ void Renderer::render(Camera& camera)
     };
 			
     // BaseRenderSystem //
-	vkRenderTarget.beginRenderPass(frame);
+	vkRenderTarget.beginRenderPass(frame); // the begin of target's pass
 
+    // Planet Renderer
     planetRenderer.submit(renderQueue);
-    for(RenderBatch& batch : renderQueue.batchQueue) vkPlanetRenderSystem.render(state, batch);
-    
+    for(RenderBatch& batch : renderQueue.batchQueue) vkPlanetRenderSystem->render(state, batch);
     renderQueue.batchQueue.clear();
     
-	vkRenderTarget.endRenderPass(frame);
+    // QuadTree Renderer 
+    qtRenderer.submit(wireframeRenderQueue);
+    for(RenderBatch& batch : wireframeRenderQueue.batchQueue) vkWireframeRenderSystem->render(state, batch);
+    wireframeRenderQueue.batchQueue.clear();
+
+	vkRenderTarget.endRenderPass(frame); // the end of target's pass
     
 	// SwapChain Render //
 	vkRenderer.beginSwapChainRenderPass();
@@ -65,7 +87,9 @@ void Renderer::render(Camera& camera)
         vkRenderTarget.getFramebufferTexture(frame),
         &instance,
         1};
-	vkScreenRenderSystem.render(state, screenBatch);
+	vkScreenRenderSystem->render(state, screenBatch);
 	vkRenderer.endSwapChainRenderPass();
 	vkRenderer.endFrame();
 }
+
+Renderer::~Renderer() = default;

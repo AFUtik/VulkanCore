@@ -9,12 +9,13 @@ struct GameContext
 {
     using PCM  = PlanetComponentManager;
     using QT   = QuadTree<u32, glm::dvec2, double, glm::dvec2>;
-    using AABB = AABB2D<double, glm::dvec2>;
+    using AABB = QT::AABB;
 
-    PCM& pcManager;
+    
 
     AABB bounds = {-1000.0f, -1000.0f, 1000.0f, 1000.0f};
-    
+
+    PCM& pcManager;
     QT qt;
 
     const double tickPhysicsPerSecond = 20.0;

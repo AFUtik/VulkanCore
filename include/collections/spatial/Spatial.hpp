@@ -54,8 +54,11 @@ struct AABB2D {
     }
 
     Vec2 center() const noexcept {
-        return { (minX + maxX) * Float(0.5), (minY + maxY) * Float(0.5) };
-    }
+    return {
+        (minX + maxX) * Float(0.5),
+        (minY + maxY) * Float(0.5)
+    };
+}
 
     Float minDist2(Vec2 p) const noexcept {
         Float dx = std::max({ minX - p.x, Float(0), p.x - maxX });

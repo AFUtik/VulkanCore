@@ -21,6 +21,9 @@ namespace myvk {
 
 	Mesh::~Mesh() = default;
 
+	Mesh::Mesh(Mesh&&) noexcept = default;
+	Mesh& Mesh::operator=(Mesh&&) noexcept = default;
+
     void Mesh::createBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices) {
 		Device& device = Device::instance();
 

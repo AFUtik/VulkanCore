@@ -1,5 +1,6 @@
 #include "rendering/renderers/PlanetRenderer.hpp"
-#include "glm/ext/matrix_transform.hpp"
+#include "rendering/systems/BaseRenderSystem.hpp"
+
 #include "rendering/Renderer.hpp"
 #include "rendering/RenderQueue.hpp"
 
@@ -11,6 +12,7 @@
 #include <numbers>
 
 #include <glm/ext.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM::instance())
 {
@@ -40,8 +42,8 @@ PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM
 	static std::random_device rd;
     static std::mt19937 gen(rd());
 
-    std::uniform_real_distribution<double> distX(-10000.0, 10000.0);
-    std::uniform_real_distribution<double> distY(-10000.0, 10000.0);
+    std::uniform_real_distribution<double> distX(-1000.0, 1000.0);
+    std::uniform_real_distribution<double> distY(-1000.0, 1000.0);
 	std::uniform_real_distribution<float> distRadius(0.2, 1.0);
 
 	const size_t AMOUNT = 256;
@@ -80,7 +82,7 @@ void PlanetRenderer::submit(RenderQueue& queue)
     queue.batchQueue.push_back(
         {
             &vkCircleMesh,
-            renderer.vkPlanetRenderSystem.getDefaultMaterial(),
+            renderer.vkPlanetRenderSystem->getDefaultMaterial(),
 			instances.data(),
 			static_cast<u32>(pcm.size())
         }

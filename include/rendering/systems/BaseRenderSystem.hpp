@@ -1,7 +1,6 @@
 #pragma once
 
 #include "vk/Descriptors.hpp"
-#include "vk/Mesh.hpp"
 #include "vk/RenderSystem.hpp"
 
 #include <glm/glm.hpp>
@@ -23,6 +22,8 @@ class RenderTarget;
 class Material;
 class Mesh;
 
+struct PipelineConfigInfo;
+
 struct GlobalUniformBuffer {glm::mat4 projview{1.f};};
 
 class BaseRenderSystem : public RenderSystem
@@ -30,6 +31,9 @@ class BaseRenderSystem : public RenderSystem
 public: 
     BaseRenderSystem(Renderer& renderer);
     BaseRenderSystem(Renderer& renderer, RenderTarget& target);
+
+    BaseRenderSystem(Renderer& renderer, PipelineConfigInfo& config);
+    BaseRenderSystem(Renderer& renderer, RenderTarget& target, PipelineConfigInfo& config);
 
     ~BaseRenderSystem();
 
@@ -39,8 +43,6 @@ public:
 
     void render(RenderState& state, RenderBatch& batch);
 protected:
-    BaseRenderSystem();
-    
     void createLayouts();
     void createDefaultMaterial();
 

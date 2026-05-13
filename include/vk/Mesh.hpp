@@ -49,11 +49,11 @@ public:
 	Mesh();
 	~Mesh();
 
-	Mesh(const Mesh&) = delete;
-	Mesh& operator=(const Mesh&) = delete;
+	Mesh(Mesh&&) noexcept;
+    Mesh& operator=(Mesh&&) noexcept;
 
-	Mesh(Mesh&&) noexcept = default;
-    Mesh& operator=(Mesh&&) noexcept = default;
+    Mesh(const Mesh&) = delete;
+    Mesh& operator=(const Mesh&) = delete;
 
 	inline void setFlags(uint32_t flags)   {this->flags |= flags;}
 	inline void resetFlags(uint32_t flags) {this->flags  = flags;}

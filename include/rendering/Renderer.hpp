@@ -1,13 +1,12 @@
 #pragma once 
 
 #include "renderers/PlanetRenderer.hpp"
-#include "systems/BaseRenderSystem.hpp"
-#include "systems/WireframeRenderSystem.hpp"
+#include "renderers/QuadTreeRenderer.hpp"
 
+#include "vk/Pipeline.hpp"
 #include "vk/Renderer.hpp"
 #include "vk/RenderTarget.hpp"
 
-#include "RenderState.hpp"
 #include "RenderQueue.hpp"
 
 #define RENDER_WIDTH 320
@@ -15,19 +14,26 @@
 
 struct Camera;
 
+namespace myvk
+{
+    struct PipelineConfigInfo;
+    struct BaseRenderSystem;
+}
+
 struct Renderer 
 {
     Renderer();
-    ~Renderer() {};
+    ~Renderer();
 
     myvk::Renderer vkRenderer;
     myvk::RenderTarget vkRenderTarget;
 
-    myvk::BaseRenderSystem vkScreenRenderSystem;
-    myvk::BaseRenderSystem vkPlanetRenderSystem; 
-    myvk::WireframeRenderSystem vkWireframeRenderSystem;
+    std::unique_ptr<myvk::BaseRenderSystem> vkScreenRenderSystem;
+    std::unique_ptr<myvk::BaseRenderSystem> vkPlanetRenderSystem; 
+    std::unique_ptr<myvk::BaseRenderSystem> vkWireframeRenderSystem;
 
     PlanetRenderer planetRenderer;
+    QuadTreeRenderer qtRenderer;
 
     RenderQueue renderQueue;
     RenderQueue wireframeRenderQueue;
@@ -39,5 +45,7 @@ struct Renderer
     RenderQueue& getRenderQueue() {return renderQueue;}
     RenderQueue& getWireframeRenderQueue() {return wireframeRenderQueue;}
 private:
+    void makeWireframeConfig(myvk::PipelineConfigInfo& config);
+
     void createVkMeshScreen();
 };

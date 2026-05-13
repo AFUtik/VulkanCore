@@ -2,6 +2,7 @@
 
 #include "vk/Device.hpp"
 #include "vk/Buffer.hpp"
+#include "vk/RenderSystem.hpp"
 #include "vk/Renderer.hpp"
 #include "vk/RenderTarget.hpp"
 #include "vk/Pipeline.hpp"
@@ -19,9 +20,31 @@
 namespace myvk 
 {
 
-BaseRenderSystem::BaseRenderSystem(Renderer& renderer) : RenderSystem(renderer) 
+BaseRenderSystem::BaseRenderSystem(Renderer& renderer, PipelineConfigInfo& config) : RenderSystem(renderer) 
 {
     createLayouts();
+
+    createPipelineLayout(layouts);
+
+	createPipeline(renderer.getSwapChainRenderPass(), config);
+
+    createDefaultMaterial();
+}
+
+BaseRenderSystem::BaseRenderSystem(Renderer& renderer, RenderTarget& target, PipelineConfigInfo& config) : RenderSystem(renderer)
+{
+    createLayouts();
+
+    createPipelineLayout(layouts);
+
+	createPipeline(target.getRenderPass(), config);
+    
+    createDefaultMaterial();
+}
+
+BaseRenderSystem::BaseRenderSystem(Renderer& renderer) : RenderSystem(renderer)
+{
+	createLayouts();
 
     createPipelineLayout(layouts);
 
@@ -29,13 +52,13 @@ BaseRenderSystem::BaseRenderSystem(Renderer& renderer) : RenderSystem(renderer)
 	Pipeline::defaultPipelineConfigInfo(config);
 
 	createPipeline(renderer.getSwapChainRenderPass(), config);
-
+    
     createDefaultMaterial();
 }
 
 BaseRenderSystem::BaseRenderSystem(Renderer& renderer, RenderTarget& target) : RenderSystem(renderer)
 {
-    createLayouts();
+	createLayouts();
 
     createPipelineLayout(layouts);
 
