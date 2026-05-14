@@ -17,6 +17,6 @@ private:
     Renderer& renderer;
     const GameContext::QT& quadTree;
 
-    std::vector<myvk::Mesh> quads;
-    std::vector<std::vector<myvk::InstanceData>> quadInstances;
+    myvk::Mesh vkQuad;
+    std::vector<myvk::InstanceData> quadInstances;
 };

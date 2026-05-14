@@ -62,7 +62,7 @@ public:
 	void createBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices);
 	void updateBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices);
 
-	void draw(VkCommandBuffer commandBuffer, size_t instanceCount) const;
+	void draw(VkCommandBuffer commandBuffer, size_t instanceCount = 1, size_t instanceOffset = 0) const;
 
 	static std::vector<VkVertexInputBindingDescription>   getBindingDescriptions();
 	static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();

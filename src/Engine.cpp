@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <thread>
+#include <iostream>
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -78,11 +79,11 @@ void Engine::run() {
 				camera.translate(Vec3(-1.0, 0.0, 0.0) * H * speed);
 			}
 			if (Events::pressed(GLFW_KEY_G)) {
-				camera.addZoom(0.01f);
+				camera.addZoom(0.005f);
 				
 			}
 			if (Events::pressed(GLFW_KEY_H)) {
-				camera.addZoom(-0.01f);
+				camera.addZoom(-0.005f);
 			}
 
 			if (Events::jpressed(GLFW_KEY_TAB)) {
@@ -105,6 +106,8 @@ void Engine::run() {
 			*/
 
 			camera.updateView();
+
+			global.gameCtx.tick();
 			global.renderer->render(camera);
 			
 			timeAccu -= H;

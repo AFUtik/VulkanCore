@@ -8,7 +8,7 @@ CameraOrtho::CameraOrtho(int width, int height, float minZ, float maxZ) : Camera
 }
 
 void CameraOrtho::updateView() {
-	Vec2 snapped = glm::floor(position * (scalar)zoom) / (scalar)zoom;
+	Vec2 snapped = glm::floor(position * zoom) / zoom;
 	this->view = glm::translate(Mat4(1.0f), -Vec3(snapped, 0.0f));
 }
 
@@ -27,13 +27,16 @@ void CameraOrtho::addZoom(float delta) {
 	float oldZoom = zoom;
     zoom += delta;
 
+	zoom = std::fmax(zoom, 0.01f);
+
     Vec3 screenCenter = {
         width * 0.5f,
-        height * 0.5f, 0.0f
+        height * 0.5f,
+        0.0f
     };
 
-    Vec3 before = position + screenCenter / (scalar)oldZoom;
-    Vec3 after  = position + screenCenter / (scalar)zoom;
+    Vec3 before = position + screenCenter / oldZoom;
+    Vec3 after  = position + screenCenter / zoom;
 
     position += (before - after);
 

@@ -43,7 +43,7 @@ concept HasXY = requires(T v) {
 template<typename Float, typename Vec2 = Vec2Base<Float>>
 requires HasXY<Vec2, Float>
 struct AABB2D {
-    Float minX, minY, maxX, maxY;
+    Float minX = 0, minY = 0, maxX = 0, maxY = 0;
 
     bool contains(Vec2 p) const noexcept {
         return p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
@@ -54,11 +54,11 @@ struct AABB2D {
     }
 
     Vec2 center() const noexcept {
-    return {
-        (minX + maxX) * Float(0.5),
-        (minY + maxY) * Float(0.5)
-    };
-}
+        return {
+            (minX + maxX) * Float(0.5),
+            (minY + maxY) * Float(0.5)
+        };
+    }
 
     Float minDist2(Vec2 p) const noexcept {
         Float dx = std::max({ minX - p.x, Float(0), p.x - maxX });

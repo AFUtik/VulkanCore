@@ -18,4 +18,4 @@ struct Global
     Global();
 };
 
-inline static Global global;
+extern Global global;

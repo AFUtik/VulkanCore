@@ -9,8 +9,8 @@
 
 #include "RenderQueue.hpp"
 
-#define RENDER_WIDTH 320
-#define RENDER_HEIGHT 180
+#define RENDER_WIDTH 640
+#define RENDER_HEIGHT 320
 
 struct Camera;
 

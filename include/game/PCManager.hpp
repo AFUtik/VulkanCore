@@ -28,6 +28,13 @@ struct PCVelocity : PCM::PlainComponent<PCVelocity>
     PCVelocity(glm::dvec2 vel) : velocity(vel) {}
 };
 
+struct PCAcceleration : PCM::PlainComponent<PCAcceleration>
+{
+    glm::dvec2 acceleration;
+    
+    PCAcceleration(glm::dvec2 acc) : acceleration(acc) {}
+};
+
 struct PCPosition : PCM::PlainComponent<PCPosition>
 {
     glm::dvec2 position;
@@ -54,6 +61,7 @@ static inline void registerPlanetComponents()
 {
     auto& pcm = PCM::instance();
     pcm.register_type<PCVelocity>();
+    pcm.register_type<PCAcceleration>();
     pcm.register_type<PCPosition>();
     pcm.register_type<PCProperties>();
     pcm.register_type<PCColor>();

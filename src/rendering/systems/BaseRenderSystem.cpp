@@ -123,6 +123,12 @@ void BaseRenderSystem::createLayouts()
 	}
 }
 
+void BaseRenderSystem::clearInstances()
+{
+	instanceOffset = 0;
+	instnaceOffsetBytes = 0;
+}
+
 void BaseRenderSystem::createDefaultMaterial() 
 {
 	defaultMaterial = std::make_unique<Material>();
@@ -151,7 +157,9 @@ void BaseRenderSystem::render(RenderState& state, RenderBatch& batch)
 {
     auto& frame = state.frame;
 
-	stagingInstanceSsbo[frame.frameIndex]->writeToBuffer(batch.instances, sizeof(myvk::InstanceData) * batch.instanceCount);
+	const size_t instancesSizeBytes = sizeof(myvk::InstanceData) * batch.instanceCount;
+
+	stagingInstanceSsbo[frame.frameIndex]->writeToBuffer(batch.instances, instancesSizeBytes, instnaceOffsetBytes);
 	globalUniforms[frame.frameIndex]->writeToBuffer(&state.projview);
 
 	pipeline->bind(frame.commandBuffer);
@@ -167,7 +175,10 @@ void BaseRenderSystem::render(RenderState& state, RenderBatch& batch)
 	);
 	
 	batch.material->bind(frame.commandBuffer);
-	batch.mesh->draw(frame.commandBuffer, batch.instanceCount);
+	batch.mesh->draw(frame.commandBuffer, batch.instanceCount, instanceOffset);
+
+	instanceOffset+=batch.instanceCount;
+	instnaceOffsetBytes+=instancesSizeBytes;
 }
 
 }

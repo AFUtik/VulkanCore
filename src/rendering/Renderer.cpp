@@ -10,6 +10,8 @@
 #include "vk/Pipeline.hpp"
 #include "vulkan/vulkan_core.h"
 
+#include <iostream>
+
 Renderer::Renderer()
     : vkRenderer(), 
       vkRenderTarget(vkRenderer.getSwapChain(), {RENDER_WIDTH, RENDER_HEIGHT}),
@@ -69,11 +71,12 @@ void Renderer::render(Camera& camera)
     planetRenderer.submit(renderQueue);
     for(RenderBatch& batch : renderQueue.batchQueue) vkPlanetRenderSystem->render(state, batch);
     renderQueue.batchQueue.clear();
+    vkPlanetRenderSystem->clearInstances();
     
-    // QuadTree Renderer 
     qtRenderer.submit(wireframeRenderQueue);
     for(RenderBatch& batch : wireframeRenderQueue.batchQueue) vkWireframeRenderSystem->render(state, batch);
     wireframeRenderQueue.batchQueue.clear();
+    vkWireframeRenderSystem->clearInstances();
 
 	vkRenderTarget.endRenderPass(frame); // the end of target's pass
     

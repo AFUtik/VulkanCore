@@ -42,19 +42,28 @@ PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM
 	static std::random_device rd;
     static std::mt19937 gen(rd());
 
-    std::uniform_real_distribution<double> distX(-1000.0, 1000.0);
-    std::uniform_real_distribution<double> distY(-1000.0, 1000.0);
-	std::uniform_real_distribution<float> distRadius(0.2, 1.0);
+    std::uniform_real_distribution<double> distX(-10000.0, 10000.0);
+    std::uniform_real_distribution<double> distY(-10000.0, 10000.0);
+	std::uniform_real_distribution<float> velX(-10, 10);
+	std::uniform_real_distribution<float> velY(-10, 10);
+	std::uniform_real_distribution<float> distRadius(0.2, 5.5);
+	std::uniform_real_distribution<float> distMass(100, 15000);
 
-	const size_t AMOUNT = 256;
+	const size_t AMOUNT = 512;
 	for(int i = 0; i < AMOUNT; i++)
 	{
 		PCM::Object p = pcm.create_object();
 		pcm.template add_component<PCPosition>(p, glm::dvec2(distX(gen), distY(gen)));
+		pcm.template add_component<PCAcceleration>(p, glm::dvec2(0.0));
+		pcm.template add_component<PCVelocity>(p,     glm::dvec2(velX(gen), velY(gen)));
 		pcm.template add_component<PCColor>(p, randomNiceColor());
-		pcm.template add_component<PCProperties>(p, distRadius(gen), 0.0);
+		pcm.template add_component<PCProperties>(p, distRadius(gen), distMass(gen));
 	}
-	
+
+	//auto& prop = pcm.get_component<PCProperties>(PCM::Object(0));
+	//prop.radius = 100.0;
+	//prop.mass = 1000000*50;
+
 	instances.reserve(AMOUNT);
 
 	if(pcm.size() > instances.size()) instances.resize(pcm.size());
@@ -70,15 +79,23 @@ PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM
 		instances[i].color = glm::vec4(color_c.color, 1.0f);
 		i++;
 	}
+	
 }
 
 void PlanetRenderer::calculateInstances()
 { 	
-	
+	int i = 0;
+	for(auto [pos_c] : PCM::View<PCPosition>(&pcm))
+	{
+		instances[i].model[3].x = static_cast<float>(pos_c.position.x);
+		instances[i].model[3].y = static_cast<float>(pos_c.position.y);
+		i++;
+	}
 }
 
 void PlanetRenderer::submit(RenderQueue& queue)
 { 
+	calculateInstances();
     queue.batchQueue.push_back(
         {
             &vkCircleMesh,

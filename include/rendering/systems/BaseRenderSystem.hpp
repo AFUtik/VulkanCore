@@ -42,6 +42,7 @@ public:
     inline DescriptorSetLayout* getMaterialSetLayout() override {return materialSetLayout.get();}
 
     void render(RenderState& state, RenderBatch& batch);
+    void clearInstances();
 protected:
     void createLayouts();
     void createDefaultMaterial();
@@ -60,6 +61,9 @@ protected:
     std::vector<std::unique_ptr<Buffer>> stagingInstanceSsbo;
 
 	std::unique_ptr<Material> defaultMaterial;
+    
+    size_t instanceOffset = 0;
+    size_t instnaceOffsetBytes = 0;
 };
 
 }

@@ -105,9 +105,11 @@ struct QuadTree
         queryNode(0, range, std::forward<Callback>(cb));
     }
     */
- 
     u32 nodeCount() const noexcept { return static_cast<u32>(nodes_.size()); }
+
     std::span<const Node> nodes() const noexcept { return nodes_; }
+
+    std::span<const Item> getItems(const Node& node) {return node.usesHeap() ? heap_[node.heapIndex()] : std::span<const Item>(pool_.data(), node.itemCount);}
 
     const AABB& bounds() const {return nodes_[0].bounds;}
  

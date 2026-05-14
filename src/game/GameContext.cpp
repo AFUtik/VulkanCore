@@ -4,14 +4,10 @@
 
 GameContext::GameContext() : pcManager(PCM::instance())
 {
-
+    qt.init(bounds, 8, 8);
 }
 
-void GameContext::buildQTree()
+void GameContext::tick()
 {
-    qt.init(bounds, 4, 4);
-    for(const auto& planet : pcManager.get_objects())
-    {
-        qt.insert(planet.get_id(), pcManager.template get_component<PCPosition>(planet).position);
-    }
+    qt.step(tickPhisicsDelta);
 }

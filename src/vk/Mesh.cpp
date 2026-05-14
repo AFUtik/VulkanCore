@@ -194,7 +194,7 @@ namespace myvk {
 		}
 	}
 
-	void Mesh::draw(VkCommandBuffer commandBuffer, size_t instanceCount) const {
+	void Mesh::draw(VkCommandBuffer commandBuffer, size_t instanceCount, size_t instanceOffset) const {
 		// Bind Cmd
 		VkBuffer buffers[] = { vertexBuffer->getBuffer() };
 		VkDeviceSize offsets[] = { 0 };
@@ -203,9 +203,9 @@ namespace myvk {
 
 		// Draw Cmd 
 		if (indexBuffer) {
-			vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, 0);
+			vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, instanceOffset);
 		} else {
-			vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, 0);
+			vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, instanceOffset);
 		}
 	}
 
