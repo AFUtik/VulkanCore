@@ -1,12 +1,15 @@
 #include "vk/Device.hpp"
 #include "vk/Buffer.hpp"
+#include "vk/Swapchain.hpp"
 #include "vk/VkTexture.hpp"
 #include "vk/Descriptors.hpp"
 #include "vk/VkWindow.hpp"
 
 #include "window/Window.hpp"
+#include "Path.hpp"
 
 #include <cstdint>
+#include <fstream>
 #include <set>
 #include <unordered_set>
 #include <iostream>
@@ -24,8 +27,10 @@ namespace myvk {
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageType,
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData) {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+        void* pUserData)
+    {
+        auto* validationLog = static_cast<std::ofstream*>(pUserData);
+        (*validationLog) << pCallbackData->pMessage << '\n';
 
         return VK_FALSE;
     }
@@ -59,7 +64,8 @@ namespace myvk {
     }
 
     // class member functions
-    Device::Device() {
+    Device::Device() : logger(std::ofstream(exeDir / "validation.txt"))
+    {
         createInstance();
         createSetDebugNameFunc();
         setupDebugMessenger();
@@ -73,16 +79,31 @@ namespace myvk {
     Device::~Device() {
         vkDeviceWaitIdle(device_);
         
-        for (DeletionQueue& queue : deletionQueues)
-            queue.flush();
+        for (DeletionQueue& queue : deletionQueues) queue.flush();
 
         vkDestroyCommandPool(device_, commandPool, nullptr);
 
+        #ifndef NDEBUG 
+            std::ofstream vma_leaks(exeDir / "vma_leaks.txt");
+            char* statsString = nullptr;
+            vmaBuildStatsString(
+                allocator_,
+                &statsString,
+                VK_TRUE);
+
+            vma_leaks << statsString;
+            vma_leaks.flush();
+
+            vmaFreeStatsString(
+                allocator_,
+                statsString);
+        #endif
         vmaDestroyAllocator(allocator_);
 
         vkDestroyDevice(device_, nullptr);
-
-        if (enableValidationLayers) {
+        if (enableValidationLayers) 
+        {
+            logger.validation.flush();
             DestroyDebugUtilsMessengerEXT(instance_, debugMessenger, nullptr);
         }
 
@@ -131,16 +152,39 @@ namespace myvk {
         hasGflwRequiredInstanceExtensions();
     }
 
-    void Device::setDebugName(uint64_t handle, VkObjectType type, const char* name)
+    void Device::setDebugName(uint64_t handle, VkObjectType type, std::string_view name)
+    {
+        
+        VkDebugUtilsObjectNameInfoEXT info{};
+        info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        info.objectType = type;
+        info.objectHandle = handle;
+        info.pObjectName = name.data();
+
+        setDebugNameFunc(device_, &info);
+    }
+
+    void Device::setDebugNameAllocation(
+        uint64_t handle,
+        VkObjectType type,
+        VmaAllocation allocation,
+        std::string_view name)
     {
         VkDebugUtilsObjectNameInfoEXT info{};
         info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
         info.objectType = type;
         info.objectHandle = handle;
-        info.pObjectName = name;
+        info.pObjectName = name.data();
 
         setDebugNameFunc(device_, &info);
+
+        const std::string allocationName = std::string(name) + "_VmaMemory";
+        vmaSetAllocationName(
+            allocator_,
+            allocation,
+            allocationName.c_str());
     }
+
 
     void Device::pickPhysicalDevice() {
         uint32_t deviceCount = 0;
@@ -258,7 +302,7 @@ namespace myvk {
             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         createInfo.pfnUserCallback = debugCallback;
-        createInfo.pUserData = nullptr;  // Optional
+        createInfo.pUserData = &logger.validation;  // Optional
     }
 
     void Device::setupDebugMessenger() {
@@ -574,6 +618,9 @@ namespace myvk {
             throw std::runtime_error("failed to create image with VMA!");
         }
 
+
+        // For non vma allocation //
+        
         //if (vkCreateImage(device_, &imageInfo, nullptr, &image) != VK_SUCCESS) {
         //    throw std::runtime_error("failed to create image!");
         //}
@@ -839,4 +886,9 @@ namespace myvk {
         );
     }
 
+    void Device::createSetDebugNameFunc()
+    {
+        setDebugNameFunc = (PFN_vkSetDebugUtilsObjectNameEXT) vkGetInstanceProcAddr(instance_, "vkSetDebugUtilsObjectNameEXT");
+
+    }
 }  // namespace myvk

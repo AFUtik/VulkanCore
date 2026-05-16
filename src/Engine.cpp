@@ -12,6 +12,7 @@
 #include <memory>
 #include <thread>
 #include <iostream>
+#include <csignal>
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -37,7 +38,26 @@ Engine::Engine() : camera(RENDER_WIDTH, RENDER_HEIGHT)
 
 Engine::~Engine() {}
 
+void crashHandler(int signal)
+{
+	auto& device = myvk::Device::instance();
+
+    device.logger.validation.flush();
+
+    std::cerr
+        << "Fatal signal: "
+        << signal
+        << '\n';
+
+    std::_Exit(EXIT_FAILURE);
+}
+
 void Engine::run() {
+	signal(SIGSEGV, crashHandler);
+	signal(SIGABRT, crashHandler);
+	signal(SIGFPE,  crashHandler);
+	signal(SIGILL,  crashHandler);
+
 	Window& window = Window::instance();
 	global.renderer = std::make_unique<Renderer>();
 	//global.assets.load();

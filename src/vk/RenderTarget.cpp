@@ -42,7 +42,7 @@ namespace myvk {
         }
 
         for(int i = 0; i < images.size(); i++) {
-            vkDestroySampler(device.device(), screenSamplers[i], nullptr);
+            //vkDestroySampler(device.device(), screenSamplers[i], nullptr);
         }
 
         vkDestroyRenderPass(device.device(), renderPass, nullptr);
@@ -151,6 +151,7 @@ namespace myvk {
             }
 
             #ifndef NDEBUG
+                device.setDebugNameAllocation((uint64_t)images[i], VK_OBJECT_TYPE_IMAGE, imageAllocs[i], "RenderTarget_Image");
                 device.setDebugName((uint64_t)imageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "RenderTarget_ImageView");
             #endif
         }

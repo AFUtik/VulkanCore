@@ -1,11 +1,16 @@
 #pragma once
 
+#include "vk/Swapchain.hpp"
+#define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1
+#define VMA_STATS_STRING_ENABLED 1
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
 #include <vector>
 #include <deque>
 #include <functional>
+#include <string>
+#include <fstream>
 
 namespace myvk {
     struct DeletionQueue
@@ -20,7 +25,6 @@ namespace myvk {
 
 		DeletionQueue(DeletionQueue&&) noexcept = default;
 		DeletionQueue& operator=(DeletionQueue&&) noexcept = default;
-
 
         void push_function(std::function<void()>&& function) {
             deletors.push_back(function);
@@ -54,6 +58,11 @@ namespace myvk {
 
     class Device {
     public:
+        struct Logger
+        {
+            std::ofstream validation;
+        };
+
         #ifdef NDEBUG
                 const bool enableValidationLayers = false;
         #else
@@ -74,9 +83,15 @@ namespace myvk {
         }
 
         void setDebugName(
+            uint64_t handle, 
+            VkObjectType type, 
+            std::string_view name);
+
+        void setDebugNameAllocation(
             uint64_t handle,
             VkObjectType type,
-            const char *name);
+            VmaAllocation alloc,
+            std::string_view name);
 
         VkCommandPool getCommandPool() { return commandPool; }
         VkDevice device() { return device_; }
@@ -129,18 +144,15 @@ namespace myvk {
             
         void createDeletionQueues(uint64_t amount);
             
-        void freeDeletionQueue(uint32_t index) {
-            deletionQueues[index].flush();
-        }
+        void freeDeletionQueue(uint32_t index) {deletionQueues[index].flush();}
 
-        inline void setFrameIndex(uint32_t index) {
-            frame_index = index;
-        }
+        inline void setFrameIndex(uint32_t index) {frame_index = index;}
 
         // Device Allocation //
         template <typename T> void free(T* resource);
 
         VkPhysicalDeviceProperties properties;
+        Logger logger;
     private:
         void createInstance();
         void setupDebugMessenger();
@@ -150,12 +162,8 @@ namespace myvk {
         void createCommandPool();
         void createAllocator();
         
-        inline void createSetDebugNameFunc()
-        {
-            setDebugNameFunc = (PFN_vkSetDebugUtilsObjectNameEXT) vkGetInstanceProcAddr(instance_, "vkSetDebugUtilsObjectNameEXT");
-        }
-
         // helper functions
+        void createSetDebugNameFunc();
         bool isDeviceSuitable(VkPhysicalDevice device);
         std::vector<const char*> getRequiredExtensions();
         bool checkValidationLayerSupport();
@@ -183,5 +191,7 @@ namespace myvk {
 
         const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
         const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+
+        
     };
 }
