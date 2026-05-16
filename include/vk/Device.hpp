@@ -174,7 +174,7 @@ namespace myvk {
         VkSurfaceKHR surface_;
         VkQueue graphicsQueue_;
         VkQueue presentQueue_;
-        VmaAllocator allocator_;
+        VmaAllocator allocator_; 
 
         PFN_vkSetDebugUtilsObjectNameEXT setDebugNameFunc;
 
