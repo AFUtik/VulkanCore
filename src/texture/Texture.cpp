@@ -11,18 +11,6 @@
 Texture::Texture(std::string path, TextureChannels channels_) : channels(channels_) {
     pixels.reset(stbi_load(path.c_str(), &width, &height, &channels, channels_));
     channels = channels_;
-    if (!pixels) {
-    #ifndef _WIN64
-        char cwd[PATH_MAX];
-        if (getcwd(cwd, sizeof(cwd)) != NULL) {
-            printf("Current working dir: %s\n", cwd);
-        } else {
-            printf("getcwd() error\n");
-        }
-    #endif
-        printf("Error loading Texture from '%s'\n", path.c_str());
-        exit(1);
-    }
 }
 
 Texture::Texture(std::unique_ptr<uint8_t[]> ptr, int width, int height, int channels) :

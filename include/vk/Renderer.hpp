@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <cassert>
+#include <cstdint>
 
 struct VkRenderPass_T;
 using VkRenderPass = VkRenderPass_T*;

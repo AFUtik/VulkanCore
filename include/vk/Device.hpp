@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vma/vk_mem_alloc.h>
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
 #include <vector>
@@ -11,7 +11,6 @@ namespace myvk {
     struct DeletionQueue
     {
         std::deque<std::function<void()>> deletors;
-        //std::mutex mtx;
 
 		DeletionQueue() = default;
 		~DeletionQueue() {}
@@ -73,6 +72,11 @@ namespace myvk {
             static Device static_device;
             return static_device;
         }
+
+        void setDebugName(
+            uint64_t handle,
+            VkObjectType type,
+            const char *name);
 
         VkCommandPool getCommandPool() { return commandPool; }
         VkDevice device() { return device_; }
@@ -145,6 +149,11 @@ namespace myvk {
         void createLogicalDevice();
         void createCommandPool();
         void createAllocator();
+        
+        inline void createSetDebugNameFunc()
+        {
+            setDebugNameFunc = (PFN_vkSetDebugUtilsObjectNameEXT) vkGetInstanceProcAddr(instance_, "vkSetDebugUtilsObjectNameEXT");
+        }
 
         // helper functions
         bool isDeviceSuitable(VkPhysicalDevice device);
@@ -166,6 +175,8 @@ namespace myvk {
         VkQueue graphicsQueue_;
         VkQueue presentQueue_;
         VmaAllocator allocator_;
+
+        PFN_vkSetDebugUtilsObjectNameEXT setDebugNameFunc;
 
         std::vector<DeletionQueue> deletionQueues;
         uint32_t frame_index = 0;

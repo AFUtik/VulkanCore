@@ -19,7 +19,7 @@ Renderer::Renderer() : device(Device::instance()), window(Window::instance()) {
 		.setMaxSets(1024)
 		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1024)
 		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1024)
 		.build();
 }
 

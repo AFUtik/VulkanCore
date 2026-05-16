@@ -29,14 +29,14 @@ void RenderSystem::createPipelineLayout(const std::vector<VkDescriptorSetLayout>
 	}
 }
 
-void RenderSystem::createPipeline(VkRenderPass renderPass ,PipelineConfigInfo& pipelineConfig) {
+void RenderSystem::createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig) {
 	assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
 	pipelineConfig.renderPass     = renderPass;
 	pipelineConfig.pipelineLayout = pipelineLayout;
 	pipeline = std::make_unique<Pipeline>(
-		"C:/cplusplus/VulkanRender/VulkanRender/resources/shaders/shader.vert.spv",
-		"C:/cplusplus/VulkanRender/VulkanRender/resources/shaders/shader.frag.spv",
+		"/home/afutik/cplusplus/VulkanCore/resources/shaders/shader.vert.spv",
+		"/home/afutik/cplusplus/VulkanCore/resources/shaders/shader.frag.spv",
 		pipelineConfig);
 }
 

@@ -17,9 +17,7 @@ find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(imgui CONFIG REQUIRED)
 find_package(Stb REQUIRED)
-find_package(Freetype REQUIRED)
 
 include_directories(${PROJECT_NAME} include/)
 
@@ -29,6 +27,4 @@ target_link_libraries(${PROJECT_NAME}
 	glm::glm
 	Vulkan::Vulkan
 	GPUOpen::VulkanMemoryAllocator
-	imgui::imgui
-	${Stb_INCLUDE_DIR}
-	Freetype::Freetype)
+	${Stb_INCLUDE_DIR})

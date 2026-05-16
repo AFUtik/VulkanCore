@@ -5,6 +5,7 @@
 #include <span>
 #include <memory>
 #include <vector>
+#include <cstdint>
 
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>

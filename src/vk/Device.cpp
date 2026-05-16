@@ -6,9 +6,11 @@
 
 #include "window/Window.hpp"
 
+#include <cstdint>
 #include <set>
 #include <unordered_set>
 #include <iostream>
+#include <cstring>
 
 bool HasStencilComponent(VkFormat Format)
 {
@@ -59,6 +61,7 @@ namespace myvk {
     // class member functions
     Device::Device() {
         createInstance();
+        createSetDebugNameFunc();
         setupDebugMessenger();
         createSurface();
         pickPhysicalDevice();
@@ -126,6 +129,17 @@ namespace myvk {
         }
 
         hasGflwRequiredInstanceExtensions();
+    }
+
+    void Device::setDebugName(uint64_t handle, VkObjectType type, const char* name)
+    {
+        VkDebugUtilsObjectNameInfoEXT info{};
+        info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        info.objectType = type;
+        info.objectHandle = handle;
+        info.pObjectName = name;
+
+        setDebugNameFunc(device_, &info);
     }
 
     void Device::pickPhysicalDevice() {

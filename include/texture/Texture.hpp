@@ -2,9 +2,7 @@
 
 #include <string>
 #include <memory>
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
+#include <cstdint>
 
 enum TextureChannels : uint32_t {
     RGBA = 4,

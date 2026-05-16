@@ -42,9 +42,7 @@ namespace myvk {
         }
 
         for(int i = 0; i < images.size(); i++) {
-            if(screenTextures[i]) {
-                vkDestroySampler(device.device(), screenSamplers[i], nullptr);
-            }
+            vkDestroySampler(device.device(), screenSamplers[i], nullptr);
         }
 
         vkDestroyRenderPass(device.device(), renderPass, nullptr);
@@ -54,7 +52,6 @@ namespace myvk {
         screenTextures.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
         screenSamplers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
         
-
         for(int i = 0; i < images.size(); i++) {
             screenTextures[i] = std::make_unique<Material>();
             screenTextures[i]->setRenderSystem(system);
@@ -79,10 +76,14 @@ namespace myvk {
                 .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
                 .unnormalizedCoordinates = VK_FALSE
             };
+            
             if(vkCreateSampler(device.device(), &SamplerInfo, VK_NULL_HANDLE, &screenSamplers[i]) != VK_SUCCESS) {
                 throw std::runtime_error("Failed to create image sampler");
             } 
-            
+            #ifndef NDEBUG
+                device.setDebugName((uint64_t)screenSamplers[i], VK_OBJECT_TYPE_SAMPLER, "RenderTarget_Sampler");
+            #endif
+
             VkDescriptorImageInfo imageInfo;
             imageInfo.sampler   = screenSamplers[i];
             imageInfo.imageView = imageViews[i];
@@ -148,6 +149,10 @@ namespace myvk {
                 VK_SUCCESS) {
                 throw std::runtime_error("failed to create texture image view!");
             }
+
+            #ifndef NDEBUG
+                device.setDebugName((uint64_t)imageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "RenderTarget_ImageView");
+            #endif
         }
     }
 
@@ -231,6 +236,10 @@ namespace myvk {
                 &framebuffers[i]) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create framebuffer!");
             }
+            
+            #ifndef NDEBUG
+                device.setDebugName((uint64_t)framebuffers[i], VK_OBJECT_TYPE_FRAMEBUFFER, "RenderTarget_Framebuffer");
+            #endif
         }
     }
 
@@ -280,6 +289,10 @@ namespace myvk {
             if (vkCreateImageView(device.device(), &viewInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create texture image view!");
             }
+
+            #ifndef NDEBUG
+                device.setDebugName((uint64_t)depthImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "RenderTarget_DepthImageView");
+            #endif
         }
     }
 
