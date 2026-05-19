@@ -40,8 +40,8 @@ PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM
 	static std::random_device rd;
     static std::mt19937 gen(rd());
 
-    std::uniform_real_distribution<double> distX(-10000.0, 10000.0);
-    std::uniform_real_distribution<double> distY(-10000.0, 10000.0);
+    std::uniform_real_distribution<double> distX(-100000.0, 100000.0);
+    std::uniform_real_distribution<double> distY(-100000.0, 100000.0);
 	std::uniform_real_distribution<float> velX(-10, 10);
 	std::uniform_real_distribution<float> velY(-10, 10);
 	std::uniform_real_distribution<float> distRadius(0.2, 5.5);

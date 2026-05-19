@@ -29,8 +29,7 @@ namespace myvk {
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData)
     {
-        auto* validationLog = static_cast<std::ofstream*>(pUserData);
-        (*validationLog) << pCallbackData->pMessage << '\n';
+        std::cerr << pCallbackData->pMessage << '\n';
 
         return VK_FALSE;
     }
@@ -64,7 +63,7 @@ namespace myvk {
     }
 
     // class member functions
-    Device::Device() : logger(std::ofstream(exeDir / "validation.txt"))
+    Device::Device()
     {
         createInstance();
 
@@ -107,7 +106,6 @@ namespace myvk {
         vkDestroyDevice(device_, nullptr);
         if (enableValidationLayers) 
         {
-            logger.validation.flush();
             DestroyDebugUtilsMessengerEXT(instance_, debugMessenger, nullptr);
         }
 
@@ -272,7 +270,7 @@ namespace myvk {
             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         createInfo.pfnUserCallback = debugCallback;
-        createInfo.pUserData = &logger.validation;  // Optional
+        createInfo.pUserData = nullptr;  // Optional
     }
 
     void Device::setupDebugMessenger() {

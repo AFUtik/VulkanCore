@@ -45,7 +45,7 @@ void crashHandler(int signal)
 {
 	auto& device = myvk::Device::instance();
 
-    device.logger.validation.flush();
+    //device.logger.validation.flush();
 
     std::cerr
         << "Fatal signal: "

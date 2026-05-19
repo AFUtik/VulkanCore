@@ -13,7 +13,7 @@ struct GameContext
 
     AABB bounds = {-100000.0f, -100000.0f, 100000.0f, 100000.0f};
 
-    PCM& pcManager;
+    PCM& pcm;
     BarnesHutQT qt;
 
     const double tickPhysicsPerSecond = 20.0;

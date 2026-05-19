@@ -1,6 +1,7 @@
 #pragma once
 
 #include "collections/spatial/QuadTree.hpp"
+#include "game/PCManager.hpp"
 #include <glm/glm.hpp>
 
 #include <tuple>
@@ -27,17 +28,20 @@ struct BarnesHutQT : public QuadTree<u32, glm::dvec2, double, glm::dvec2>
         nodes_barnes_.resize(1); // Setting root
     }
 
-    void step(double dt);
-    void rebuild();
-private:
-    std::vector<NodeBarnes> nodes_barnes_;
-protected:
     void insertBodyInto(
         u32 ni,
-        u32 object_id);
+        u32 object_id,
+        const glm::dvec2& pos,
+        double mass);
 
-    void computeForceRecursive(
-        u32 ni, 
-        u32 self_id,
-        std::tuple<PCPosition&, PCAcceleration&>& body);
+    void computeForce(
+        u32 rootNi, 
+        u32 self_id, 
+        const glm::dvec2& pos, 
+              glm::dvec2& acc, 
+        double mass);
+        
+    std::vector<NodeBarnes> nodes_barnes_;
+private:
+    
 }; 
