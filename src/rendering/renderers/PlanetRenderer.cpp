@@ -6,8 +6,6 @@
 
 #include "game/PCManager.hpp"
 
-#include "model/Mesh.hpp"
-
 #include "Color.hpp"
 #include <numbers>
 
@@ -16,26 +14,26 @@
 
 PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM::instance())
 {
-    Mesh mesh;
+    std::vector<Vertex> vertices; std::vector<u32> indices; 
 
 	int segments = 8;
 	float radius = 50.0f;
 
-	mesh.vertices.push_back({0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	vertices.push_back({0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
 	for (int i = 0; i <= segments; i++) {
 		float angle = i * 2.0f * std::numbers::pi / segments;
 		float x = cos(angle) * radius;
 		float y = sin(angle) * radius;
 
-		mesh.vertices.push_back({x, y, 0.0f, 0.0f, 0.0f, 1.0, 1.0f, 1.0f, 1.0f});
+		vertices.push_back({x, y, 0.0f, 0.0f, 0.0f, 1.0, 1.0f, 1.0f, 1.0f});
 	}
 	for (int i = 1; i <= segments; i++) {
-		mesh.indices.push_back(0);
-		mesh.indices.push_back(i);
-		mesh.indices.push_back(i + 1);
+		indices.push_back(0);
+		indices.push_back(i);
+		indices.push_back(i + 1);
 	}
 
-	vkCircleMesh.updateBuffers(mesh.vertices, mesh.indices);
+	vkCircleMesh.updateBuffers(std::as_bytes(std::span(vertices)), indices);
 
 	// TO REMOVE CODE //
 

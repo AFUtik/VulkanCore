@@ -40,6 +40,7 @@ namespace myvk {
 		inline DescriptorPoolManager* getDescriptorPool() {return descriptorPool;}
 	protected:
 		void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts);
+
 		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
 		
 		DescriptorPoolManager* descriptorPool;

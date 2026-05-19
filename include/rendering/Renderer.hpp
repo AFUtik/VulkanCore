@@ -8,6 +8,7 @@
 #include "vk/RenderTarget.hpp"
 
 #include "RenderQueue.hpp"
+#include "vk/Shader.hpp"
 
 #define RENDER_WIDTH 640
 #define RENDER_HEIGHT 320
@@ -18,6 +19,7 @@ namespace myvk
 {
     struct PipelineConfigInfo;
     struct BaseRenderSystem;
+    struct Shader;
 }
 
 struct Renderer 
@@ -27,6 +29,9 @@ struct Renderer
 
     myvk::Renderer vkRenderer;
     myvk::RenderTarget vkRenderTarget;
+
+    myvk::ShaderManager shaderManager;
+    myvk::Shader* baseShader;
 
     std::unique_ptr<myvk::BaseRenderSystem> vkScreenRenderSystem;
     std::unique_ptr<myvk::BaseRenderSystem> vkPlanetRenderSystem; 
@@ -38,7 +43,7 @@ struct Renderer
     RenderQueue renderQueue;
     RenderQueue wireframeRenderQueue;
 
-    myvk::Mesh vkMeshScreen;
+    BaseMesh vkMeshScreen;
 
     void render(Camera& camera);
 

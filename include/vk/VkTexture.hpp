@@ -32,6 +32,10 @@ namespace myvk {
 
         VkSampler   getSampler() {return sampler;}
         VkImageView getView() {return view;}
+
+        #ifndef NDEBUG
+        void addDebugInfo(const char* info);
+        #endif
     private:
         void createTextureSampler(
             VkSampler& sampler, 

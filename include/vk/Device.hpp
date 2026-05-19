@@ -1,6 +1,5 @@
 #pragma once
 
-#include "vk/Swapchain.hpp"
 #define VMA_DEBUG_INITIALIZE_ALLOCATIONS 1
 #define VMA_STATS_STRING_ENABLED 1
 #include <vk_mem_alloc.h>
@@ -9,8 +8,12 @@
 #include <vector>
 #include <deque>
 #include <functional>
-#include <string>
 #include <fstream>
+#include <unordered_map>
+
+#ifndef NDEBUG
+    #include "MemoryTracker.hpp"
+#endif
 
 namespace myvk {
     struct DeletionQueue
@@ -58,11 +61,6 @@ namespace myvk {
 
     class Device {
     public:
-        struct Logger
-        {
-            std::ofstream validation;
-        };
-
         #ifdef NDEBUG
                 const bool enableValidationLayers = false;
         #else
@@ -81,17 +79,6 @@ namespace myvk {
             static Device static_device;
             return static_device;
         }
-
-        void setDebugName(
-            uint64_t handle, 
-            VkObjectType type, 
-            std::string_view name);
-
-        void setDebugNameAllocation(
-            uint64_t handle,
-            VkObjectType type,
-            VmaAllocation alloc,
-            std::string_view name);
 
         VkCommandPool getCommandPool() { return commandPool; }
         VkDevice device() { return device_; }
@@ -152,7 +139,30 @@ namespace myvk {
         template <typename T> void free(T* resource);
 
         VkPhysicalDeviceProperties properties;
-        Logger logger;
+        
+        #ifndef NDEBUG
+            struct Logger
+            {
+                std::ofstream validation;
+            };
+
+            void addDebugHandle(
+                uint64_t handle, 
+                VkObjectType type, 
+                const char* name);
+
+            void addDebugObject( 
+                uint64_t handle,
+                VkObjectType type,
+                VmaAllocation allocation,
+                const char* name,
+
+                const void* object,
+                size_t objectSize);
+                
+            MemoryTracker memoryTracker;
+            Logger logger;
+        #endif
     private:
         void createInstance();
         void setupDebugMessenger();
@@ -191,7 +201,5 @@ namespace myvk {
 
         const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
         const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-
-        
     };
 }

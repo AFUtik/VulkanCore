@@ -1,9 +1,12 @@
 #include "Engine.hpp"
+#include "GLFW/glfw3.h"
 #include "Global.hpp"
 
+#include "rendering/BaseMesh.hpp"
 #include "rendering/Renderer.hpp"
 #include "vk/Device.hpp"
 
+#include "vk/Mesh.hpp"
 #include "vk/RenderTarget.hpp"
 #include "vk/VkTexture.hpp"
 #include "window/Events.hpp"
@@ -109,8 +112,11 @@ void Engine::run() {
 			if (Events::jpressed(GLFW_KEY_TAB)) {
 				Events::toggle_cursor();
 			}
+			if (Events::jpressed(GLFW_KEY_ESCAPE)) {
+				window.setShouldClose(true);
+			}
 
-			/*
+			/* FOR 3D
 			if (Events::_cursor_locked) {
 				camY += -Events::deltaY / Window::getHeight() * 2;
 				camX += -Events::deltaX / Window::getHeight() * 2;
@@ -142,30 +148,3 @@ void Engine::run() {
 	vkDeviceWaitIdle(myvk::Device::instance().device());
 	global.renderer.reset();
 }
-
-/*
-
-void Engine::loadModels() {
-	model = std::make_shared<Model>();
-
-	MeshInstance meshInstance;
-	meshInstance.vertices.push_back({1.0f, 1.0f, 0.0f,   1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	meshInstance.vertices.push_back({1.0f, -1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	meshInstance.vertices.push_back({-1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	meshInstance.vertices.push_back({-1.0f, 1.0f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-
-	meshInstance.indices.push_back(0);
-	meshInstance.indices.push_back(1);
-	meshInstance.indices.push_back(2);
-	meshInstance.indices.push_back(2);
-	meshInstance.indices.push_back(3);
-	meshInstance.indices.push_back(0);
-
-	Texture2D texture("C:/cplusplus/VulkanRender/VulkanRender/resources/img/green.png");
-
-	std::shared_ptr<GPUTexture> gpuTexture = std::make_shared<GPUTexture>(device, &texture);
-	model->material = std::make_shared<GPUMaterial>(*globalPool, *materialSetLayout, gpuTexture);
-	model->mesh = std::make_shared<GPUMesh>(device, meshInstance);
-}
-
-*/

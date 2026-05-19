@@ -232,4 +232,18 @@ void VkTexture::createImageView(VkImageAspectFlags AspectFlags)
     }
 }
 
+	#ifndef NDEBUG
+    void VkTexture::addDebugInfo(const char* info)
+	{
+		device.addDebugObject(
+			(uint64_t)image, 
+			VK_OBJECT_TYPE_IMAGE, 
+			vmaAllocation, 
+			info, 
+			this,
+			imageWidth*imageHeight*channels
+		);
+	}
+	#endif
+
 }

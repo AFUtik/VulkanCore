@@ -1,7 +1,9 @@
 #pragma once
 
+
 #include "vk/Descriptors.hpp"
 #include "vk/RenderSystem.hpp"
+#include "vk/Mesh.hpp"
 
 #include <glm/glm.hpp>
 
@@ -22,6 +24,8 @@ class RenderTarget;
 class Material;
 class Mesh;
 
+struct Shader;
+
 struct PipelineConfigInfo;
 
 struct GlobalUniformBuffer {glm::mat4 projview{1.f};};
@@ -29,11 +33,14 @@ struct GlobalUniformBuffer {glm::mat4 projview{1.f};};
 class BaseRenderSystem : public RenderSystem
 {
 public: 
-    BaseRenderSystem(Renderer& renderer);
-    BaseRenderSystem(Renderer& renderer, RenderTarget& target);
+    BaseRenderSystem(
+        Renderer& renderer, 
+        PipelineConfigInfo& config);
 
-    BaseRenderSystem(Renderer& renderer, PipelineConfigInfo& config);
-    BaseRenderSystem(Renderer& renderer, RenderTarget& target, PipelineConfigInfo& config);
+    BaseRenderSystem(
+        Renderer& renderer, 
+        RenderTarget& target, 
+        PipelineConfigInfo& config);
 
     ~BaseRenderSystem();
 
@@ -43,10 +50,13 @@ public:
 
     void render(RenderState& state, RenderBatch& batch);
     void clearInstances();
+    
+    static std::vector<VkVertexInputBindingDescription>   getBindingDescriptions();
+	static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
 protected:
     void createLayouts();
     void createDefaultMaterial();
-
+    
     GlobalUniformBuffer ubo;
     
     std::vector<VkDescriptorSet> descriptorSets;
@@ -61,9 +71,13 @@ protected:
     std::vector<std::unique_ptr<Buffer>> stagingInstanceSsbo;
 
 	std::unique_ptr<Material> defaultMaterial;
+
+    Shader* shader;
     
     size_t instanceOffset = 0;
     size_t instnaceOffsetBytes = 0;
+
+    
 };
 
 }

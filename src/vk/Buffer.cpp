@@ -11,6 +11,7 @@
 // std
 #include <cassert>
 #include <cstring>
+#include <vulkan/vulkan_core.h>
 
 namespace myvk {
 
@@ -44,9 +45,9 @@ Buffer::Buffer(
       usageFlags{usageFlags},
       memoryPropertyFlags{memoryPropertyFlags} 
 {
-  alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
-  bufferSize = alignmentSize * instanceCount;
-  device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, vmaAllocation, memoryUsage);
+    alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
+    bufferSize = alignmentSize * instanceCount;
+    device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, vmaAllocation, memoryUsage);
 }
 
 Buffer::~Buffer() {
@@ -208,4 +209,19 @@ VkResult Buffer::invalidateIndex(int index) {
   return invalidate(alignmentSize, index * alignmentSize);
 }
 
-}  // namespace lve
+#ifndef NDEBUG
+void Buffer::addDebugInfo(const char* info)
+{
+
+    device.addDebugObject(
+        (uint64_t)buffer, 
+        VK_OBJECT_TYPE_BUFFER, 
+        vmaAllocation, 
+        info, 
+        this,
+        instanceSize*instanceCount
+    );
+}
+#endif
+
+}  // namespace myvk

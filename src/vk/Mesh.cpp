@@ -17,26 +17,26 @@ inline uint32_t nextPow2(uint32_t v) {
 }
 
 namespace myvk {
-	Mesh::Mesh() {}
+	Mesh::Mesh() = default;
 
 	Mesh::~Mesh() = default;
 
 	Mesh::Mesh(Mesh&&) noexcept = default;
 	Mesh& Mesh::operator=(Mesh&&) noexcept = default;
 
-    void Mesh::createBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices) {
+    void Mesh::createBuffers(std::span<const std::byte> vertices, std::span<uint32_t> indices) {
 		Device& device = Device::instance();
 
-		vertexCount = static_cast<uint32_t>(vertices.size());
-		indexCount = static_cast<uint32_t>(indices.size());
+		vertexCount = static_cast<uint32_t>(vertices.size() / vertexStride);
+		indexCount  = static_cast<uint32_t>(indices.size());
 
 		reservedVertexBufferSize = nextPow2(vertexCount);
 		reservedIndexBufferSize  = nextPow2(indexCount);
 
 		// VertexBuffer creation //
 		if(vertexCount >= 3) {
-			VkDeviceSize bufferSize = sizeof(vertices[0]) * reservedVertexBufferSize;
-			VkDeviceSize copySize   = sizeof(vertices[0]) * vertexCount;
+			VkDeviceSize bufferSize = vertexStride * reservedVertexBufferSize;
+			VkDeviceSize copySize   = vertexStride * vertexCount;
 			if(flags & MeshFlags::GPUMemory) { // GPU MEMORY
 				Buffer stagingBuffer(
 					device,
@@ -116,10 +116,10 @@ namespace myvk {
 		}
 	}
 
-	void Mesh::updateBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices) {
+	void Mesh::updateBuffers(std::span<const std::byte> vertices, std::span<uint32_t> indices) {
 		Device& device = Device::instance();
 
-		vertexCount = static_cast<uint32_t>(vertices.size());
+		vertexCount = static_cast<uint32_t>(vertices.size() / vertexStride);
 		indexCount  = static_cast<uint32_t>(indices.size());
 
 		if (vertexCount > reservedVertexBufferSize || indexCount  > reservedIndexBufferSize)
@@ -130,7 +130,7 @@ namespace myvk {
 
 		if (vertexCount >= 3)
 		{
-			VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
+			VkDeviceSize bufferSize = vertexStride * vertexCount;
 
 			if (flags & MeshFlags::GPUMemory)
 			{
@@ -209,38 +209,19 @@ namespace myvk {
 		}
 	}
 
-	std::vector<VkVertexInputBindingDescription> Mesh::getBindingDescriptions() {
-		std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
-
-		bindingDescriptions[0].binding = 0;
-		bindingDescriptions[0].stride = sizeof(Vertex);
-		bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-		return bindingDescriptions;
+	#ifndef NDEBUG
+	void Mesh::addDebugInfo(const char* info)
+	{
+		if(vertexBuffer)
+		{
+			std::string modified = std::string(info) + "_VertexBuffer";
+			vertexBuffer->addDebugInfo(modified.c_str());
+		}
+		if(indexBuffer)
+		{
+			std::string modified = std::string(info) + "_IndexBuffer";
+			indexBuffer->addDebugInfo(modified.c_str());
+		}
 	}
-
-	std::vector<VkVertexInputAttributeDescription> Mesh::getAttributeDescriptions() {
-		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3);
-
-		size_t location = 0;
-		attributeDescriptions[0].binding = 0;
-		attributeDescriptions[0].location = location;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[0].offset = 0;
-		location++;
-
-		attributeDescriptions[1].binding = 0;
-		attributeDescriptions[1].location = location;
-		attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(Vertex, u);
-		location++;
-
-		attributeDescriptions[2].binding = 0;
-		attributeDescriptions[2].location = location;
-		attributeDescriptions[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		attributeDescriptions[2].offset = offsetof(Vertex, r);
-		location++;
-
-		return attributeDescriptions;
-	}
+	#endif
 }

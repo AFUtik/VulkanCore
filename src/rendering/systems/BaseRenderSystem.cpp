@@ -11,16 +11,18 @@
 #include "vk/VkTexture.hpp"
 #include "vk/Material.hpp"
 #include "vk/Mesh.hpp"
+#include "vk/Shader.hpp"
 
 #include "rendering/RenderState.hpp"
 #include "rendering/RenderQueue.hpp"
+#include "rendering/BaseMesh.hpp"
 
 #include "texture/Texture.hpp"
 
 namespace myvk 
 {
 
-BaseRenderSystem::BaseRenderSystem(Renderer& renderer, PipelineConfigInfo& config) : RenderSystem(renderer) 
+BaseRenderSystem::BaseRenderSystem(Renderer& renderer, PipelineConfigInfo& config) : RenderSystem(renderer)
 {
     createLayouts();
 
@@ -36,34 +38,6 @@ BaseRenderSystem::BaseRenderSystem(Renderer& renderer, RenderTarget& target, Pip
     createLayouts();
 
     createPipelineLayout(layouts);
-
-	createPipeline(target.getRenderPass(), config);
-    
-    createDefaultMaterial();
-}
-
-BaseRenderSystem::BaseRenderSystem(Renderer& renderer) : RenderSystem(renderer)
-{
-	createLayouts();
-
-    createPipelineLayout(layouts);
-
-	PipelineConfigInfo config{};
-	Pipeline::defaultPipelineConfigInfo(config);
-
-	createPipeline(renderer.getSwapChainRenderPass(), config);
-    
-    createDefaultMaterial();
-}
-
-BaseRenderSystem::BaseRenderSystem(Renderer& renderer, RenderTarget& target) : RenderSystem(renderer)
-{
-	createLayouts();
-
-    createPipelineLayout(layouts);
-
-	PipelineConfigInfo config{};
-	Pipeline::defaultPipelineConfigInfo(config);
 
 	createPipeline(target.getRenderPass(), config);
     
@@ -92,7 +66,7 @@ void BaseRenderSystem::createLayouts()
 	for (int i = 0; i < stagingInstanceSsbo.size(); i++) {
 		stagingInstanceSsbo[i] = std::make_unique<Buffer>(
 			device,
-			sizeof(myvk::InstanceData),
+			sizeof(InstanceData),
 			maxInstances,
 			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -157,7 +131,7 @@ void BaseRenderSystem::render(RenderState& state, RenderBatch& batch)
 {
     auto& frame = state.frame;
 
-	const size_t instancesSizeBytes = sizeof(myvk::InstanceData) * batch.instanceCount;
+	const size_t instancesSizeBytes = sizeof(InstanceData) * batch.instanceCount;
 
 	stagingInstanceSsbo[frame.frameIndex]->writeToBuffer(batch.instances, instancesSizeBytes, instnaceOffsetBytes);
 	globalUniforms[frame.frameIndex]->writeToBuffer(&state.projview);
@@ -179,6 +153,41 @@ void BaseRenderSystem::render(RenderState& state, RenderBatch& batch)
 
 	instanceOffset+=batch.instanceCount;
 	instnaceOffsetBytes+=instancesSizeBytes;
+}
+
+std::vector<VkVertexInputBindingDescription> BaseRenderSystem::getBindingDescriptions() {
+	std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
+
+	bindingDescriptions[0].binding = 0;
+	bindingDescriptions[0].stride = sizeof(Vertex);
+	bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+	return bindingDescriptions;
+}
+
+std::vector<VkVertexInputAttributeDescription> BaseRenderSystem::getAttributeDescriptions() {
+	std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3);
+
+	size_t location = 0;
+	attributeDescriptions[0].binding = 0;
+	attributeDescriptions[0].location = location;
+	attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	attributeDescriptions[0].offset = 0;
+	location++;
+
+	attributeDescriptions[1].binding = 0;
+	attributeDescriptions[1].location = location;
+	attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
+	attributeDescriptions[1].offset = offsetof(Vertex, u);
+	location++;
+
+	attributeDescriptions[2].binding = 0;
+	attributeDescriptions[2].location = location;
+	attributeDescriptions[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	attributeDescriptions[2].offset = offsetof(Vertex, r);
+	location++;
+
+	return attributeDescriptions;
 }
 
 }

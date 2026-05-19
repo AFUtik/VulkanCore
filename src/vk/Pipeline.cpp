@@ -1,18 +1,17 @@
 #include "vk/Pipeline.hpp"
 #include "vk/Device.hpp"
 #include "vk/Mesh.hpp"
+#include "vk/Shader.hpp"
 
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <cassert>
 
 namespace myvk {
-	Pipeline::Pipeline(
-		const std::string& vertFilepath,
-		const std::string& fragFilepath,
-		const PipelineConfigInfo& configInfo) : device(Device::instance())
+	Pipeline::Pipeline(const PipelineConfigInfo& configInfo) : device(Device::instance())
 	{
-		createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
+		createGraphicsPipeline(configInfo);
 	}
 
 	Pipeline::~Pipeline() {
@@ -42,10 +41,7 @@ namespace myvk {
 		return buffer;
 	}
 
-	void Pipeline::createGraphicsPipeline(
-		const std::string& vertFilepath, 
-		const std::string& fragFilepath, 
-		const PipelineConfigInfo& configInfo) 
+	void Pipeline::createGraphicsPipeline(const PipelineConfigInfo& configInfo) 
 	{
 		assert(
 			configInfo.pipelineLayout != VK_NULL_HANDLE &&
@@ -53,12 +49,10 @@ namespace myvk {
 		assert(
 			configInfo.renderPass != VK_NULL_HANDLE &&
 			"Cannot create graphics pipeline: no renderPass provided in configInfo");
-
-		auto vertCode = readFile(vertFilepath);
-		auto fragCode = readFile(fragFilepath);
-
-		createShaderModule(vertCode, &vertShaderModule);
-		createShaderModule(fragCode, &fragShaderModule);
+		
+		Shader* shader = configInfo.shader;
+		createShaderModule(shader->getVertexCode(), &vertShaderModule);
+		createShaderModule(shader->getFragmentCode(), &fragShaderModule);
 
 		VkPipelineShaderStageCreateInfo shaderStages[2];
 		shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -76,15 +70,12 @@ namespace myvk {
 		shaderStages[1].pNext = nullptr;
 		shaderStages[1].pSpecializationInfo = nullptr;
 
-		auto bindingDescriptions = Mesh::getBindingDescriptions();
-		auto attributeDescriptions = Mesh::getAttributeDescriptions();
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexAttributeDescriptionCount =
-			static_cast<uint32_t>(attributeDescriptions.size());
-		vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
-		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-		vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
+		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(configInfo.attributes.size());
+		vertexInputInfo.vertexBindingDescriptionCount   = static_cast<uint32_t>(configInfo.bindings.size());
+		vertexInputInfo.pVertexAttributeDescriptions    = configInfo.attributes.data();
+		vertexInputInfo.pVertexBindingDescriptions      = configInfo.bindings.data();
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -117,11 +108,11 @@ namespace myvk {
 		}
 	}
 
-	void Pipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule) {
+	void Pipeline::createShaderModule(const std::vector<uint32_t>& code, VkShaderModule* shaderModule) {
 		VkShaderModuleCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		createInfo.codeSize = code.size();
-		createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+		createInfo.codeSize = code.size() * sizeof(uint32_t);
+		createInfo.pCode    = code.data();
 
 		if (vkCreateShaderModule(device.device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create shader module");

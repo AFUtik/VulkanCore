@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vk/Mesh.hpp"
+#include "rendering/BaseMesh.hpp"
 
 struct Renderer;
 struct RenderQueue;
@@ -17,7 +18,6 @@ private:
     
     PlanetComponentManager& pcm;
 
-    myvk::Mesh vkCircleMesh;
-
-    std::vector<myvk::InstanceData> instances;
+    BaseMesh vkCircleMesh;
+    std::vector<InstanceData> instances;
 };

@@ -1,14 +1,12 @@
 #include "vk/Swapchain.hpp"
 #include "vk/Device.hpp"
 
-// std
 #include <array>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-#include <vulkan/vulkan_core.h>
 
 namespace myvk {
     SwapChain::SwapChain(VkExtent2D extent) : 
@@ -26,7 +24,6 @@ namespace myvk {
         init();
         oldSwapChain.reset();
     }
-
 
     void SwapChain::init() {
         vkDeviceWaitIdle(device.device());
@@ -219,7 +216,7 @@ namespace myvk {
                 throw std::runtime_error("failed to create texture image view!");
             }
             #ifndef NDEBUG
-                device.setDebugName((uint64_t)swapChainImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchain_ImageView");
+                device.addDebugHandle((uint64_t)swapChainImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchain_ImageView");
             #endif
         }
     }
@@ -306,7 +303,7 @@ namespace myvk {
                 throw std::runtime_error("failed to create framebuffer!");
             }
             #ifndef NDEBUG
-                device.setDebugName((uint64_t)swapChainFramebuffers[i], VK_OBJECT_TYPE_FRAMEBUFFER, "Swapchain_Framebuffer");
+                device.addDebugHandle((uint64_t)swapChainFramebuffers[i], VK_OBJECT_TYPE_FRAMEBUFFER, "Swapchain_Framebuffer");
             #endif
         }
     }
@@ -359,7 +356,7 @@ namespace myvk {
                 throw std::runtime_error("failed to create texture image view!");
             }
             #ifndef NDEBUG
-                device.setDebugName((uint64_t)depthImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchain_DepthImageView");
+                device.addDebugHandle((uint64_t)depthImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchain_DepthImageView");
             #endif
         }
     }
@@ -384,8 +381,8 @@ namespace myvk {
                 throw std::runtime_error("failed to create synchronization objects for a frame!");
             }
             #ifndef NDEBUG
-                device.setDebugName((uint64_t)imageAvailableSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Swapchain_ImageAvailableSemaphore");
-                device.setDebugName((uint64_t)inFlightFences[i], VK_OBJECT_TYPE_FENCE, "Swapchain_InFlightFence");
+                device.addDebugHandle((uint64_t)imageAvailableSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Swapchain_ImageAvailableSemaphore");
+                device.addDebugHandle((uint64_t)inFlightFences[i], VK_OBJECT_TYPE_FENCE, "Swapchain_InFlightFence");
             #endif
         }
 
@@ -394,7 +391,7 @@ namespace myvk {
                 throw std::runtime_error("failed to create render finished semaphore!");
             }
             #ifndef NDEBUG
-                device.setDebugName((uint64_t)renderFinishedSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Swapchain_RenderFinishedSemaphore");
+                device.addDebugHandle((uint64_t)renderFinishedSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Swapchain_RenderFinishedSemaphore");
             #endif
         }
     }

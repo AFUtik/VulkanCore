@@ -1,7 +1,7 @@
 #pragma once
 
 #include "game/GameContext.hpp"
-#include "vk/Mesh.hpp"
+#include "rendering/BaseMesh.hpp"
 
 #include <vector>
 
@@ -16,7 +16,7 @@ struct QuadTreeRenderer
 private:
     Renderer& renderer;
     const GameContext::QT& quadTree;
-
-    myvk::Mesh vkQuad;
-    std::vector<myvk::InstanceData> quadInstances;
+    
+    std::vector<InstanceData> quadInstances;
+    BaseMesh vkQuad;
 };

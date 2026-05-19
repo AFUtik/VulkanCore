@@ -1,16 +1,12 @@
 #include "rendering/Renderer.hpp"
 #include "rendering/RenderState.hpp"
-
 #include "rendering/systems/BaseRenderSystem.hpp"
 
 #include "Camera.hpp"
-#include "model/Mesh.hpp"
 
 #include "vk/Mesh.hpp"
 #include "vk/Pipeline.hpp"
 #include "vulkan/vulkan_core.h"
-
-#include <iostream>
 
 Renderer::Renderer()
     : vkRenderer(), 
@@ -18,13 +14,22 @@ Renderer::Renderer()
       planetRenderer(*this),
       qtRenderer(*this)
 {
-    vkScreenRenderSystem = std::make_unique<myvk::BaseRenderSystem>(vkRenderer);
-    vkPlanetRenderSystem = std::make_unique<myvk::BaseRenderSystem>(vkRenderer, vkRenderTarget);
+    baseShader = shaderManager.loadShader(
+    "/home/afutik/cplusplus/VulkanCore/resources/shaders/shader.vert", 
+    "/home/afutik/cplusplus/VulkanCore/resources/shaders/shader.frag",
+    "BaseShader");
 
-    myvk::PipelineConfigInfo config{};
+    myvk::PipelineConfigInfo config{
+        .bindings   = myvk::BaseRenderSystem::getBindingDescriptions(),
+        .attributes = myvk::BaseRenderSystem::getAttributeDescriptions(),
+        .shader     = baseShader
+    };
     myvk::Pipeline::defaultPipelineConfigInfo(config);
-    makeWireframeConfig(config);
+    
+    vkScreenRenderSystem = std::make_unique<myvk::BaseRenderSystem>(vkRenderer, config);
+    vkPlanetRenderSystem = std::make_unique<myvk::BaseRenderSystem>(vkRenderer, vkRenderTarget, config);
 
+    makeWireframeConfig(config);
     vkWireframeRenderSystem = std::make_unique<myvk::BaseRenderSystem>(vkRenderer, vkRenderTarget, config);
 
     vkRenderTarget.createFramebufferTexture(vkScreenRenderSystem.get());
@@ -39,19 +44,26 @@ void Renderer::makeWireframeConfig(myvk::PipelineConfigInfo& config)
 
 void Renderer::createVkMeshScreen()
 { 
-    Mesh screenMesh;
-	screenMesh.vertices.push_back({1.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	screenMesh.vertices.push_back({1.0f,  -1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	screenMesh.vertices.push_back({-1.0f,  -1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
-	screenMesh.vertices.push_back({-1.0f,  1.0f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+    std::vector<Vertex> vertices; 
+    std::vector<u32> indices; 
 
-	screenMesh.indices.push_back(0);
-	screenMesh.indices.push_back(1);
-	screenMesh.indices.push_back(2);
-	screenMesh.indices.push_back(2);
-	screenMesh.indices.push_back(3);
-	screenMesh.indices.push_back(0);
-	vkMeshScreen.updateBuffers(screenMesh.vertices, screenMesh.indices);
+	vertices.push_back({1.0f,   1.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	vertices.push_back({1.0f,  -1.0f, 0.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	vertices.push_back({-1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+	vertices.push_back({-1.0f,  1.0f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f});
+
+	indices.push_back(0);
+	indices.push_back(1);
+	indices.push_back(2);
+	indices.push_back(2);
+	indices.push_back(3);
+	indices.push_back(0);
+
+	vkMeshScreen.updateBuffers(std::as_bytes(std::span(vertices)), indices);
+    
+    #ifndef NDEBUG
+    vkMeshScreen.addDebugInfo("ScreenMesh");
+    #endif
 }
 
 void Renderer::render(Camera& camera)
@@ -84,7 +96,7 @@ void Renderer::render(Camera& camera)
 	vkRenderer.beginSwapChainRenderPass();
     
     state.projview = glm::mat4(1.0f);
-    myvk::InstanceData instance{};
+    InstanceData instance{};
     RenderBatch screenBatch{
         &vkMeshScreen, 
         vkRenderTarget.getFramebufferTexture(frame),

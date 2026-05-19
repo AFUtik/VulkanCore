@@ -1,14 +1,11 @@
 #pragma once
 
-#include "../model/Vertex.hpp"
-
 #include <span>
 #include <memory>
-#include <vector>
 #include <cstdint>
 
-#include <vulkan/vulkan.h>
-#include <glm/glm.hpp>
+struct VkCommandBuffer_T;
+using VkCommandBuffer = VkCommandBuffer_T*;
 
 namespace myvk {
 
@@ -31,21 +28,16 @@ enum RenderQueueFlags {
 	Transparent = 1 << 7
 };
 
-struct alignas(16) InstanceData {
-	glm::mat4 model = glm::mat4(1.0f);
-	glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-};
-
 class Mesh {
 private:
 	std::unique_ptr<Buffer> vertexBuffer;
 	std::unique_ptr<Buffer> indexBuffer;
 	uint32_t reservedVertexBufferSize   = 0;
 	uint32_t reservedIndexBufferSize    = 0;
-	uint32_t reservedInstanceBufferSize = 0;
+	uint32_t vertexStride  = 0;
 	uint32_t vertexCount   = 0;
 	uint32_t indexCount    = 0;
-	uint32_t flags = GPUMemory | Solid | Opaque;
+	uint32_t flags = (uint32_t)GPUMemory | (uint32_t)Solid | (uint32_t)Opaque;
 public:
 	Mesh();
 	~Mesh();
@@ -53,20 +45,26 @@ public:
 	Mesh(Mesh&&) noexcept;
     Mesh& operator=(Mesh&&) noexcept;
 
-    Mesh(const Mesh&) = delete;
-    Mesh& operator=(const Mesh&) = delete;
+    Mesh(const Mesh&) noexcept = delete;
+    Mesh& operator=(const Mesh&) noexcept = delete;
+
+	inline uint32_t getVertexCount() {return vertexCount;}
+	inline uint32_t getIndexCount() {return indexCount;}
 
 	inline void setFlags(uint32_t flags)   {this->flags |= flags;}
 	inline void resetFlags(uint32_t flags) {this->flags  = flags;}
 	inline bool checkFlag(uint32_t flag) {return flags & flag;}
 	
-	void createBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices);
-	void updateBuffers(std::span<Vertex> vertices, std::span<uint32_t> indices);
+	void setVertexStride(uint32_t vertexStride) {this->vertexStride = vertexStride;} // Call before 'createBuffers' or 'updateBuffers' functions.
+
+	void createBuffers(std::span<const std::byte> vertices, std::span<uint32_t> indices = {});
+	void updateBuffers(std::span<const std::byte> vertices, std::span<uint32_t> indices = {});
 
 	void draw(VkCommandBuffer commandBuffer, size_t instanceCount = 1, size_t instanceOffset = 0) const;
-
-	static std::vector<VkVertexInputBindingDescription>   getBindingDescriptions();
-	static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+	
+	#ifndef NDEBUG
+	void addDebugInfo(const char* info);
+	#endif
 };
 
 }

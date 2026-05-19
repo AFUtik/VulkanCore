@@ -67,7 +67,11 @@ namespace myvk {
     Device::Device() : logger(std::ofstream(exeDir / "validation.txt"))
     {
         createInstance();
+
+        #ifndef NDEBUG
         createSetDebugNameFunc();
+        #endif
+
         setupDebugMessenger();
         createSurface();
         pickPhysicalDevice();
@@ -151,40 +155,6 @@ namespace myvk {
 
         hasGflwRequiredInstanceExtensions();
     }
-
-    void Device::setDebugName(uint64_t handle, VkObjectType type, std::string_view name)
-    {
-        
-        VkDebugUtilsObjectNameInfoEXT info{};
-        info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-        info.objectType = type;
-        info.objectHandle = handle;
-        info.pObjectName = name.data();
-
-        setDebugNameFunc(device_, &info);
-    }
-
-    void Device::setDebugNameAllocation(
-        uint64_t handle,
-        VkObjectType type,
-        VmaAllocation allocation,
-        std::string_view name)
-    {
-        VkDebugUtilsObjectNameInfoEXT info{};
-        info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-        info.objectType = type;
-        info.objectHandle = handle;
-        info.pObjectName = name.data();
-
-        setDebugNameFunc(device_, &info);
-
-        const std::string allocationName = std::string(name) + "_VmaMemory";
-        vmaSetAllocationName(
-            allocator_,
-            allocation,
-            allocationName.c_str());
-    }
-
 
     void Device::pickPhysicalDevice() {
         uint32_t deviceCount = 0;
@@ -844,6 +814,10 @@ namespace myvk {
                 vmaDestroyBuffer(allocator, info.buffer, info.allocation);
             }
         );
+
+        #ifndef NDEBUG
+        memoryTracker.untrack((const void*)resource);
+        #endif
     }
 
     template<>
@@ -863,6 +837,9 @@ namespace myvk {
                 vmaDestroyImage(allocator, info.image, info.allocation);
             }
         );
+        #ifndef NDEBUG
+        memoryTracker.untrack((const void*)resource);
+        #endif
     }
 
     template<>
@@ -872,6 +849,9 @@ namespace myvk {
                 vkDestroyDescriptorSetLayout(device, layout, nullptr);
             }
         );
+        #ifndef NDEBUG
+        memoryTracker.untrack((const void*)resource);
+        #endif
     }
 
     template<>
@@ -884,11 +864,63 @@ namespace myvk {
                 }
             }
         );
+        #ifndef NDEBUG
+        memoryTracker.untrack((const void*)resource);
+        #endif
     }
+
+    #ifndef NDEBUG
 
     void Device::createSetDebugNameFunc()
     {
         setDebugNameFunc = (PFN_vkSetDebugUtilsObjectNameEXT) vkGetInstanceProcAddr(instance_, "vkSetDebugUtilsObjectNameEXT");
-
     }
+
+    void Device::addDebugHandle(
+        uint64_t handle, 
+        VkObjectType type, 
+        const char* name)
+    {
+        VkDebugUtilsObjectNameInfoEXT info{};
+        info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        info.objectType = type;
+        info.objectHandle = handle;
+        info.pObjectName = name;
+
+        setDebugNameFunc(device_, &info);
+    }
+
+    void Device::addDebugObject( 
+        uint64_t handle,
+        VkObjectType type,
+        VmaAllocation allocation,
+        const char* name,
+
+        const void* object,
+        size_t objectSize)
+    {
+        // Vulkan Validation Layer
+        VkDebugUtilsObjectNameInfoEXT info{};
+        info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        info.objectType = type;
+        info.objectHandle = handle;
+        info.pObjectName = name;
+
+        setDebugNameFunc(device_, &info);
+
+        // Vma Stat Table
+        const std::string allocationName = std::string(name) + "_VmaMemory";
+        vmaSetAllocationName(
+            allocator_,
+            allocation,
+            allocationName.c_str());
+
+        // Memory Tracker
+        AllocationInfo allocInfo{};
+        allocInfo.size = objectSize;
+        std::strncpy(allocInfo.name.data(), name, sizeof(allocInfo.name) - 1);
+        memoryTracker.track(object, allocInfo);
+    }
+
+    #endif
 }  // namespace myvk

@@ -34,10 +34,7 @@ void RenderSystem::createPipeline(VkRenderPass renderPass, PipelineConfigInfo& p
 
 	pipelineConfig.renderPass     = renderPass;
 	pipelineConfig.pipelineLayout = pipelineLayout;
-	pipeline = std::make_unique<Pipeline>(
-		"/home/afutik/cplusplus/VulkanCore/resources/shaders/shader.vert.spv",
-		"/home/afutik/cplusplus/VulkanCore/resources/shaders/shader.frag.spv",
-		pipelineConfig);
+	pipeline = std::make_unique<Pipeline>(pipelineConfig);
 }
 
 }

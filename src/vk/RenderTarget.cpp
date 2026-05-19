@@ -42,7 +42,7 @@ namespace myvk {
         }
 
         for(int i = 0; i < images.size(); i++) {
-            //vkDestroySampler(device.device(), screenSamplers[i], nullptr);
+            vkDestroySampler(device.device(), screenSamplers[i], nullptr);
         }
 
         vkDestroyRenderPass(device.device(), renderPass, nullptr);
@@ -81,7 +81,7 @@ namespace myvk {
                 throw std::runtime_error("Failed to create image sampler");
             } 
             #ifndef NDEBUG
-                device.setDebugName((uint64_t)screenSamplers[i], VK_OBJECT_TYPE_SAMPLER, "RenderTarget_Sampler");
+                device.addDebugHandle((uint64_t)screenSamplers[i], VK_OBJECT_TYPE_SAMPLER, "RenderTarget_Sampler");
             #endif
 
             VkDescriptorImageInfo imageInfo;
@@ -151,8 +151,8 @@ namespace myvk {
             }
 
             #ifndef NDEBUG
-                device.setDebugNameAllocation((uint64_t)images[i], VK_OBJECT_TYPE_IMAGE, imageAllocs[i], "RenderTarget_Image");
-                device.setDebugName((uint64_t)imageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "RenderTarget_ImageView");
+                device.addDebugObject((uint64_t)images[i], VK_OBJECT_TYPE_IMAGE, imageAllocs[i], "RenderTarget_Image", nullptr, 0);
+                device.addDebugHandle((uint64_t)imageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "RenderTarget_ImageView");
             #endif
         }
     }
@@ -239,7 +239,7 @@ namespace myvk {
             }
             
             #ifndef NDEBUG
-                device.setDebugName((uint64_t)framebuffers[i], VK_OBJECT_TYPE_FRAMEBUFFER, "RenderTarget_Framebuffer");
+                device.addDebugHandle((uint64_t)framebuffers[i], VK_OBJECT_TYPE_FRAMEBUFFER, "RenderTarget_Framebuffer");
             #endif
         }
     }
@@ -292,7 +292,7 @@ namespace myvk {
             }
 
             #ifndef NDEBUG
-                device.setDebugName((uint64_t)depthImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "RenderTarget_DepthImageView");
+                device.addDebugHandle((uint64_t)depthImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, "RenderTarget_DepthImageView");
             #endif
         }
     }

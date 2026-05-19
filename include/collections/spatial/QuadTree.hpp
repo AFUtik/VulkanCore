@@ -138,8 +138,7 @@ protected:
     {
         Node& n = nodes_[ni];
 
-        if (n.itemStorage == NO_STORAGE)
-            n.itemStorage = allocPoolSlot();
+        if (n.itemStorage == NO_STORAGE) n.itemStorage = allocPoolSlot();
 
         u32 offset = n.poolOffset();
 
@@ -233,7 +232,7 @@ protected:
         nodes_[ni].itemCount   = 0;
  
         for (int i = 0; i < oldCount; i++) {
-            const Item& item = pool_[oldStore + i];
+            const Item item = pool_[oldStore + i];
 
             const Vec2 cc = nodes_[ni].bounds.center();
             const int  q  = (item.primitive.x >= cc.x ? 1 : 0) | (item.primitive.y >= cc.y ? 2 : 0);

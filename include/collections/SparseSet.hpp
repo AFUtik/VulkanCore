@@ -208,14 +208,16 @@ private:
         auto new_dense_id = std::make_unique<I[]>(new_cap);
         auto new_sparse   = std::make_unique<I[]>(new_cap);
 
-        if constexpr (std::is_trivially_copyable_v<T>) {
-            std::memcpy(new_dense.get(), dense.get(), _size * sizeof(T));
-        } else {
-            std::move(dense.get(), dense.get() + _size, new_dense.get());
-        }
+        if (_size > 0) {
+            if constexpr (std::is_trivially_copyable_v<T>) {
+                std::memcpy(new_dense.get(), dense.get(), _size * sizeof(T));
+            } else {
+                std::move(dense.get(), dense.get() + _size, new_dense.get());
+            }
 
-        std::memcpy(new_dense_id.get(), dense_id.get(), _size * sizeof(I));
-        std::memcpy(new_sparse.get(),   sparse.get(),   _size * sizeof(I));
+            std::memcpy(new_dense_id.get(), dense_id.get(), _size * sizeof(I));
+            std::memcpy(new_sparse.get(),   sparse.get(),   _size * sizeof(I));
+        }
 
         dense    = std::move(new_dense);
         dense_id = std::move(new_dense_id);
