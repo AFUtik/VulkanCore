@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <cstdint>
 
 struct VkPipelineLayout_T;
 using VkPipelineLayout = VkPipelineLayout_T*;
@@ -24,6 +25,8 @@ namespace myvk {
 	struct PipelineConfigInfo;
 	class  Pipeline;
 
+	struct RenderTarget;
+
 	class RenderSystem {
 	public:
 		RenderSystem(Renderer& renderer);
@@ -38,15 +41,15 @@ namespace myvk {
 		inline VkPipelineLayout getPipelineLayout() {return pipelineLayout;}
 
 		inline DescriptorPoolManager* getDescriptorPool() {return descriptorPool;}
+		
+		void addPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig, uint32_t& pipelineId);
 	protected:
 		void createPipelineLayout(const std::vector<VkDescriptorSetLayout>& layouts);
-
-		void createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig);
+		
+		VkPipelineLayout pipelineLayout;
 		
 		DescriptorPoolManager* descriptorPool;
-
-		std::unique_ptr<Pipeline> pipeline;
-		VkPipelineLayout pipelineLayout;
+		std::vector<std::unique_ptr<Pipeline>> pipelines;
 		
 		Device& device;
 	};

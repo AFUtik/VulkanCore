@@ -29,12 +29,13 @@ void RenderSystem::createPipelineLayout(const std::vector<VkDescriptorSetLayout>
 	}
 }
 
-void RenderSystem::createPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig) {
+void RenderSystem::addPipeline(VkRenderPass renderPass, PipelineConfigInfo& pipelineConfig, uint32_t& pipelineId) {
 	assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
 	pipelineConfig.renderPass     = renderPass;
 	pipelineConfig.pipelineLayout = pipelineLayout;
-	pipeline = std::make_unique<Pipeline>(pipelineConfig);
+	pipelines.push_back(std::make_unique<Pipeline>(pipelineConfig));
+	pipelineId = static_cast<uint32_t>(pipelines.size()-1);
 }
 
 }

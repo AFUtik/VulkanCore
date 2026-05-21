@@ -22,24 +22,10 @@
 namespace myvk 
 {
 
-BaseRenderSystem::BaseRenderSystem(Renderer& renderer, PipelineConfigInfo& config) : RenderSystem(renderer)
+BaseRenderSystem::BaseRenderSystem(Renderer& renderer) : RenderSystem(renderer)
 {
     createLayouts();
-
     createPipelineLayout(layouts);
-
-	createPipeline(renderer.getSwapChainRenderPass(), config);
-
-    createDefaultMaterial();
-}
-
-BaseRenderSystem::BaseRenderSystem(Renderer& renderer, RenderTarget& target, PipelineConfigInfo& config) : RenderSystem(renderer)
-{
-    createLayouts();
-
-    createPipelineLayout(layouts);
-
-	createPipeline(target.getRenderPass(), config);
     
     createDefaultMaterial();
 }
@@ -97,12 +83,6 @@ void BaseRenderSystem::createLayouts()
 	}
 }
 
-void BaseRenderSystem::clearInstances()
-{
-	instanceOffset = 0;
-	instnaceOffsetBytes = 0;
-}
-
 void BaseRenderSystem::createDefaultMaterial() 
 {
 	defaultMaterial = std::make_unique<Material>();
@@ -127,32 +107,36 @@ Material* BaseRenderSystem::getDefaultMaterial()
 	return defaultMaterial.get();
 }
 
-void BaseRenderSystem::render(RenderState& state, RenderBatch& batch) 
+void BaseRenderSystem::flushRenderQueue(RenderState& state) 
 {
-    auto& frame = state.frame;
+	auto& frame = state.frame;
+	for(const auto& batch : renderQueue.batchQueue)
+	{
+		const size_t instancesSizeBytes = sizeof(InstanceData) * batch.instanceCount;
 
-	const size_t instancesSizeBytes = sizeof(InstanceData) * batch.instanceCount;
+		stagingInstanceSsbo[frame.frameIndex]->writeToBuffer(batch.instances, instancesSizeBytes, instnaceOffsetBytes);
+		globalUniforms[frame.frameIndex]->writeToBuffer(&state.projview);
 
-	stagingInstanceSsbo[frame.frameIndex]->writeToBuffer(batch.instances, instancesSizeBytes, instnaceOffsetBytes);
-	globalUniforms[frame.frameIndex]->writeToBuffer(&state.projview);
+		pipelines[state.pipeline]->bind(frame.commandBuffer);
 
-	pipeline->bind(frame.commandBuffer);
+		vkCmdBindDescriptorSets(
+			frame.commandBuffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipelineLayout,
+			0,
+			1,
+			&descriptorSets[frame.frameIndex],
+			0, 
+			nullptr
+		);
+		
+		batch.material->bind(frame.commandBuffer);
+		batch.mesh->draw(frame.commandBuffer, batch.instanceCount, instanceOffset);
 
-	vkCmdBindDescriptorSets(
-		frame.commandBuffer,
-		VK_PIPELINE_BIND_POINT_GRAPHICS,
-		pipelineLayout,
-		0,
-		1,
-		&descriptorSets[frame.frameIndex],
-		0, nullptr
-	);
-	
-	batch.material->bind(frame.commandBuffer);
-	batch.mesh->draw(frame.commandBuffer, batch.instanceCount, instanceOffset);
-
-	instanceOffset+=batch.instanceCount;
-	instnaceOffsetBytes+=instancesSizeBytes;
+		instanceOffset+=batch.instanceCount;
+		instnaceOffsetBytes+=instancesSizeBytes;
+	}
+	renderQueue.batchQueue.clear();
 }
 
 std::vector<VkVertexInputBindingDescription> BaseRenderSystem::getBindingDescriptions() {

@@ -3,7 +3,7 @@
 
 #include "vk/Descriptors.hpp"
 #include "vk/RenderSystem.hpp"
-#include "vk/Mesh.hpp"
+#include "rendering/RenderQueue.hpp"
 
 #include <glm/glm.hpp>
 
@@ -33,24 +33,24 @@ struct GlobalUniformBuffer {glm::mat4 projview{1.f};};
 class BaseRenderSystem : public RenderSystem
 {
 public: 
-    BaseRenderSystem(
-        Renderer& renderer, 
-        PipelineConfigInfo& config);
-
-    BaseRenderSystem(
-        Renderer& renderer, 
-        RenderTarget& target, 
-        PipelineConfigInfo& config);
+    BaseRenderSystem(Renderer& renderer);
 
     ~BaseRenderSystem();
 
 	Material* getDefaultMaterial();
 
+    inline RenderQueue& getRenderQueue() {return renderQueue;}
+
     inline DescriptorSetLayout* getMaterialSetLayout() override {return materialSetLayout.get();}
 
-    void render(RenderState& state, RenderBatch& batch);
-    void clearInstances();
-    
+    void flushRenderQueue(RenderState& state);
+    inline void clearQueue() noexcept
+    {
+        renderQueue.batchQueue.clear();
+        instanceOffset      = 0;
+        instnaceOffsetBytes = 0;
+    }
+
     static std::vector<VkVertexInputBindingDescription>   getBindingDescriptions();
 	static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
 protected:
@@ -77,7 +77,9 @@ protected:
     size_t instanceOffset = 0;
     size_t instnaceOffsetBytes = 0;
 
-    
+    RenderQueue renderQueue;
 };
+
+using BSR = BaseRenderSystem;
 
 }

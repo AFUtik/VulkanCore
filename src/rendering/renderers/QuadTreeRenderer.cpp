@@ -51,7 +51,7 @@ void QuadTreeRenderer::submit(RenderQueue& queue)
     queue.batchQueue.push_back(
         {
             &vkQuad,
-            renderer.vkWireframeRenderSystem->getDefaultMaterial(),
+            renderer.baseRenderSystem->getDefaultMaterial(),
             quadInstances.data(),
             static_cast<u32>(quadInstances.size())
         }

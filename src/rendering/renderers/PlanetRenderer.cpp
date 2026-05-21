@@ -97,7 +97,7 @@ void PlanetRenderer::submit(RenderQueue& queue)
     queue.batchQueue.push_back(
         {
             &vkCircleMesh,
-            renderer.vkPlanetRenderSystem->getDefaultMaterial(),
+            renderer.baseRenderSystem->getDefaultMaterial(),
 			instances.data(),
 			static_cast<u32>(pcm.size())
         }

@@ -7,4 +7,7 @@ struct RenderState
 {
     myvk::FrameInfo& frame;
     glm::mat4 projview;
+
+    uint32_t rsystem;
+    uint32_t pipeline;
 };

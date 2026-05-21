@@ -1,7 +1,7 @@
 #pragma once
 
 #include "vk/Mesh.hpp"
-#include "rendering/BaseMesh.hpp"
+#include "rendering/RenderQueue.hpp"
 
 struct Renderer;
 struct RenderQueue;

@@ -1,11 +1,11 @@
-#pragma once 
+#pragma once
 
-#include "vk/Mesh.hpp"
-#include "rendering/BaseMesh.hpp"
+#include "BaseMesh.hpp"
 
-namespace myvk {
-    class Material;
-}
+namespace myvk 
+{
+    struct Material;
+};
 
 struct RenderBatch
 { 

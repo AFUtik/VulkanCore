@@ -1,7 +1,7 @@
 #pragma once
 
 #include "game/GameContext.hpp"
-#include "rendering/BaseMesh.hpp"
+#include "rendering/RenderQueue.hpp"
 
 #include <vector>
 
