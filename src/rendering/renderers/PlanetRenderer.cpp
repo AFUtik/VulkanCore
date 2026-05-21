@@ -33,7 +33,8 @@ PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM
 		indices.push_back(i + 1);
 	}
 
-	vkCircleMesh.updateBuffers(std::as_bytes(std::span(vertices)), indices);
+	vkCircleMesh.updateVertexBuffer(vertices.data(), vertices.size());
+    vkCircleMesh.updateIndexBuffer(indices.data(), indices.size());
 
 	// TO REMOVE CODE //
 

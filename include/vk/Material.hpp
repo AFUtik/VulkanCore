@@ -41,7 +41,4 @@ private:
     VkDescriptorSet descriptor      = nullptr;
 };
 
-//struct MaterialResources : public ResourceManager<Material> {};
-//using MaterialHandle = MaterialResources::ReferencedResource;
-
 }

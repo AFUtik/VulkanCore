@@ -2,7 +2,9 @@
 #include "vk/Device.hpp"
 #include "vk/Buffer.hpp"
 
-inline uint32_t nextPow2(uint32_t v) {
+#include <cassert>
+
+static inline uint32_t nextPow2(uint32_t v) noexcept {
     if (v == 0) return 1;
 
     v--;
@@ -24,175 +26,254 @@ namespace myvk {
 	Mesh::Mesh(Mesh&&) noexcept = default;
 	Mesh& Mesh::operator=(Mesh&&) noexcept = default;
 
-    void Mesh::createBuffers(std::span<const std::byte> vertices, std::span<uint32_t> indices) {
-		Device& device = Device::instance();
+	void Mesh::createVertexBuffer(const void* vertices, uint64_t size)
+	{
+		auto& device = myvk::Device::instance();
+		assert(size >= 3 && "Not enough vertices");
 
-		vertexCount = static_cast<uint32_t>(vertices.size() / vertexStride);
-		indexCount  = static_cast<uint32_t>(indices.size());
+		vertexCount = size;
 
-		reservedVertexBufferSize = nextPow2(vertexCount);
-		reservedIndexBufferSize  = nextPow2(indexCount);
-
-		// VertexBuffer creation //
-		if(vertexCount >= 3) {
-			VkDeviceSize bufferSize = vertexStride * reservedVertexBufferSize;
-			VkDeviceSize copySize   = vertexStride * vertexCount;
-			if(flags & MeshFlags::GPUMemory) { // GPU MEMORY
-				Buffer stagingBuffer(
-					device,
-					bufferSize,
-					1,
-					VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					VMA_MEMORY_USAGE_CPU_ONLY
-				);
-				stagingBuffer.map();
-				stagingBuffer.writeToBuffer(vertices.data(), copySize);
-				stagingBuffer.unmap();
+		VkDeviceSize bufferSize = static_cast<uint64_t>(vertexStride) * nextPow2(vertexCount);
+		VkDeviceSize copySize   = static_cast<uint64_t>(vertexStride) * vertexCount;
+		if(flags & MeshFlags::GPUMemory) {
+			Buffer stagingBuffer(
+				device,
+				bufferSize,
+				1,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VMA_MEMORY_USAGE_CPU_ONLY
+			);
+			stagingBuffer.map();
+			stagingBuffer.writeToBuffer(vertices, copySize);
+			stagingBuffer.unmap();
 				
 
-				vertexBuffer = std::make_unique<Buffer>(
-					device,
-					bufferSize,
-					1,
-					VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-					0,
-					VMA_MEMORY_USAGE_GPU_ONLY
-				);
+			vertexBuffer = std::make_unique<Buffer>(
+				device,
+				bufferSize,
+				1,
+				VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				0,
+				VMA_MEMORY_USAGE_GPU_ONLY
+			);
 				
-				device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
-			} 
-			else { // CPU MEMORY
+			device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
+		} 
+		else {
 
-				vertexBuffer = std::make_unique<Buffer>(
-					device,
-					bufferSize,
-					1,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					0,
-					VMA_MEMORY_USAGE_CPU_TO_GPU
-				);
-				vertexBuffer->writeToBuffer(vertices.data(), bufferSize);
-			}
+			vertexBuffer = std::make_unique<Buffer>(
+				device,
+				bufferSize,
+				1,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				0,
+				VMA_MEMORY_USAGE_CPU_TO_GPU
+			);
+			vertexBuffer->writeToBuffer(vertices, bufferSize);
 		}
-		
-		// IndexBuffer creation //
-		if(indexCount) {
-			VkDeviceSize bufferSize = sizeof(indices[0]) * reservedIndexBufferSize;
-			if(flags & MeshFlags::GPUMemory) { // GPU MEMORY
-				Buffer stagingBuffer(
-					device,
-					bufferSize,
-					1,
-					VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					VMA_MEMORY_USAGE_CPU_ONLY
-				);
-				stagingBuffer.map();
-				stagingBuffer.writeToBuffer(indices.data(), bufferSize);
-				stagingBuffer.unmap();
+	};
 
-				indexBuffer = std::make_unique<Buffer>(
-					device,
-					bufferSize,
-					1,
-					VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-					0,
-					VMA_MEMORY_USAGE_GPU_ONLY
-				);
-				
-				device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
-			} else { // CPU MEMORY
-				indexBuffer = std::make_unique<Buffer>(
-					device,
-					bufferSize,
-					1,
-					VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-					VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-					VMA_MEMORY_USAGE_CPU_TO_GPU
-				);
-				indexBuffer->writeToBuffer(indices.data(), bufferSize);
-			}
-		}
-	}
-
-	void Mesh::updateBuffers(std::span<const std::byte> vertices, std::span<uint32_t> indices) {
-		Device& device = Device::instance();
-
-		vertexCount = static_cast<uint32_t>(vertices.size() / vertexStride);
-		indexCount  = static_cast<uint32_t>(indices.size());
-
-		if (vertexCount > reservedVertexBufferSize || indexCount  > reservedIndexBufferSize)
-		{
-			createBuffers(vertices, indices);
+	void Mesh::updateVertexBuffer(const void* vertices, uint64_t size)
+	{
+		auto& device = myvk::Device::instance();
+		VkDeviceSize updateSize = static_cast<uint64_t>(vertexStride) * size;
+		if(vertexBuffer==nullptr || updateSize > vertexBuffer->getBufferSize()) {
+			createVertexBuffer(vertices, size);
 			return;
 		}
-
-		if (vertexCount >= 3)
+	
+		if (flags & MeshFlags::GPUMemory)
 		{
-			VkDeviceSize bufferSize = vertexStride * vertexCount;
+			Buffer stagingBuffer(
+				device,
+				updateSize,
+				1,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VMA_MEMORY_USAGE_CPU_ONLY
+			);
 
-			if (flags & MeshFlags::GPUMemory)
-			{
-				// staging buffer
-				Buffer stagingBuffer(
-					device,
-					bufferSize,
-					1,
-					VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					VMA_MEMORY_USAGE_CPU_ONLY
-				);
+			stagingBuffer.map();
+			stagingBuffer.writeToBuffer(vertices, updateSize);
+			stagingBuffer.unmap();
 
-				stagingBuffer.map();
-				stagingBuffer.writeToBuffer(vertices.data(), bufferSize);
-				stagingBuffer.unmap();
-
-				device.copyBuffer(
-					stagingBuffer.getBuffer(),
-					vertexBuffer->getBuffer(),
-					bufferSize
-				);
-			}
-			else
-			{
-				vertexBuffer->map();
-				vertexBuffer->writeToBuffer(vertices.data(), bufferSize);
-			}
+			device.copyBuffer(
+				stagingBuffer.getBuffer(),
+				vertexBuffer->getBuffer(),
+				updateSize
+			);
 		}
-
-		if (indexCount)
+		else
 		{
-			VkDeviceSize bufferSize = sizeof(indices[0]) * indexCount;
-
-			if (flags & MeshFlags::GPUMemory)
-			{
-				Buffer stagingBuffer(
-					device,
-					bufferSize,
-					1,
-					VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					VMA_MEMORY_USAGE_CPU_ONLY
-				);
-
-				stagingBuffer.map();
-				stagingBuffer.writeToBuffer(indices.data(), bufferSize);
-				stagingBuffer.unmap();
-
-				device.copyBuffer(
-					stagingBuffer.getBuffer(),
-					indexBuffer->getBuffer(),
-					bufferSize
-				);
-			}
-			else
-			{
-				indexBuffer->map();
-				indexBuffer->writeToBuffer(indices.data(), bufferSize);
-			}
+			vertexBuffer->map();
+			vertexBuffer->writeToBuffer(vertices, updateSize);
 		}
-	}
+	};
+
+	void Mesh::createIndexBuffer(const void* indices, uint64_t size)
+	{
+		auto& device = myvk::Device::instance();
+		indexCount = size;
+
+		VkDeviceSize bufferSize = static_cast<uint64_t>(indexStride) * nextPow2(indexCount);
+		VkDeviceSize copySize   = static_cast<uint64_t>(indexStride) * indexCount;
+		if(flags & MeshFlags::GPUMemory) {
+			Buffer stagingBuffer(
+				device,
+				bufferSize,
+				1,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VMA_MEMORY_USAGE_CPU_ONLY
+			);
+			stagingBuffer.map();
+			stagingBuffer.writeToBuffer(indices, copySize);
+			stagingBuffer.unmap();
+				
+			indexBuffer = std::make_unique<Buffer>(
+				device,
+				bufferSize,
+				1,
+				VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				0,
+				VMA_MEMORY_USAGE_GPU_ONLY
+			);
+				
+			device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
+		} 
+		else {
+			indexBuffer = std::make_unique<Buffer>(
+				device,
+				bufferSize,
+				1,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				0,
+				VMA_MEMORY_USAGE_CPU_TO_GPU
+			);
+			indexBuffer->writeToBuffer(indices, bufferSize);
+		}
+	};
+
+	void Mesh::updateIndexBuffer(const void* indices, uint64_t size)
+	{
+		auto& device = myvk::Device::instance();
+		VkDeviceSize updateSize = static_cast<uint64_t>(indexStride) * size;
+		if(indexBuffer==nullptr || updateSize > indexBuffer->getBufferSize()) {
+			createIndexBuffer(indices, size);
+			return;
+		}
+	
+		if (flags & MeshFlags::GPUMemory)
+		{
+			Buffer stagingBuffer(
+				device,
+				updateSize,
+				1,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VMA_MEMORY_USAGE_CPU_ONLY
+			);
+
+			stagingBuffer.map();
+			stagingBuffer.writeToBuffer(indices, updateSize);
+			stagingBuffer.unmap();
+
+			device.copyBuffer(
+				stagingBuffer.getBuffer(),
+				indexBuffer->getBuffer(),
+				updateSize
+			);
+		}
+		else
+		{
+			indexBuffer->map();
+			indexBuffer->writeToBuffer(indices, updateSize);
+		}
+	};
+
+	void Mesh::createInstanceBuffer(const void* instances, uint64_t size)
+	{
+		auto& device = myvk::Device::instance();
+		assert(size >= 1 && "Requires one instance at least");
+
+		instanceCount = size;
+
+		VkDeviceSize bufferSize = static_cast<uint64_t>(instanceStride) * nextPow2(instanceCount);
+		VkDeviceSize copySize   = static_cast<uint64_t>(instanceStride) * instanceCount;
+		if(flags & MeshFlags::GPUMemory) {
+			Buffer stagingBuffer(
+				device,
+				bufferSize,
+				1,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VMA_MEMORY_USAGE_CPU_ONLY
+			);
+			stagingBuffer.map();
+			stagingBuffer.writeToBuffer(instances, copySize);
+			stagingBuffer.unmap();
+				
+			instanceBuffer = std::make_unique<Buffer>(
+				device,
+				bufferSize,
+				1,
+				VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				0,
+				VMA_MEMORY_USAGE_GPU_ONLY
+			);
+				
+			device.copyBuffer(stagingBuffer.getBuffer(), instanceBuffer->getBuffer(), bufferSize);
+		} 
+		else {
+			instanceBuffer = std::make_unique<Buffer>(
+				device,
+				bufferSize,
+				1,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				0,
+				VMA_MEMORY_USAGE_CPU_TO_GPU
+			);
+			instanceBuffer->writeToBuffer(instances, bufferSize);
+		}
+	};
+
+	void Mesh::updateInstanceBuffer(const void* instances, uint64_t size)
+	{
+		auto& device = myvk::Device::instance();
+		VkDeviceSize updateSize = instanceStride * size;
+		if(instanceBuffer==nullptr || updateSize > instanceBuffer->getBufferSize()) {
+			createIndexBuffer(instances, size);
+			return;
+		}
+	
+		if (flags & MeshFlags::GPUMemory)
+		{
+			Buffer stagingBuffer(
+				device,
+				updateSize,
+				1,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VMA_MEMORY_USAGE_CPU_ONLY
+			);
+
+			stagingBuffer.map();
+			stagingBuffer.writeToBuffer(instances, updateSize);
+			stagingBuffer.unmap();
+
+			device.copyBuffer(
+				stagingBuffer.getBuffer(),
+				instanceBuffer->getBuffer(),
+				updateSize
+			);
+		}
+		else
+		{
+			instanceBuffer->map();
+			instanceBuffer->writeToBuffer(instances, updateSize);
+		}
+	};
 
 	void Mesh::draw(VkCommandBuffer commandBuffer, size_t instanceCount, size_t instanceOffset) const {
 		// Bind Cmd
@@ -221,6 +302,11 @@ namespace myvk {
 		{
 			std::string modified = std::string(info) + "_IndexBuffer";
 			indexBuffer->addDebugInfo(modified.c_str());
+		}
+		if(instanceBuffer)
+		{
+			std::string modified = std::string(info) + "_InstanceBuffer";
+			instanceBuffer->addDebugInfo(modified.c_str());
 		}
 	}
 	#endif

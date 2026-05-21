@@ -38,4 +38,5 @@ void Material::bind(VkCommandBuffer commandBuffer) const {
 	    nullptr);
 }
 
+
 }

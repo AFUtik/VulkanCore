@@ -20,5 +20,6 @@ struct BaseMesh : public myvk::Mesh
     BaseMesh() 
     {
         setVertexStride(sizeof(Vertex));
+        setIndexStride(sizeof(uint32_t));
     }
 };

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <span>
 #include <memory>
 #include <cstdint>
 
@@ -16,29 +15,7 @@ enum MeshFlags {
 	GPUMemory               = 1 << 1,
 };
 
-enum RenderTopologyFlags {
-	Solid     = 1 << 2,
-	Wireframe = 1 << 3,
-	Line      = 1 << 4
-};
-
-enum RenderQueueFlags {
-	Opaque      = 1 << 5,
-	Cutout      = 1 << 6,
-	Transparent = 1 << 7
-};
-
-class Mesh {
-private:
-	std::unique_ptr<Buffer> vertexBuffer;
-	std::unique_ptr<Buffer> indexBuffer;
-	uint32_t reservedVertexBufferSize   = 0;
-	uint32_t reservedIndexBufferSize    = 0;
-	uint32_t vertexStride  = 0;
-	uint32_t vertexCount   = 0;
-	uint32_t indexCount    = 0;
-	uint32_t flags = (uint32_t)GPUMemory | (uint32_t)Solid | (uint32_t)Opaque;
-public:
+struct Mesh {
 	Mesh();
 	~Mesh();
 
@@ -48,23 +25,41 @@ public:
     Mesh(const Mesh&) noexcept = delete;
     Mesh& operator=(const Mesh&) noexcept = delete;
 
-	inline uint32_t getVertexCount() {return vertexCount;}
-	inline uint32_t getIndexCount() {return indexCount;}
+	inline uint32_t getVertexCount()   {return vertexCount;}
+	inline uint32_t getIndexCount()    {return indexCount;}
+	inline uint32_t getInstanceCount() {return instanceCount;}
 
-	inline void setFlags(uint32_t flags)   {this->flags |= flags;}
-	inline void resetFlags(uint32_t flags) {this->flags  = flags;}
-	inline bool checkFlag(uint32_t flag) {return flags & flag;}
-	
-	void setVertexStride(uint32_t vertexStride) {this->vertexStride = vertexStride;} // Call before 'createBuffers' or 'updateBuffers' functions.
+	inline void setMemoryUsage(MeshFlags flag)             {this->flags = flag;}
+	inline void setVertexStride(uint32_t vertexStride)     {this->vertexStride   = vertexStride;} 
+	inline void setIndexStride(uint32_t indexStride)       {this->indexStride    = indexStride;}
+	inline void setInstanceStride(uint32_t instanceStride) {this->instanceStride = instanceStride;}
 
-	void createBuffers(std::span<const std::byte> vertices, std::span<uint32_t> indices = {});
-	void updateBuffers(std::span<const std::byte> vertices, std::span<uint32_t> indices = {});
+	void createVertexBuffer(const void* vertices, uint64_t size);
+	void updateVertexBuffer(const void* vertices, uint64_t size);
+
+	void createIndexBuffer(const void* indices, uint64_t size);
+	void updateIndexBuffer(const void* indices, uint64_t size);
+
+	void createInstanceBuffer(const void* instances, uint64_t size);
+	void updateInstanceBuffer(const void* instances, uint64_t size);
 
 	void draw(VkCommandBuffer commandBuffer, size_t instanceCount = 1, size_t instanceOffset = 0) const;
 	
 	#ifndef NDEBUG
 	void addDebugInfo(const char* info);
 	#endif
+private:
+	std::unique_ptr<Buffer> vertexBuffer;
+	std::unique_ptr<Buffer> indexBuffer;
+	std::unique_ptr<Buffer> instanceBuffer;
+	uint32_t vertexCount   = 0;
+	uint32_t indexCount    = 0;
+	uint32_t instanceCount = 0;
+
+	uint8_t flags = GPUMemory;
+	uint8_t vertexStride   = 0;
+	uint8_t indexStride    = 0;
+	uint8_t instanceStride = 0;
 };
 
 }

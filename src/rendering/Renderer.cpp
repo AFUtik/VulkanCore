@@ -72,7 +72,8 @@ void Renderer::createVkMeshScreen()
 	indices.push_back(3);
 	indices.push_back(0);
 
-	vkMeshScreen.updateBuffers(std::as_bytes(std::span(vertices)), indices);
+	vkMeshScreen.updateVertexBuffer(vertices.data(), vertices.size());
+    vkMeshScreen.updateIndexBuffer(indices.data(), indices.size());
     
     #ifndef NDEBUG
     vkMeshScreen.addDebugInfo("ScreenMesh");

@@ -24,7 +24,8 @@ QuadTreeRenderer::QuadTreeRenderer(Renderer& renderer) : renderer(renderer), qua
     std::vector<u32> indices;
     MeshTools::generate(vertices, indices, quad);
 
-    vkQuad.updateBuffers(std::as_bytes(std::span(vertices)), indices);
+    vkQuad.updateVertexBuffer(vertices.data(), vertices.size());
+    vkQuad.updateIndexBuffer(indices.data(), indices.size());
 }
 
 void QuadTreeRenderer::submit(RenderQueue& queue)
