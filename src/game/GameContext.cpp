@@ -22,9 +22,9 @@ void GameContext::tick()
 
     threadPool.parallel_for(0, obj_count, [&](size_t i) {
         auto& object = objects[i];
-        auto& pos = pcm.get_component<PCPosition>(object).position;
-        auto& vel = pcm.get_component<PCVelocity>(object).velocity;
-        pos += vel * tickPhisicsDelta;
+        auto& pos_c = pcm.get_component<PCPosition>(object);
+        auto& vel_c = pcm.get_component<PCVelocity>(object);
+        pos_c.setPosition(pos_c.position + vel_c.velocity * tickPhisicsDelta);
     });
 
     qt.clear();

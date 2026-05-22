@@ -37,9 +37,21 @@ struct PCAcceleration : PCM::PlainComponent<PCAcceleration>
 
 struct PCPosition : PCM::PlainComponent<PCPosition>
 {
+    glm::dvec2 previous = glm::dvec2(.0);
     glm::dvec2 position;
     
     PCPosition(glm::dvec2 pos) : position(pos) {}
+
+    inline glm::dvec2 interpolate(double t) const
+    {
+        return glm::mix(previous, position, t);
+    }
+
+    inline void setPosition(const glm::dvec2 &pos)
+    {
+        previous = position;
+        position = pos;
+    }
 };
 
 struct PCProperties : PCM::PlainComponent<PCProperties>

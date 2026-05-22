@@ -2,6 +2,7 @@
 #include "GLFW/glfw3.h"
 #include "Global.hpp"
 
+#include "game/GameContext.hpp"
 #include "rendering/BaseMesh.hpp"
 #include "rendering/Renderer.hpp"
 #include "vk/Device.hpp"
@@ -41,50 +42,35 @@ Engine::Engine() : camera(RENDER_WIDTH, RENDER_HEIGHT)
 
 Engine::~Engine() {}
 
-void crashHandler(int signal)
-{
-	auto& device = myvk::Device::instance();
-
-    //device.logger.validation.flush();
-
-    std::cerr
-        << "Fatal signal: "
-        << signal
-        << '\n';
-
-    std::_Exit(EXIT_FAILURE);
-}
-
 void Engine::run() {
-	signal(SIGSEGV, crashHandler);
-	signal(SIGABRT, crashHandler);
-	signal(SIGFPE,  crashHandler);
-	signal(SIGILL,  crashHandler);
-
 	Window& window = Window::instance();
 	global.renderer = std::make_unique<Renderer>();
 	//global.assets.load();
 
 	Events::toggle_cursor();
 	double lastTime = glfwGetTime();
-	double timeAccu = 0.0f;
+	double timeAccu = 0.0;
+	double physAccu = 0.0;
+	double alpha = 0.0;
 	const double target_fps = 60.0;
-	const scalar H = 1.0f / target_fps;
-	const scalar speed = 40.0;
-	float camX = 0.0f;
-	float camY = 0.0f;
+	const float H = 1.0f / target_fps;
+	const float speed = 320.0;
+	//float camX = 0.0f;
+	//float camY = 0.0f;
 
-	float angle = 0;
-	float scale = 1;
-
-	glm::mat4 model = glm::mat4(1.0f);
-	
 	while (!window.isShouldClose()) {
 		double currentTime = glfwGetTime();
 		double frameTime = currentTime - lastTime;
 		lastTime = currentTime;
 
 		timeAccu += frameTime;
+		physAccu += frameTime;
+		while(physAccu >= GameContext::tickPhisicsDelta)
+		{
+			global.gameCtx.tick();
+			physAccu -= GameContext::tickPhisicsDelta;
+		}
+		global.gameCtx.alpha = physAccu / GameContext::tickPhisicsDelta;
 		if (timeAccu >= H) {
 			//guiEventListener.listen();
 			//guiRenderer->syncAll();
@@ -133,7 +119,6 @@ void Engine::run() {
 
 			camera.updateView();
 
-			global.gameCtx.tick();
 			global.renderer->render(camera);
 			
 			timeAccu -= H;

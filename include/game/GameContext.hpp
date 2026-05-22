@@ -16,9 +16,10 @@ struct GameContext
     PCM& pcm;
     BarnesHutQT qt;
 
-    const double tickPhysicsPerSecond = 20.0;
-    const double tickPhisicsDelta = 1.0 / tickPhysicsPerSecond;
+    static constexpr double tickPhysicsPerSecond = 2.0;
+    static constexpr double tickPhisicsDelta = 1.0 / tickPhysicsPerSecond;
     const bool runPhysicsThreaded = false;
+    double alpha = 0.0;
 
     GameContext();
     

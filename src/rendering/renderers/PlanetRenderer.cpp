@@ -1,4 +1,5 @@
 #include "rendering/renderers/PlanetRenderer.hpp"
+#include "Global.hpp"
 #include "rendering/systems/BaseRenderSystem.hpp"
 
 #include "rendering/Renderer.hpp"
@@ -86,8 +87,9 @@ void PlanetRenderer::calculateInstances()
 	int i = 0;
 	for(auto [pos_c] : PCM::View<PCPosition>(&pcm))
 	{
-		instances[i].model[3].x = static_cast<float>(pos_c.position.x);
-		instances[i].model[3].y = static_cast<float>(pos_c.position.y);
+		glm::dvec2 interpolated = pos_c.interpolate(global.gameCtx.alpha);
+		instances[i].model[3].x = static_cast<float>(interpolated.x);
+		instances[i].model[3].y = static_cast<float>(interpolated.y);
 		i++;
 	}
 }
