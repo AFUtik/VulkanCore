@@ -2,15 +2,15 @@
 
 #include "BaseMesh.hpp"
 
-namespace myvk 
+namespace vk 
 {
     struct Material;
 };
 
 struct RenderBatch
 { 
-    myvk::Mesh* mesh              = nullptr;
-    myvk::Material* material      = nullptr;
+    vk::Mesh* mesh              = nullptr;
+    vk::Material* material      = nullptr;
 
     const InstanceData* instances = nullptr;
     uint32_t instanceCount = 0;

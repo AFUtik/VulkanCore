@@ -1,17 +1,17 @@
 #include "rendering/systems/BaseRenderSystem.hpp"
 
-#include "vk/Device.hpp"
-#include "vk/Buffer.hpp"
-#include "vk/RenderSystem.hpp"
-#include "vk/Renderer.hpp"
-#include "vk/RenderTarget.hpp"
-#include "vk/Pipeline.hpp"
-#include "vk/Swapchain.hpp"
-#include "vk/Descriptors.hpp"
-#include "vk/VkTexture.hpp"
-#include "vk/Material.hpp"
-#include "vk/Mesh.hpp"
-#include "vk/Shader.hpp"
+#include "gfx/vk/Device.hpp"
+#include "gfx/vk/Buffer.hpp"
+#include "gfx/vk/RenderSystem.hpp"
+#include "gfx/vk/Renderer.hpp"
+#include "gfx/vk/RenderTarget.hpp"
+#include "gfx/vk/Pipeline.hpp"
+#include "gfx/vk/Swapchain.hpp"
+#include "gfx/vk/Descriptors.hpp"
+#include "gfx/vk/VkTexture.hpp"
+#include "gfx/vk/Material.hpp"
+#include "gfx/vk/Mesh.hpp"
+#include "gfx/vk/Shader.hpp"
 
 #include "rendering/RenderState.hpp"
 #include "rendering/RenderQueue.hpp"
@@ -19,7 +19,7 @@
 
 #include "texture/Texture.hpp"
 
-namespace myvk 
+namespace vk 
 {
 
 BaseRenderSystem::BaseRenderSystem(Renderer& renderer) : RenderSystem(renderer)
@@ -96,7 +96,7 @@ void BaseRenderSystem::createDefaultMaterial()
     Texture defaultTex(std::move(whitePixel), 1, 1, TextureChannels::RGBA);
     defaultMaterial->setRenderSystem(this);
     defaultMaterial->setAlbedo(
-		std::make_unique<myvk::VkTexture>(
+		std::make_unique<VkTexture>(
 			defaultTex.raw(), defaultTex.width, defaultTex.height, defaultTex.height, TextureFilter::Nearest
 		)
 	);

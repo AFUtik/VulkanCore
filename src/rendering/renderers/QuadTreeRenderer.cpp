@@ -6,7 +6,6 @@
 #include "MeshTools.hpp"
 
 #include "glm/ext/matrix_transform.hpp"
-#include <iostream>
 
 QuadTreeRenderer::QuadTreeRenderer(Renderer& renderer) : renderer(renderer), quadTree(global.gameCtx.qt) 
 {
@@ -23,9 +22,10 @@ QuadTreeRenderer::QuadTreeRenderer(Renderer& renderer) : renderer(renderer), qua
     std::vector<Vertex> vertices; 
     std::vector<u32> indices;
     MeshTools::generate(vertices, indices, quad);
-
-    vkQuad.updateVertexBuffer(vertices.data(), vertices.size());
-    vkQuad.updateIndexBuffer(indices.data(), indices.size());
+    
+    vkQuad = meshManager.Create<BaseMesh>();
+    vkQuad->updateVertexBuffer(vertices.data(), vertices.size());
+    vkQuad->updateIndexBuffer(indices.data(), indices.size());
 }
 
 void QuadTreeRenderer::submit(RenderQueue& queue)
@@ -51,7 +51,7 @@ void QuadTreeRenderer::submit(RenderQueue& queue)
 
     queue.batchQueue.push_back(
         {
-            &vkQuad,
+            vkQuad.Get(),
             renderer.baseRenderSystem->getDefaultMaterial(),
             quadInstances.data(),
             static_cast<u32>(quadInstances.size())

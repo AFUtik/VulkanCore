@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include "vk/Descriptors.hpp"
-#include "vk/RenderSystem.hpp"
+#include "gfx/vk/Descriptors.hpp"
+#include "gfx/vk/RenderSystem.hpp"
 #include "rendering/RenderQueue.hpp"
 
 #include <glm/glm.hpp>
@@ -13,7 +13,7 @@ struct RenderBatch;
 struct VkDescriptorSet_T; 
 using VkDescriptorSet = VkDescriptorSet_T*;
 
-namespace myvk
+namespace vk
 {
 
 class Buffer;

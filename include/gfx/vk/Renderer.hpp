@@ -1,0 +1,72 @@
+#pragma once
+
+#include "FrameInfo.hpp"
+
+#include <memory>
+#include <vector>
+#include <cassert>
+#include <cstdint>
+
+struct VkRenderPass_T;
+using VkRenderPass = VkRenderPass_T*;
+
+class Window;
+
+namespace vk {
+	class SwapChain;
+	class DescriptorPoolManager;
+
+	struct Device;
+
+	class Renderer {
+	public:
+		Renderer();
+		~Renderer();
+
+		Renderer(const Renderer&) = delete;
+		Renderer& operator=(const Renderer&) = delete;
+
+		VkRenderPass getSwapChainRenderPass();
+		bool isFrameInProgress() const { return isFrameStarted; }
+
+		DescriptorPoolManager* getDescriptorPool() { return descriptorPoolManager.get(); }
+		SwapChain* getSwapChain() {return swapchain.get();}
+
+		VkCommandBuffer getCurrentCommandBuffer() const { 
+			assert(isFrameStarted && "Cannot get command buffer when frame not in progress");
+			return commandBuffers[currentFrameIndex]; 
+		}
+
+		int getFrameIndex() const { 
+			assert(isFrameStarted && "Cannot get frame buffer index when frame not in progress");
+			return currentFrameIndex; 
+		}
+
+		void beginFrame();
+		void endFrame();
+
+		void beginSwapChainRenderPass();
+		void endSwapChainRenderPass  ();
+
+		FrameInfo& frameInfo() {return frame;}
+	private:
+		void createCommandBuffers();
+		void recreateSwapChain();
+		void freeCommandBuffers();
+
+		Device& device;
+		Window& window;
+
+		FrameInfo frame;
+
+		std::unique_ptr<SwapChain> swapchain;
+
+		std::vector<VkCommandBuffer> commandBuffers;
+
+		std::unique_ptr<DescriptorPoolManager> descriptorPoolManager;
+
+		uint32_t currentImageIndex;
+		int currentFrameIndex = 0;
+		bool isFrameStarted = false;
+	};
+}

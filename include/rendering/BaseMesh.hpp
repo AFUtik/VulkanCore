@@ -1,6 +1,7 @@
 #pragma once
 
-#include "vk/Mesh.hpp"
+#include "gfx/vk/Mesh.hpp"
+
 #include <glm/glm.hpp>
 
 struct Vertex
@@ -15,7 +16,7 @@ struct InstanceData {
 	glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 };
 
-struct BaseMesh : public myvk::Mesh
+struct BaseMesh : public vk::Mesh
 {
     BaseMesh() 
     {

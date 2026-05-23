@@ -35,11 +35,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 if(ENABLE_SANITIZERS AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Debug>:
-            -O1 -g -fno-omit-frame-pointer
-            -fsanitize=address,undefined
-            -D_GLIBCXX_ASSERTIONS>
-    )
-    target_link_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+            -O0
+            -g 
+            -fno-omit-frame-pointer>
     )
 endif()

@@ -47,7 +47,7 @@ struct PCPosition : PCM::PlainComponent<PCPosition>
         return glm::mix(previous, position, t);
     }
 
-    inline void setPosition(const glm::dvec2 &pos)
+    inline void updatePosition(const glm::dvec2 &pos)
     {
         previous = position;
         position = pos;

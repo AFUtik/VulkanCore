@@ -4,29 +4,26 @@
 
 #include "Camera.hpp"
 
-#include "vk/Pipeline.hpp"
-#include "vulkan/vulkan_core.h"
-
 Renderer::Renderer()
     : vkRenderer(), 
       vkRenderTarget(vkRenderer.getSwapChain(), {RENDER_WIDTH, RENDER_HEIGHT}),
       planetRenderer(*this),
       qtRenderer(*this)
 {
-    baseRenderSystem   = std::make_unique<myvk::BaseRenderSystem>(vkRenderer);
-    screenRenderSystem = std::make_unique<myvk::BaseRenderSystem>(vkRenderer);
+    baseRenderSystem   = std::make_unique<vk::BaseRenderSystem>(vkRenderer);
+    screenRenderSystem = std::make_unique<vk::BaseRenderSystem>(vkRenderer);
 
     baseShader = shaderManager.loadShader(
     "/home/afutik/cplusplus/VulkanCore/resources/shaders/shader.vert", 
     "/home/afutik/cplusplus/VulkanCore/resources/shaders/shader.frag",
     "BaseShader");
 
-    myvk::PipelineConfigInfo config{
-        .bindings   = myvk::BaseRenderSystem::getBindingDescriptions(),
-        .attributes = myvk::BaseRenderSystem::getAttributeDescriptions(),
+    vk::PipelineConfigInfo config{
+        .bindings   = vk::BaseRenderSystem::getBindingDescriptions(),
+        .attributes = vk::BaseRenderSystem::getAttributeDescriptions(),
         .shader     = baseShader
     };
-    myvk::Pipeline::defaultPipelineConfigInfo(config);
+    vk::Pipeline::defaultPipelineConfigInfo(config);
 
     baseRenderSystem->addPipeline(
         vkRenderTarget.getRenderPass(), 
@@ -49,7 +46,7 @@ Renderer::Renderer()
     createVkMeshScreen();
 }
 
-void Renderer::makeWireframeConfig(myvk::PipelineConfigInfo& config)
+void Renderer::makeWireframeConfig(vk::PipelineConfigInfo& config)
 {
     config.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     config.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
@@ -128,3 +125,5 @@ void Renderer::render(Camera& camera)
 }
 
 Renderer::~Renderer() = default;
+
+gfx::ResourceManager meshManager;

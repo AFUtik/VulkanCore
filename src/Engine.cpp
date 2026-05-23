@@ -3,29 +3,18 @@
 #include "Global.hpp"
 
 #include "game/GameContext.hpp"
-#include "rendering/BaseMesh.hpp"
 #include "rendering/Renderer.hpp"
-#include "vk/Device.hpp"
 
-#include "vk/Mesh.hpp"
-#include "vk/RenderTarget.hpp"
-#include "vk/VkTexture.hpp"
 #include "window/Events.hpp"
 #include "window/Window.hpp"
 
 #include <memory>
+#include <optional>
 #include <thread>
-#include <iostream>
-#include <csignal>
-
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <stb_image.h>
 
 #include "game/PCManager.hpp"
+
+#include "gfx/vk/Device.hpp"
 
 #define WIDTH 1720
 #define HEIGHT 880
@@ -130,6 +119,6 @@ void Engine::run() {
 		Events::pullEvents();
 	}
 
-	vkDeviceWaitIdle(myvk::Device::instance().device());
+	vkDeviceWaitIdle(vk::Device::instance().device());
 	global.renderer.reset();
 }

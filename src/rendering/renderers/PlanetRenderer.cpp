@@ -1,12 +1,14 @@
 #include "rendering/renderers/PlanetRenderer.hpp"
-#include "Global.hpp"
+#include "rendering/BaseMesh.hpp"
 #include "rendering/systems/BaseRenderSystem.hpp"
-
 #include "rendering/Renderer.hpp"
 #include "rendering/RenderQueue.hpp"
 
+#include "gfx/ResourceManager.hpp"
+
 #include "game/PCManager.hpp"
 
+#include "Global.hpp"
 #include "Color.hpp"
 #include <numbers>
 
@@ -15,6 +17,8 @@
 
 PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM::instance())
 {
+	meshManager.objects_.type_size = sizeof(BaseMesh);
+
     std::vector<Vertex> vertices; std::vector<u32> indices; 
 
 	int segments = 8;
@@ -34,8 +38,11 @@ PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM
 		indices.push_back(i + 1);
 	}
 
-	vkCircleMesh.updateVertexBuffer(vertices.data(), vertices.size());
-    vkCircleMesh.updateIndexBuffer(indices.data(), indices.size());
+	vkCircleMesh = meshManager.Create<BaseMesh>();
+	std::cout << "Circle Handle Index: " << vkCircleMesh.block_->index << std::endl;
+
+	vkCircleMesh->updateVertexBuffer(vertices.data(), vertices.size());
+    vkCircleMesh->updateIndexBuffer(indices.data(), indices.size());
 
 	// TO REMOVE CODE //
 
@@ -98,8 +105,9 @@ void PlanetRenderer::submit(RenderQueue& queue)
 { 
 	calculateInstances();
     queue.batchQueue.push_back(
-        {
-            &vkCircleMesh,
+        RenderBatch
+		{
+            vkCircleMesh.Get(),
             renderer.baseRenderSystem->getDefaultMaterial(),
 			instances.data(),
 			static_cast<u32>(pcm.size())

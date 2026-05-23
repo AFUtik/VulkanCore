@@ -1,7 +1,10 @@
 #pragma once
 
-#include "vk/Mesh.hpp"
+#include "game/GameContext.hpp"
+#include "rendering/BaseMesh.hpp"
 #include "rendering/RenderQueue.hpp"
+
+#include "gfx/Handle.hpp"
 
 struct Renderer;
 struct RenderQueue;
@@ -18,6 +21,6 @@ private:
     
     PlanetComponentManager& pcm;
 
-    BaseMesh vkCircleMesh;
+    gfx::Handle<BaseMesh>     vkCircleMesh;
     std::vector<InstanceData> instances;
 };

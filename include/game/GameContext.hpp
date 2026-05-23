@@ -18,7 +18,6 @@ struct GameContext
 
     static constexpr double tickPhysicsPerSecond = 2.0;
     static constexpr double tickPhisicsDelta = 1.0 / tickPhysicsPerSecond;
-    const bool runPhysicsThreaded = false;
     double alpha = 0.0;
 
     GameContext();

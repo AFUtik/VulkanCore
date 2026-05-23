@@ -1,11 +1,11 @@
 #pragma once
 
-#include "vk/FrameInfo.hpp"
+#include "gfx/vk/FrameInfo.hpp"
 #include <glm/glm.hpp>
 
 struct RenderState
 {
-    myvk::FrameInfo& frame;
+    vk::FrameInfo& frame;
     glm::mat4 projview;
 
     uint32_t rsystem;

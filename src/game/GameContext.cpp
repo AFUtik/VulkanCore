@@ -24,7 +24,7 @@ void GameContext::tick()
         auto& object = objects[i];
         auto& pos_c = pcm.get_component<PCPosition>(object);
         auto& vel_c = pcm.get_component<PCVelocity>(object);
-        pos_c.setPosition(pos_c.position + vel_c.velocity * tickPhisicsDelta);
+        pos_c.updatePosition(pos_c.position + vel_c.velocity * tickPhisicsDelta);
     });
 
     qt.clear();
