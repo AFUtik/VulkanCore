@@ -56,7 +56,15 @@ struct Handle {
 
         return reinterpret_cast<T*>(block_->object);
     }
-//private:
+
+    uint32_t index() const
+    {
+        assert(block_);
+        assert(block_->index != ~0u);
+
+        return block_->index;
+    }
+private:
     friend struct ResourceManager;
 
     ResourceBlockBase* block_ = nullptr;

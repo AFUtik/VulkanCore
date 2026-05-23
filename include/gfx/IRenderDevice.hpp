@@ -21,22 +21,22 @@ struct ICommandBuffer { virtual ~ICommandBuffer() = default;};
 
 struct IRenderSystem
 {
-    virtual void render     (IMeshHandle*, IMaterialHandle*);
-    virtual void renderBatch(IMeshHandle*, IMaterialHandle*, const void* instances, uint64_t instanceCount);
+    virtual void render     (IMeshHandle*, IMaterialHandle*) {};
+    virtual void renderBatch(IMeshHandle*, IMaterialHandle*, const void* instances, uint64_t instanceCount) {};
 
-    virtual std::unique_ptr<IMaterialHandle> createMaterial(const Material&)  = 0;
-    virtual std::unique_ptr<IMeshHandle>     createMesh(const Mesh&)         = 0; 
+    virtual std::unique_ptr<IMaterialHandle> createMaterial(const Material&) {return {};};
+    virtual std::unique_ptr<IMeshHandle>     createMesh(const Mesh&)         {return {};}; 
 };
 
 struct IRenderDevice
 {
     virtual ~IRenderDevice() = default;
 
-    virtual std::unique_ptr<ITexture>        createTexture (const Texture&)   = 0;
-    virtual std::unique_ptr<IBuffer>         createBuffer  ()                 = 0;
+    virtual std::unique_ptr<ITexture>        createTexture (const Texture&)   {return {};};
+    virtual std::unique_ptr<IBuffer>         createBuffer  ()                 {return {};};
    
-    virtual ICommandBuffer*                  beginFrame()                     = 0;
-    virtual void                             endFrame()                       = 0;
+    virtual ICommandBuffer*                  beginFrame()                     {return nullptr;};
+    virtual void                             endFrame()                       {};
 };
 
 } // namespace gfx

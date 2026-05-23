@@ -7,7 +7,6 @@
 #include "gfx/vk/Renderer.hpp"
 #include "gfx/vk/RenderTarget.hpp"
 #include "gfx/vk/Shader.hpp"
-#include "gfx/ResourceManager.hpp"
 
 #define RENDER_WIDTH 640
 #define RENDER_HEIGHT 320
@@ -47,5 +46,3 @@ private:
 
     void createVkMeshScreen();
 };
-
-extern gfx::ResourceManager meshManager;

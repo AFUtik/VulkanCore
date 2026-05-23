@@ -14,5 +14,7 @@ struct Context
 
 extern Context gfx;
 
+extern void initVulkanBackend();
+
 }
 

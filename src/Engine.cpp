@@ -15,13 +15,15 @@
 #include "game/PCManager.hpp"
 
 #include "gfx/vk/Device.hpp"
+#include "gfx/gfx.hpp"
 
 #define WIDTH 1720
 #define HEIGHT 880
 
 Engine::Engine() : camera(RENDER_WIDTH, RENDER_HEIGHT) 
 {
-	// Component Managers //
+	gfx::initVulkanBackend();
+
 	registerPlanetComponents();
 
 	Window::instance().init(WIDTH, HEIGHT, "Vulkan Engine");

@@ -125,5 +125,3 @@ void Renderer::render(Camera& camera)
 }
 
 Renderer::~Renderer() = default;
-
-gfx::ResourceManager meshManager;

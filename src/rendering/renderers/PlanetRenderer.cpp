@@ -4,8 +4,6 @@
 #include "rendering/Renderer.hpp"
 #include "rendering/RenderQueue.hpp"
 
-#include "gfx/ResourceManager.hpp"
-
 #include "game/PCManager.hpp"
 
 #include "Global.hpp"
@@ -15,9 +13,13 @@
 #include <glm/ext.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
+#include "gfx/gfx.hpp"
+#include "gfx/VulkanBackend.hpp"
+
 PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM::instance())
 {
-	meshManager.objects_.type_size = sizeof(BaseMesh);
+	auto* vk = dynamic_cast<gfx_vk::VulkanRenderDevice*>(gfx::gfx.iRenderDevice.get());
+	vk->meshResource.objects_.type_size = sizeof(BaseMesh);
 
     std::vector<Vertex> vertices; std::vector<u32> indices; 
 
@@ -38,9 +40,7 @@ PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM
 		indices.push_back(i + 1);
 	}
 
-	vkCircleMesh = meshManager.Create<BaseMesh>();
-	std::cout << "Circle Handle Index: " << vkCircleMesh.block_->index << std::endl;
-
+	vkCircleMesh = vk->meshResource.Create<BaseMesh>();
 	vkCircleMesh->updateVertexBuffer(vertices.data(), vertices.size());
     vkCircleMesh->updateIndexBuffer(indices.data(), indices.size());
 

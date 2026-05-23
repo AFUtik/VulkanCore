@@ -7,8 +7,14 @@
 
 #include "glm/ext/matrix_transform.hpp"
 
+#include "gfx/gfx.hpp"
+#include "gfx/VulkanBackend.hpp"
+
 QuadTreeRenderer::QuadTreeRenderer(Renderer& renderer) : renderer(renderer), quadTree(global.gameCtx.qt) 
 {
+    auto gfx = reinterpret_cast<gfx_vk::VulkanRenderDevice*>(gfx::gfx.iRenderDevice.get());
+	gfx->meshResource.objects_.type_size = sizeof(BaseMesh);
+
     GameContext::AABB aabb = quadTree.bounds();
     aabb.maxX = aabb.maxX - aabb.minX;
     aabb.maxY = aabb.maxY - aabb.minY;
@@ -23,7 +29,7 @@ QuadTreeRenderer::QuadTreeRenderer(Renderer& renderer) : renderer(renderer), qua
     std::vector<u32> indices;
     MeshTools::generate(vertices, indices, quad);
     
-    vkQuad = meshManager.Create<BaseMesh>();
+    vkQuad = gfx->meshResource.Create<BaseMesh>();
     vkQuad->updateVertexBuffer(vertices.data(), vertices.size());
     vkQuad->updateIndexBuffer(indices.data(), indices.size());
 }
