@@ -4,6 +4,7 @@
 #include "rendering/RenderQueue.hpp"
 
 #include "gfx/Handle.hpp"
+#include "gfx/IMesh.hpp"
 
 #include <vector>
 
@@ -20,5 +21,5 @@ private:
     const GameContext::QT& quadTree;
     
     std::vector<InstanceData> quadInstances;
-    gfx::Handle<BaseMesh> vkQuad;
+    gfx::Handle<gfx::IMesh> vkQuad;
 };

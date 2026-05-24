@@ -3,26 +3,21 @@
 #include "Handle.hpp"
 #include <memory>
 #include <new>
-#include <type_traits>
 #include <vector>
 #include <cstring>
 
 namespace gfx
 {
 
+template<typename T, size_t BLOCK_SIZE = 512>
 struct ResourceManager
 {
-    ResourceManager()
-    {
-        blocks_.type_size = sizeof(ResourceBlockBase);
-    };
-
     ~ResourceManager()
     {
         for(int i = 0; i < slots.size(); i++)
         {
-            Array::Block& block = blocks_.blocks[blockIndex(i)];
-            auto resBlock = reinterpret_cast<ResourceBlockBase*>(block[i % Array::BLOCK_SIZE]);
+            auto& block = blocks_.blocks[blockIndex(i)];
+            auto resBlock = reinterpret_cast<ResourceBlockBase*>(block[i % BLOCK_SIZE]);
             resBlock->destroyFn(resBlock);
         }
     }
@@ -35,10 +30,9 @@ struct ResourceManager
         bool     alive = false;
     };
 
+    template<typename C>
     struct Array
     {
-        static constexpr std::size_t BLOCK_SIZE = 512;
-    
         struct AlignedDeleter 
         {
             std::size_t align = alignof(std::max_align_t);
@@ -53,10 +47,10 @@ struct ResourceManager
             Array* parent = nullptr;
             std::unique_ptr<std::byte[], AlignedDeleter> data;
     
-            Block(Array* parent) : parent(parent), data(nullptr, AlignedDeleter{parent->type_align})
+            Block(Array* parent) : parent(parent), data(nullptr, AlignedDeleter{alignof(C)})
             {
-                const std::size_t data_size = BLOCK_SIZE * this->parent->type_size;
-                void* raw = ::operator new[](data_size, std::align_val_t(this->parent->type_align));
+                const std::size_t data_size = BLOCK_SIZE * sizeof(C);
+                void* raw = ::operator new[](data_size, std::align_val_t(alignof(C)));
                 data.reset(static_cast<std::byte*>(raw));
                 std::memset(data.get(), 0, data_size);
             }
@@ -64,13 +58,10 @@ struct ResourceManager
             void* operator[](std::size_t i) const 
             {
                 assert(i < BLOCK_SIZE);
-                return reinterpret_cast<void*>(data.get() + (this->parent->type_size * i));
+                return reinterpret_cast<void*>(data.get() + (sizeof(C) * i));
             }
         };
 
-        uint64_t type_size;
-        uint64_t type_align = alignof(std::max_align_t);
-        
         std::vector<Block> blocks;
 
         Array() = default;
@@ -88,12 +79,10 @@ struct ResourceManager
         }
     };
 
-    template<typename T, typename... Args>
+    template<typename... Args>
     Handle<T> Create(Args&&... args)
     {
-        assert(sizeof(T) == objects_.type_size);
-
-        u32 index = emplace<T>();
+        u32 index = emplace();
         new (std::launder(reinterpret_cast<T*>(objects_[index]))) T(std::forward<Args>(args)...);
         new (std::launder(reinterpret_cast<ResourceBlockBase*>(blocks_[index]))) ResourceBlockBase();
 
@@ -102,8 +91,9 @@ struct ResourceManager
         block->manager = this;
         block->index = index;
         block->alive = true;
-        block->destroyFn = [](ResourceBlockBase* b) {
-            static_cast<ResourceManager*>(b->manager)->free(b->index);
+        block->destroyFn = [](ResourceBlockBase* b) 
+        {
+            static_cast<ResourceManager<T, BLOCK_SIZE>*>(b->manager)->free(b->index);
 
             std::destroy_at(static_cast<T*>(b->object));
             b->alive = false;
@@ -114,12 +104,13 @@ struct ResourceManager
         return h;
     }
     
-    Array objects_, blocks_;
+    Array<T> objects_;
+    Array<ResourceBlockBase> blocks_;
     std::vector<Slot> slots;
 private:
     static constexpr uint32_t blockIndex(uint32_t idx) noexcept 
     {
-        return idx / Array::BLOCK_SIZE;
+        return idx / BLOCK_SIZE;
     }
 
     void ensureSlotExists(uint32_t idx) 
@@ -131,7 +122,6 @@ private:
         objects_.resize(idx);
     }
 
-    template<typename T>
     uint32_t emplace()
     {
         uint32_t idx = kNone;

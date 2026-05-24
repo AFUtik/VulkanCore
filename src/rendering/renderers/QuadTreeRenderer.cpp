@@ -1,4 +1,5 @@
 #include "rendering/renderers/QuadTreeRenderer.hpp"
+#include "gfx/vk/Mesh.hpp"
 #include "rendering/systems/BaseRenderSystem.hpp"
 #include "rendering/Renderer.hpp"
 
@@ -12,8 +13,7 @@
 
 QuadTreeRenderer::QuadTreeRenderer(Renderer& renderer) : renderer(renderer), quadTree(global.gameCtx.qt) 
 {
-    auto gfx = reinterpret_cast<gfx_vk::VulkanRenderDevice*>(gfx::gfx.iRenderDevice.get());
-	gfx->meshResource.objects_.type_size = sizeof(BaseMesh);
+    auto vk = reinterpret_cast<gfx_vk::VulkanRenderDevice*>(gfx::gfx.iRenderDevice.get());
 
     GameContext::AABB aabb = quadTree.bounds();
     aabb.maxX = aabb.maxX - aabb.minX;
@@ -29,7 +29,11 @@ QuadTreeRenderer::QuadTreeRenderer(Renderer& renderer) : renderer(renderer), qua
     std::vector<u32> indices;
     MeshTools::generate(vertices, indices, quad);
     
-    vkQuad = gfx->meshResource.Create<BaseMesh>();
+    gfx::Handle<vk::Mesh> mesh = vk->meshResource.Create();
+	mesh->setVertexStride(sizeof(Vertex));
+	mesh->setIndexStride(sizeof(u32));
+
+	vkQuad = std::move(mesh);
     vkQuad->updateVertexBuffer(vertices.data(), vertices.size());
     vkQuad->updateIndexBuffer(indices.data(), indices.size());
 }
@@ -57,7 +61,7 @@ void QuadTreeRenderer::submit(RenderQueue& queue)
 
     queue.batchQueue.push_back(
         {
-            vkQuad.Get(),
+            static_cast<vk::Mesh*>(vkQuad.Get()),
             renderer.baseRenderSystem->getDefaultMaterial(),
             quadInstances.data(),
             static_cast<u32>(quadInstances.size())

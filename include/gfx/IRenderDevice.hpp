@@ -10,7 +10,7 @@ struct Texture;
 namespace gfx {
 
 struct Material;
-struct Mesh;
+struct IMesh;
 
 struct IMeshHandle;
 struct IMaterialHandle;
@@ -25,12 +25,14 @@ struct IRenderSystem
     virtual void renderBatch(IMeshHandle*, IMaterialHandle*, const void* instances, uint64_t instanceCount) {};
 
     virtual std::unique_ptr<IMaterialHandle> createMaterial(const Material&) {return {};};
-    virtual std::unique_ptr<IMeshHandle>     createMesh(const Mesh&)         {return {};}; 
+    
 };
 
 struct IRenderDevice
 {
     virtual ~IRenderDevice() = default;
+
+    virtual Handle<IMesh> createMesh() {return {};}; 
 
     virtual std::unique_ptr<ITexture>        createTexture (const Texture&)   {return {};};
     virtual std::unique_ptr<IBuffer>         createBuffer  ()                 {return {};};

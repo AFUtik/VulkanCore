@@ -19,7 +19,6 @@
 PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM::instance())
 {
 	auto* vk = dynamic_cast<gfx_vk::VulkanRenderDevice*>(gfx::gfx.iRenderDevice.get());
-	vk->meshResource.objects_.type_size = sizeof(BaseMesh);
 
     std::vector<Vertex> vertices; std::vector<u32> indices; 
 
@@ -40,7 +39,11 @@ PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM
 		indices.push_back(i + 1);
 	}
 
-	vkCircleMesh = vk->meshResource.Create<BaseMesh>();
+	gfx::Handle<vk::Mesh> mesh = vk->meshResource.Create();
+	mesh->setVertexStride(sizeof(Vertex));
+	mesh->setIndexStride(sizeof(u32));
+
+	vkCircleMesh = std::move(mesh);
 	vkCircleMesh->updateVertexBuffer(vertices.data(), vertices.size());
     vkCircleMesh->updateIndexBuffer(indices.data(), indices.size());
 
@@ -107,7 +110,7 @@ void PlanetRenderer::submit(RenderQueue& queue)
     queue.batchQueue.push_back(
         RenderBatch
 		{
-            vkCircleMesh.Get(),
+            static_cast<vk::Mesh*>(vkCircleMesh.Get()),
             renderer.baseRenderSystem->getDefaultMaterial(),
 			instances.data(),
 			static_cast<u32>(pcm.size())

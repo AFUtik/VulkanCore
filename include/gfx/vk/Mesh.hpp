@@ -3,6 +3,8 @@
 #include <memory>
 #include <cstdint>
 
+#include "gfx/IMesh.hpp"
+
 struct VkCommandBuffer_T;
 using VkCommandBuffer = VkCommandBuffer_T*;
 
@@ -11,11 +13,11 @@ namespace vk {
 class Buffer;
 
 enum MeshFlags {
-	CPUMemory               = 1 << 0,
-	GPUMemory               = 1 << 1,
+	CPUMemory = 1 << 0,
+	GPUMemory = 1 << 1,
 };
 
-struct Mesh {
+struct Mesh : public gfx::IMesh {
 	Mesh();
 	~Mesh();
 
@@ -35,13 +37,13 @@ struct Mesh {
 	inline void setInstanceStride(uint32_t instanceStride) {this->instanceStride = instanceStride;}
 
 	void createVertexBuffer(const void* vertices, uint64_t size);
-	void updateVertexBuffer(const void* vertices, uint64_t size);
+	void updateVertexBuffer(const void* vertices, uint64_t size) override;
 
 	void createIndexBuffer(const void* indices, uint64_t size);
-	void updateIndexBuffer(const void* indices, uint64_t size);
+	void updateIndexBuffer(const void* indices, uint64_t size) override;
 
 	void createInstanceBuffer(const void* instances, uint64_t size);
-	void updateInstanceBuffer(const void* instances, uint64_t size);
+	void updateInstanceBuffer(const void* instances, uint64_t size) override;
 
 	void draw(VkCommandBuffer commandBuffer, size_t instanceCount = 1, size_t instanceOffset = 0) const;
 	

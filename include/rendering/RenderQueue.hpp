@@ -7,6 +7,11 @@ namespace vk
     struct Material;
 };
 
+namespace gfx
+{
+    struct IMesh;
+}
+
 struct RenderBatch
 { 
     vk::Mesh* mesh              = nullptr;

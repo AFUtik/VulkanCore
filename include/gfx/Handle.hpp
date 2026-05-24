@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gfx/vk/Device.hpp"
 #include <atomic>
 #include <cstdint>
 #include <utility>
@@ -14,8 +15,6 @@ namespace gfx
 
 using u32 = std::uint32_t;
 using u8  = std::uint8_t;
-
-struct ResourceManager;
 
 struct ResourceBlockBase {
     void* object  = nullptr;
@@ -35,19 +34,45 @@ struct Handle {
     {
         if (block_) block_->refCount.fetch_add(1, std::memory_order_relaxed);
     }
-
-    Handle(Handle&& o) noexcept : block_(o.block_)
+    
+    Handle& operator=(Handle&& o) noexcept
     {
+        Release();
+        block_ = o.block_;
         o.block_ = nullptr;
+        return *this;
+    }
+    
+    template<typename C>
+    requires std::is_convertible_v<C*, T*>
+    Handle(const Handle<C>& o) noexcept : block_(o.block_)
+    {
+        if (block_)
+            block_->refCount.fetch_add(1, std::memory_order_relaxed);
+    }
+    
+    template<typename C>
+    requires std::is_convertible_v<C*, T*>
+    Handle& operator=(Handle<C>&& o) noexcept
+    {
+        Release();
+        block_ = o.block_;
+        o.block_ = nullptr;
+        return *this;
     }
 
-    Handle& operator=(Handle o) noexcept { Swap(o); return *this; }
     ~Handle() { Release(); }
 
     T*   operator->() const { return Get(); }
     T&   operator* () const { return *Get(); }
     bool IsValid()    const { return block_ && block_->alive; }
     explicit operator bool() const { return IsValid(); }
+
+    template<typename C>
+    Handle<C> Cast() const
+    {
+        return Handle<C>(*this);
+    }
     
     T* Get() const
     {
@@ -64,7 +89,13 @@ struct Handle {
 
         return block_->index;
     }
-private:
+    
+    
+
+    template<typename>
+    friend class Handle;
+
+    template<typename, size_t>
     friend struct ResourceManager;
 
     ResourceBlockBase* block_ = nullptr;
