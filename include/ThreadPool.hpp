@@ -25,7 +25,7 @@ public:
 
         const u32 total   = end - begin;
         const u32 nT      = static_cast<u32>(threads_.size());
-        const u32 chunk   = (total + nT - 1) / nT;   // ceiling div
+        const u32 chunk   = (total + nT - 1) / nT;
 
         task_begin_ = begin;
         task_end_   = end;
@@ -37,12 +37,7 @@ public:
                 for (u32 i = b; i < e; ++i) f(i);
         };
 
-        // Синхронна фаза 1: головний потік відпускає воркерів
         barrier_.arrive_and_wait();
-
-        // Воркери виконують роботу...
-
-        // Синхронна фаза 2: чекаємо завершення всіх
         barrier_.arrive_and_wait();
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Handle.hpp"
+
 #include <memory>
 #include <new>
 #include <vector>
@@ -16,6 +17,8 @@ struct ResourceManager
     {
         for(int i = 0; i < slots.size(); i++)
         {
+            if(!slots[i].alive) continue;
+
             auto& block = blocks_.blocks[blockIndex(i)];
             auto resBlock = reinterpret_cast<ResourceBlockBase*>(block[i % BLOCK_SIZE]);
             resBlock->destroyFn(resBlock);

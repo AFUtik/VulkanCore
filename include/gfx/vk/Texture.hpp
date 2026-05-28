@@ -3,32 +3,21 @@
 #include "vulkan/vulkan_core.h"
 #include <vulkan/vulkan.h>
 
+#include "gfx/IRenderDevice.hpp"
+
 struct VmaAllocation_T;
 using VmaAllocation = VmaAllocation_T*;
 
 namespace vk {
     class Device;
 
-    enum TextureFilter
-    { 
-        Linear,
-        Nearest,
-        LinearMipmap,
-        NearestMipmap
-    };
-
-    class VkTexture {
+    class Texture : gfx::Image {
     public:
-        VkTexture(
-            const uint8_t* pixels, 
-            uint32_t width, uint32_t height,
-            uint32_t channels, 
-            TextureFilter filter = TextureFilter::Linear);
+        Texture();
+        ~Texture();
 
-        ~VkTexture();
-
-        VkTexture(const VkTexture&) = delete;
-        VkTexture& operator=(const VkTexture&) = delete;
+        Texture(const Texture&) = delete;
+        Texture& operator=(const Texture&) = delete;
 
         VkSampler   getSampler() {return sampler;}
         VkImageView getView() {return view;}
@@ -36,6 +25,14 @@ namespace vk {
         #ifndef NDEBUG
         void addDebugInfo(const char* info);
         #endif
+
+        void writeToImage(
+            const uint8_t* pixels,
+            uint32_t width,
+            uint32_t height,
+            uint32_t channels) override;
+        
+        void setImageFilter(gfx::ImageFilter filter) override;
     private:
         void createTextureSampler(
             VkSampler& sampler, 
@@ -49,14 +46,14 @@ namespace vk {
 
 		void createImage();
         
-		void createTexture(const uint8_t* pixels, uint32_t channels, TextureFilter filter);
+		void createTexture(const uint8_t* pixels, uint32_t channels, gfx::ImageFilter filter);
 
         bool isCubemap = false;
 
-        VkImage image = VK_NULL_HANDLE;
+        VkImage image                = VK_NULL_HANDLE;
         VmaAllocation vmaAllocation  = VK_NULL_HANDLE;
-        VkImageView view  = VK_NULL_HANDLE;
-        VkSampler sampler  = VK_NULL_HANDLE;
+        VkImageView view             = VK_NULL_HANDLE;
+        VkSampler sampler            = VK_NULL_HANDLE;
         VkImageLayout imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
         uint32_t imageWidth, imageHeight, channels;

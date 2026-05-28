@@ -1,19 +1,11 @@
-#include "gfx/vk/VkTexture.hpp"
+#include "gfx/vk/Texture.hpp"
+#include "gfx/IRenderDevice.hpp"
 #include "gfx/vk/Device.hpp"
 #include "gfx/vk/Buffer.hpp"
 
 #include <stdexcept>
 
 namespace vk {
-
-VkTexture::VkTexture(
-	const uint8_t* pixels, 
-    uint32_t width, uint32_t height,
-    uint32_t channels, 
-    TextureFilter filter) : device(Device::instance()), imageWidth(width), imageHeight(height), channels(channels)
-{
-	createTexture(pixels, channels, filter);
-};
 
 int GetBytesPerTexFormat(VkFormat Format)
 {
@@ -47,11 +39,23 @@ int GetBytesPerTexFormat(VkFormat Format)
 	return 0;
 }
 
-VkTexture::~VkTexture() {
-	device.free<VkTexture>(this);
+Texture::Texture() : device(Device::instance())
+{
+
 }
 
-void VkTexture::createTexture(const uint8_t* pixels, uint32_t channels, TextureFilter filter) {
+Texture::~Texture() {
+	device.free<Texture>(this);
+}
+
+void Texture::writeToImage(const uint8_t* pixels, uint32_t width, uint32_t height, uint32_t channels) 
+{
+	if(image != VK_NULL_HANDLE) device.free<Texture>(this);
+
+	this->imageWidth  = width;
+	this->imageHeight = height;
+	this->channels    = channels;
+	
 	if(channels == 4) 
 	{
 		format = VK_FORMAT_R8G8B8A8_SRGB;
@@ -75,27 +79,36 @@ void VkTexture::createTexture(const uint8_t* pixels, uint32_t channels, TextureF
 	int LayerCount = isCubemap ? 6 : 1;
 	updateTextureImage(LayerCount, pixels);
 
-	// Step #2: create the image view
 	VkImageAspectFlags AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 	createImageView(AspectFlags);
 
 	VkFilter MinFilter;
 	VkFilter MaxFilter;
-	if(filter == TextureFilter::Linear) {
-		MinFilter = VK_FILTER_LINEAR;
-		MaxFilter = VK_FILTER_LINEAR;
-	} else if(filter == TextureFilter::Nearest) {
-		MinFilter = VK_FILTER_NEAREST;
-		MaxFilter = VK_FILTER_NEAREST;
-	}
-	
+	MinFilter = VK_FILTER_NEAREST;
+	MaxFilter = VK_FILTER_NEAREST;
 	VkSamplerAddressMode AddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
-	// Step #3: create the Texture sampler
 	createTextureSampler(sampler, MinFilter, MaxFilter, AddressMode);
 }
 
-void VkTexture::createImage()
+void Texture::setImageFilter(gfx::ImageFilter filter)
+{
+	VkFilter MinFilter;
+	VkFilter MaxFilter;
+	if(filter == gfx::ImageFilter::LINEAR)
+	{
+		MinFilter = VK_FILTER_LINEAR;
+		MaxFilter = VK_FILTER_LINEAR;
+	}
+	if(filter == gfx::ImageFilter::NEAREST)
+	{
+		MinFilter = VK_FILTER_NEAREST;
+		MaxFilter = VK_FILTER_NEAREST;
+	}
+	VkSamplerAddressMode AddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	createTextureSampler(sampler, MinFilter, MaxFilter, AddressMode);
+}
+
+void Texture::createImage()
 {
 	/*VkImageFormatProperties imageFormatProperties;
 	vkGetPhysicalDeviceImageFormatProperties(m_physDevices.Selected().m_physDevice,
@@ -127,7 +140,7 @@ void VkTexture::createImage()
 }
 
 
-void VkTexture::updateTextureImage(int layerCount, const void* pPixels)
+void Texture::updateTextureImage(int layerCount, const void* pPixels)
 {
 	int BytesPerPixel = GetBytesPerTexFormat(format);
 
@@ -155,7 +168,7 @@ void VkTexture::updateTextureImage(int layerCount, const void* pPixels)
 	imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
-void VkTexture::createTextureSampler(VkSampler& sampler, VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)
+void Texture::createTextureSampler(VkSampler& sampler, VkFilter MinFilter, VkFilter MaxFilter, VkSamplerAddressMode AddressMode)
 {
 	VkSamplerCreateInfo SamplerInfo = {
 		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -182,7 +195,7 @@ void VkTexture::createTextureSampler(VkSampler& sampler, VkFilter MinFilter, VkF
     } 
 }
 
-void VkTexture::createImageView(VkImageAspectFlags AspectFlags) 
+void Texture::createImageView(VkImageAspectFlags AspectFlags) 
 {
 	VkImageViewCreateInfo viewInfo =
 	{
@@ -233,7 +246,7 @@ void VkTexture::createImageView(VkImageAspectFlags AspectFlags)
 }
 
 	#ifndef NDEBUG
-    void VkTexture::addDebugInfo(const char* info)
+    void Texture::addDebugInfo(const char* info)
 	{
 		device.addDebugObject(
 			(uint64_t)image, 

@@ -2,16 +2,22 @@
 #include "rendering/RenderState.hpp"
 #include "rendering/systems/BaseRenderSystem.hpp"
 
+#include "gfx/gfx.hpp"
+#include "gfx/backend/VulkanBackend.hpp"
+
+#include "gfx/vk/Renderer.hpp"
+
 #include "Camera.hpp"
 
 Renderer::Renderer()
-    : vkRenderer(), 
-      vkRenderTarget(vkRenderer.getSwapChain(), {RENDER_WIDTH, RENDER_HEIGHT}),
+    : vkRenderTarget(reinterpret_cast<gfx_vk::VulkanRenderDevice*>(gfx::gfx.iRenderDevice.get())->renderer->getSwapChain(), {RENDER_WIDTH, RENDER_HEIGHT}),
       planetRenderer(*this),
       qtRenderer(*this)
 {
-    baseRenderSystem   = std::make_unique<vk::BaseRenderSystem>(vkRenderer);
-    screenRenderSystem = std::make_unique<vk::BaseRenderSystem>(vkRenderer);
+    auto vk_device = reinterpret_cast<gfx_vk::VulkanRenderDevice*>(gfx::gfx.iRenderDevice.get());
+
+    baseRenderSystem   = std::make_unique<vk::BaseRenderSystem>(*vk_device->renderer.get());
+    screenRenderSystem = std::make_unique<vk::BaseRenderSystem>(*vk_device->renderer.get());
 
     baseShader = shaderManager.loadShader(
     "/home/afutik/cplusplus/VulkanCore/resources/shaders/shader.vert", 
@@ -31,7 +37,7 @@ Renderer::Renderer()
         mainPipeln);
 
     screenRenderSystem->addPipeline(
-        vkRenderer.getSwapChainRenderPass(), 
+        vk_device->renderer->getSwapChainRenderPass(), 
         config,
         screenPipeln 
     );
@@ -79,8 +85,10 @@ void Renderer::createVkMeshScreen()
 
 void Renderer::render(Camera& camera)
 {  
-	vkRenderer.beginFrame();
-    auto& frame = vkRenderer.frameInfo();
+    auto renderer = reinterpret_cast<gfx_vk::VulkanRenderDevice*>(gfx::gfx.iRenderDevice.get())->renderer.get();
+
+	renderer->beginFrame();
+    auto& frame = renderer->frameInfo();
     
     RenderState state {
         .frame=frame, 
@@ -106,7 +114,7 @@ void Renderer::render(Camera& camera)
 
 
 
-	vkRenderer.beginSwapChainRenderPass();
+	renderer->beginSwapChainRenderPass();
     
     state.projview = glm::mat4(1.0f);
     InstanceData instance{};
@@ -120,8 +128,8 @@ void Renderer::render(Camera& camera)
 	screenRenderSystem->flushRenderQueue(state);
     screenRenderSystem->clearQueue();
     
-	vkRenderer.endSwapChainRenderPass();
-	vkRenderer.endFrame();
+	renderer->endSwapChainRenderPass();
+	renderer->endFrame();
 }
 
 Renderer::~Renderer() = default;

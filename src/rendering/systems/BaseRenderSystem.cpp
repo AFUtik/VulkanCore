@@ -8,7 +8,7 @@
 #include "gfx/vk/Pipeline.hpp"
 #include "gfx/vk/Swapchain.hpp"
 #include "gfx/vk/Descriptors.hpp"
-#include "gfx/vk/VkTexture.hpp"
+#include "gfx/vk/Texture.hpp"
 #include "gfx/vk/Material.hpp"
 #include "gfx/vk/Mesh.hpp"
 #include "gfx/vk/Shader.hpp"
@@ -18,6 +18,8 @@
 #include "rendering/BaseMesh.hpp"
 
 #include "texture/Texture.hpp"
+
+using TextureCPU = Texture;
 
 namespace vk 
 {
@@ -93,13 +95,13 @@ void BaseRenderSystem::createDefaultMaterial()
 	whitePixel[2] = 255;
 	whitePixel[3] = 255;
 
-    Texture defaultTex(std::move(whitePixel), 1, 1, TextureChannels::RGBA);
+    TextureCPU defaultTex(std::move(whitePixel), 1, 1, TextureChannels::RGBA);
+
+	auto texture = std::make_unique<vk::Texture>();
+	texture->writeToImage(defaultTex.raw(), defaultTex.width, defaultTex.height, defaultTex.channels);
+
     defaultMaterial->setRenderSystem(this);
-    defaultMaterial->setAlbedo(
-		std::make_unique<VkTexture>(
-			defaultTex.raw(), defaultTex.width, defaultTex.height, defaultTex.height, TextureFilter::Nearest
-		)
-	);
+    defaultMaterial->setAlbedo(std::move(texture));
 }
 
 Material* BaseRenderSystem::getDefaultMaterial()

@@ -3,7 +3,7 @@
 #include <memory>
 #include <cstdint>
 
-#include "gfx/IMesh.hpp"
+#include "gfx/IRenderDevice.hpp"
 
 struct VkCommandBuffer_T;
 using VkCommandBuffer = VkCommandBuffer_T*;
@@ -17,7 +17,7 @@ enum MeshFlags {
 	GPUMemory = 1 << 1,
 };
 
-struct Mesh : public gfx::IMesh {
+struct Mesh : public gfx::Mesh {
 	Mesh();
 	~Mesh();
 
@@ -44,6 +44,10 @@ struct Mesh : public gfx::IMesh {
 
 	void createInstanceBuffer(const void* instances, uint64_t size);
 	void updateInstanceBuffer(const void* instances, uint64_t size) override;
+
+	const gfx::Buffer* getVertexBuffer() const override   {return reinterpret_cast<gfx::Buffer*>(vertexBuffer.get());}
+	const gfx::Buffer* getIndexBuffer() const override    {return reinterpret_cast<gfx::Buffer*>(indexBuffer.get());}
+	const gfx::Buffer* getInstanceBuffer() const override {return reinterpret_cast<gfx::Buffer*>(instanceBuffer.get());}
 
 	void draw(VkCommandBuffer commandBuffer, size_t instanceCount = 1, size_t instanceOffset = 0) const;
 	

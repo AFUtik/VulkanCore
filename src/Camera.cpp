@@ -8,8 +8,8 @@ CameraOrtho::CameraOrtho(int width, int height, float minZ, float maxZ) : Camera
 }
 
 void CameraOrtho::updateView() {
-	Vec2 snapped = glm::floor(position * zoom) / zoom;
-	this->view = glm::translate(Mat4(1.0f), -Vec3(snapped, 0.0f));
+	glm::vec2 snapped = glm::floor(position * zoom) / zoom;
+	this->view        = glm::translate(glm::mat4(1.0f), -glm::vec3(snapped, 0.0f));
 }
 
 void CameraOrtho::updateProjection() {
@@ -29,14 +29,14 @@ void CameraOrtho::addZoom(float delta) {
 
 	zoom = std::fmax(zoom, 0.01f);
 
-    Vec3 screenCenter = {
+    glm::vec3 screenCenter = {
         width * 0.5f,
         height * 0.5f,
         0.0f
     };
 
-    Vec3 before = position + screenCenter / oldZoom;
-    Vec3 after  = position + screenCenter / zoom;
+    glm::vec3 before = position + screenCenter / oldZoom;
+    glm::vec3 after  = position + screenCenter / zoom;
 
     position += (before - after);
 
@@ -84,16 +84,16 @@ void CameraProspective::addZoom(float delta) {
 }
 
 void CameraProspective::updateVectors() {
-	x_dir = Vec3(rotation * Vec4(1, 0, 0, 1));
-	y_dir = Vec3(rotation * Vec4(0, 1, 0, 1));
-	z_dir = Vec3(rotation * Vec4(0, 0, -1, 1));
+	x_dir = glm::vec3(rotation * glm::vec4(1, 0, 0, 1));
+	y_dir = glm::vec3(rotation * glm::vec4(0, 1, 0, 1));
+	z_dir = glm::vec3(rotation * glm::vec4(0, 0, -1, 1));
 }
 
-void CameraProspective::rotate(scalar x, scalar y, scalar z) {
-	rotation = Mat4(1.0f);
-	rotation = glm::rotate(rotation, z, Vec3(0, 0, 1));
-	rotation = glm::rotate(rotation, y, Vec3(0, 1, 0));
-	rotation = glm::rotate(rotation, x, Vec3(1, 0, 0));
+void CameraProspective::rotate(float x, float y, float z) {
+	rotation = glm::mat4(1.0f);
+	rotation = glm::rotate(rotation, z, glm::vec3(0, 0, 1));
+	rotation = glm::rotate(rotation, y, glm::vec3(0, 1, 0));
+	rotation = glm::rotate(rotation, x, glm::vec3(1, 0, 0));
 
 	updateVectors();
 }

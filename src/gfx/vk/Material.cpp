@@ -1,11 +1,11 @@
 #include "gfx/vk/Material.hpp"
-#include "gfx/vk/VkTexture.hpp"
+#include "gfx/vk/Texture.hpp"
 #include "gfx/vk/Descriptors.hpp"
 #include "gfx/vk/RenderSystem.hpp"
 
 namespace vk {
 
-void Material::setAlbedo(std::unique_ptr<VkTexture> albedo) 
+void Material::setAlbedo(std::unique_ptr<Texture> albedo) 
 {
     VkDescriptorImageInfo imageInfo;
 	imageInfo.sampler   = albedo->getSampler();

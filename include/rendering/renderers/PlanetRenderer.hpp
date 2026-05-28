@@ -4,8 +4,12 @@
 #include "rendering/BaseMesh.hpp"
 #include "rendering/RenderQueue.hpp"
 
-#include "gfx/Handle.hpp"
-#include "gfx/IMesh.hpp"
+#include "gfx/management/Handle.hpp"
+
+namespace gfx
+{
+    struct Mesh;
+}
 
 struct Renderer;
 struct RenderQueue;
@@ -22,6 +26,6 @@ private:
     
     PlanetComponentManager& pcm;
 
-    gfx::Handle<gfx::IMesh>     vkCircleMesh;
+    gfx::Handle<gfx::Mesh>    vkCircleMesh;
     std::vector<InstanceData> instances;
 };

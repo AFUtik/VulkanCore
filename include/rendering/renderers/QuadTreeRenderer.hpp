@@ -3,10 +3,14 @@
 #include "game/GameContext.hpp"
 #include "rendering/RenderQueue.hpp"
 
-#include "gfx/Handle.hpp"
-#include "gfx/IMesh.hpp"
+#include "gfx/management/Handle.hpp"
 
 #include <vector>
+
+namespace gfx 
+{
+    struct Mesh;
+}
 
 struct Renderer;
 struct RenderQueue;
@@ -21,5 +25,5 @@ private:
     const GameContext::QT& quadTree;
     
     std::vector<InstanceData> quadInstances;
-    gfx::Handle<gfx::IMesh> vkQuad;
+    gfx::Handle<gfx::Mesh> vkQuad;
 };

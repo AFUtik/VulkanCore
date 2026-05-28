@@ -3,11 +3,13 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 
+#include "gfx/IRenderDevice.hpp"
+
 namespace vk {
 
 class Device;
 
-class Buffer {
+class Buffer : gfx::Buffer {
 public:
     Buffer(
         Device &device,
@@ -25,7 +27,7 @@ public:
     VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
     void unmap();
 
-    void writeToBuffer(const void* data, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+    void writeToBuffer(const void* data, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) override;
     VkResult flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
     VkDescriptorBufferInfo descriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
     VkResult invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
@@ -42,7 +44,7 @@ public:
     VkDeviceSize getAlignmentSize() const { return instanceSize; }
     VkBufferUsageFlags getUsageFlags() const { return usageFlags; }
     VkMemoryPropertyFlags getMemoryPropertyFlags() const { return memoryPropertyFlags; }
-    VkDeviceSize getBufferSize() const { return bufferSize; }
+    VkDeviceSize getBufferSize() const override { return bufferSize; }
 
     #ifndef NDEBUG
     void addDebugInfo(const char* info);

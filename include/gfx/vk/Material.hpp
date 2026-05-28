@@ -13,7 +13,7 @@ using VkPipelineLayout = VkPipelineLayout_T*;
 
 namespace vk {
 
-class VkTexture;
+class Texture;
 
 class RenderSystem;
 class Renderer;
@@ -27,13 +27,13 @@ public:
 
     void setRenderSystem(RenderSystem* system);
 
-    void setAlbedo(std::unique_ptr<VkTexture> albedo);
+    void setAlbedo(std::unique_ptr<Texture> albedo);
     
     void bind(VkCommandBuffer commandBuffer) const;
 
     inline VkDescriptorSet& getDescriptor() { return descriptor; }
 private:
-    std::unique_ptr<VkTexture> albedo;
+    std::unique_ptr<Texture> albedo;
 
     DescriptorPoolManager* pool = nullptr;
     DescriptorSetLayout* layout = nullptr;

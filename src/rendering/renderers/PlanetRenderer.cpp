@@ -14,7 +14,7 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include "gfx/gfx.hpp"
-#include "gfx/VulkanBackend.hpp"
+#include "gfx/backend/VulkanBackend.hpp"
 
 PlanetRenderer::PlanetRenderer(Renderer& renderer) : renderer(renderer), pcm(PCM::instance())
 {

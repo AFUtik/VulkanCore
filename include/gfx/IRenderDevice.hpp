@@ -1,44 +1,57 @@
 #pragma once
 
-#include <memory>
 #include <cstdint>
-
-#include "Handle.hpp"
+#include <vector>
 
 struct Texture;
 
 namespace gfx {
 
-struct Material;
-struct IMesh;
-
-struct IMeshHandle;
-struct IMaterialHandle;
-
-struct ITexture       { virtual ~ITexture() = default; };
-struct IBuffer        { virtual ~IBuffer()  = default; };
-struct ICommandBuffer { virtual ~ICommandBuffer() = default;};
-
-struct IRenderSystem
+enum ImageFilter
 {
-    virtual void render     (IMeshHandle*, IMaterialHandle*) {};
-    virtual void renderBatch(IMeshHandle*, IMaterialHandle*, const void* instances, uint64_t instanceCount) {};
-
-    virtual std::unique_ptr<IMaterialHandle> createMaterial(const Material&) {return {};};
+    LINEAR,
+    NEAREST,
+    LINEAR_MIPMAP,
+    NEAREST_MIPMAP
+};
+struct Image
+{
+    virtual void writeToImage(
+        const uint8_t* pixels,
+        uint32_t width,
+        uint32_t height,
+        uint32_t channels
+    ) = 0;
     
+    virtual void setImageFilter(ImageFilter filter) = 0;
+
+    virtual ~Image() = default;
+};
+
+struct Buffer
+{
+    virtual void writeToBuffer(const void* data, uint64_t size, uint64_t offset) = 0;
+    virtual uint64_t getBufferSize() const = 0;
+
+    virtual ~Buffer() = default;
+};
+
+struct Mesh
+{
+    virtual void updateVertexBuffer   (const void* vertices, uint64_t size)  = 0;
+    virtual void updateIndexBuffer    (const void* indices, uint64_t size)   = 0;
+    virtual void updateInstanceBuffer (const void* instances, uint64_t size) = 0;
+
+    virtual const Buffer* getVertexBuffer() const   = 0;
+    virtual const Buffer* getIndexBuffer() const    = 0;
+    virtual const Buffer* getInstanceBuffer() const = 0;
+
+    virtual ~Mesh() = default;
 };
 
 struct IRenderDevice
 {
     virtual ~IRenderDevice() = default;
-
-    virtual Handle<IMesh> createMesh() {return {};}; 
-
-    virtual std::unique_ptr<ITexture>        createTexture (const Texture&)   {return {};};
-    virtual std::unique_ptr<IBuffer>         createBuffer  ()                 {return {};};
-   
-    virtual ICommandBuffer*                  beginFrame()                     {return nullptr;};
-    virtual void                             endFrame()                       {};
 };
 
 } // namespace gfx

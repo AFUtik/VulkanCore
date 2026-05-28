@@ -1,14 +1,9 @@
 #pragma once
 
-#include "gfx/vk/Device.hpp"
 #include <atomic>
 #include <cstdint>
 #include <utility>
 #include <cassert>
-
-#ifndef NDEBUG
-#include <iostream>
-#endif
 
 namespace gfx 
 {
@@ -26,23 +21,23 @@ struct ResourceBlockBase {
     void (*destroyFn)(ResourceBlockBase*) = nullptr;
 };
 
-template<typename T>
+struct unknown_type {};
+
+template<typename T = unknown_type>
 struct Handle {
     Handle() = default;
 
-    Handle(const Handle& o) : block_(o.block_)
+    Handle(const Handle& o) noexcept : block_(o.block_)
     {
-        if (block_) block_->refCount.fetch_add(1, std::memory_order_relaxed);
+        if (block_)
+            block_->refCount.fetch_add(1, std::memory_order_relaxed);
     }
-    
-    Handle& operator=(Handle&& o) noexcept
+
+    Handle(Handle&& o) noexcept : block_(o.block_)
     {
-        Release();
-        block_ = o.block_;
         o.block_ = nullptr;
-        return *this;
     }
-    
+
     template<typename C>
     requires std::is_convertible_v<C*, T*>
     Handle(const Handle<C>& o) noexcept : block_(o.block_)
@@ -50,13 +45,47 @@ struct Handle {
         if (block_)
             block_->refCount.fetch_add(1, std::memory_order_relaxed);
     }
-    
+
+    template<typename C>
+    requires std::is_convertible_v<C*, T*>
+    Handle(Handle<C>&& o) noexcept : block_(o.block_)
+    {
+        o.block_ = nullptr;
+    }
+
+    Handle& operator=(const Handle& o) noexcept
+    {
+        Handle tmp(o);
+        Swap(tmp); 
+        return *this;
+    }
+
+    Handle& operator=(Handle&& o) noexcept
+    {
+        if (this != &o)
+        {
+            Release();
+            block_   = o.block_;
+            o.block_ = nullptr;
+        }
+        return *this;
+    }
+
+    template<typename C>
+    requires std::is_convertible_v<C*, T*>
+    Handle& operator=(const Handle<C>& o) noexcept
+    {
+        Handle tmp(o);
+        Swap(tmp);
+        return *this;
+    }
+
     template<typename C>
     requires std::is_convertible_v<C*, T*>
     Handle& operator=(Handle<C>&& o) noexcept
     {
         Release();
-        block_ = o.block_;
+        block_   = o.block_;
         o.block_ = nullptr;
         return *this;
     }
@@ -69,10 +98,7 @@ struct Handle {
     explicit operator bool() const { return IsValid(); }
 
     template<typename C>
-    Handle<C> Cast() const
-    {
-        return Handle<C>(*this);
-    }
+    Handle<C> Cast() const { return Handle<C>(*this); }
     
     T* Get() const
     {
@@ -90,8 +116,6 @@ struct Handle {
         return block_->index;
     }
     
-    
-
     template<typename>
     friend class Handle;
 
@@ -104,7 +128,8 @@ struct Handle {
     {
         if (!block_) return;
         
-        if (block_->refCount.fetch_sub(1, std::memory_order_acq_rel) == 1) block_->destroyFn(block_);
+        if (block_->refCount.fetch_sub(1, std::memory_order_acq_rel) == 1) 
+            block_->destroyFn(block_);
 
         block_ = nullptr;
     }

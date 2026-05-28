@@ -4,7 +4,6 @@
 #include "renderers/QuadTreeRenderer.hpp"
 
 #include "gfx/vk/Pipeline.hpp"
-#include "gfx/vk/Renderer.hpp"
 #include "gfx/vk/RenderTarget.hpp"
 #include "gfx/vk/Shader.hpp"
 
@@ -24,7 +23,6 @@ struct Renderer
     Renderer();
     ~Renderer();
 
-    vk::Renderer vkRenderer;
     vk::RenderTarget vkRenderTarget;
 
     vk::ShaderManager shaderManager;

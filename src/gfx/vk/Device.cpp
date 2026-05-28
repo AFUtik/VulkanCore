@@ -1,7 +1,7 @@
 #include "gfx/vk/Device.hpp"
 #include "gfx/vk/Buffer.hpp"
 #include "gfx/vk/Swapchain.hpp"
-#include "gfx/vk/VkTexture.hpp"
+#include "gfx/vk/Texture.hpp"
 #include "gfx/vk/Descriptors.hpp"
 #include "gfx/vk/VkWindow.hpp"
 
@@ -819,7 +819,7 @@ namespace vk {
     }
 
     template<>
-    void Device::free<VkTexture>(VkTexture* resource) {
+    void Device::free<Texture>(Texture* resource) {
         struct DeletionInfo {
             VkSampler sampler;
             VkImageView view;

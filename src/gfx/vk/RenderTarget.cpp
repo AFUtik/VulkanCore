@@ -1,7 +1,7 @@
 #include "gfx/vk/RenderTarget.hpp"
 #include "gfx/vk/Device.hpp"
 #include "gfx/vk/Swapchain.hpp"
-#include "gfx/vk/VkTexture.hpp"
+#include "gfx/vk/Texture.hpp"
 #include "gfx/vk/Descriptors.hpp"
 #include "gfx/vk/FrameInfo.hpp"
 #include "gfx/vk/Material.hpp"

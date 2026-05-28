@@ -22,13 +22,15 @@
 
 Engine::Engine() : camera(RENDER_WIDTH, RENDER_HEIGHT) 
 {
+	Window::instance().init(WIDTH, HEIGHT, "Vulkan Engine");
+
+	Events::init();
+	
 	gfx::initVulkanBackend();
 
 	registerPlanetComponents();
 
-	Window::instance().init(WIDTH, HEIGHT, "Vulkan Engine");
-
-	Events::init();
+	
 }
 
 Engine::~Engine() {}
@@ -67,16 +69,16 @@ void Engine::run() {
 			//guiRenderer->syncAll();
 
 			if (Events::pressed(GLFW_KEY_W)) {
-				camera.translate(Vec3(0.0, 1.0, 0.0) * H * speed);
+				camera.translate(glm::vec3(0.0, 1.0, 0.0) * H * speed);
 			}
 			if (Events::pressed(GLFW_KEY_S)) {
-				camera.translate(Vec3(0.0, -1.0, 0.0) * H * speed);
+				camera.translate(glm::vec3(0.0, -1.0, 0.0) * H * speed);
 			}
 			if (Events::pressed(GLFW_KEY_D)) {
-				camera.translate(Vec3(1.0, 0.0, 0.0) * H * speed);
+				camera.translate(glm::vec3(1.0, 0.0, 0.0) * H * speed);
 			}
 			if (Events::pressed(GLFW_KEY_A)) {
-				camera.translate(Vec3(-1.0, 0.0, 0.0) * H * speed);
+				camera.translate(glm::vec3(-1.0, 0.0, 0.0) * H * speed);
 			}
 			if (Events::pressed(GLFW_KEY_G)) {
 				camera.addZoom(0.005f);
@@ -123,4 +125,5 @@ void Engine::run() {
 
 	vkDeviceWaitIdle(vk::Device::instance().device());
 	global.renderer.reset();
+	gfx::freeVulkanBackend();
 }
