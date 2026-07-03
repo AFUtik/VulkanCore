@@ -16,12 +16,14 @@
 #include "RenderPipeline.hpp"
 #include "BindGroupLayout.hpp"
 
+struct Window;
+
 namespace gfx::gl 
 {
 
 struct BackendGL : public Device
 {
-    BackendGL();
+    BackendGL(Window* windowInstance);
     ~BackendGL() {};
 
     Handle<Image>          createImage (const ImageDesc& desc)  override;
@@ -45,6 +47,7 @@ struct BackendGL : public Device
         return screenFBO;
     }
 private:
+    Window*       windowInstance;
     FramebufferGL screenFBO;
 
     ResourceManager<ImageGL>       images;

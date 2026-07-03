@@ -1,6 +1,3 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 #include "gfx/Backend.hpp"
 #include "gfx/BindGroup.hpp"
 #include "gfx/BindGroupLayout.hpp"
@@ -16,10 +13,12 @@
 #include "gfx/RenderPipeline.hpp"
 #include "gfx/Vertex.hpp"
 
-#include <iostream>
+#include "Window.hpp"
+#include "Events.hpp"
+#include <GLFW/glfw3.h>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "thirdparties/stb_image.h"
+#include "thirdparties/stb_image.h" 
 
 // Vertex Shader
 const char* vertexShaderSrc = R"(
@@ -65,23 +64,20 @@ struct Texture
     int32_t channels;
 };
 
+const std::string absPath = "/home/afutik/code/cplusplus/GFX/";
+
 int main() {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    Window windowInstance;
+    windowInstance.init(800, 600, "GameEngine 0.0.1");
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Triangle", nullptr, nullptr);
-    glfwMakeContextCurrent(window);
+    Events::init(&windowInstance);
 
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-
-    auto device = gfx::createOpenGLBackend();
+    auto device = gfx::createOpenGLBackend(&windowInstance);
 
     // Screen Framebuffer
     gfx::Framebuffer& fbo = device->getScreenFramebuffer();
     fbo.resize(800, 600);
-    
+
     // Shaders
     gfx::Handle<gfx::Shader> vshader = device->createShader(
         gfx::ShaderDesc{
@@ -117,7 +113,7 @@ int main() {
     Texture texture;
     texture.pixels.reset(
         stbi_load(
-            "/home/afutik/cplusplus/GFX/kharkiv.png",
+            (absPath+"kharkiv.png").c_str(),
             &texture.width,
             &texture.height,
             &texture.channels,
@@ -176,7 +172,7 @@ int main() {
         .targets = {}
     };
     gfx::Handle<gfx::RenderPipeline> pipeline = device->createRenderPipeline(pipelineDesc);
-    
+
     // RenderPass
     gfx::Handle<gfx::RenderPass> pass = device->createRenderPass(
         gfx::RenderPassDesc{
@@ -189,16 +185,6 @@ int main() {
                 }
             },
             .clearColor  = {0.4f, 0.4f, 0.4f, 1.0f}
-        }
-    );
-
-    glfwSetWindowUserPointer(window, &fbo);
-    glfwSetFramebufferSizeCallback(
-        window,
-        [](GLFWwindow* window, int width, int height)
-        {
-            auto* fbo =static_cast<gfx::Framebuffer*>(glfwGetWindowUserPointer(window));
-            if(fbo) fbo->resize(width, height);
         }
     );
 
@@ -224,7 +210,12 @@ int main() {
     mesh->updateVertices(vertices.data(), vertices.size());
     mesh->updateIndexes (indices.data(), indices.size());
 
-    while (!glfwWindowShouldClose(window)) {
+    while (!windowInstance.isShouldClose()) {
+        if(Events::jpressed(GLFW_KEY_ESCAPE))
+        {
+            return 0;
+        }
+
         pass->begin(&fbo);
 
         pass->setRenderPipeline(pipeline.Get());
@@ -234,10 +225,8 @@ int main() {
 
         pass->end();
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        windowInstance.swapBuffers();
+        Events::pullEvents();
     }
-
-    glfwTerminate();
     return 0;
 }

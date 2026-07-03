@@ -4,9 +4,9 @@
 namespace gfx
 {
 
-std::unique_ptr<Device> createOpenGLBackend()
+std::unique_ptr<Device> createOpenGLBackend(Window* windowInstance)
 {
-    return std::make_unique<gl::BackendGL>();
+    return std::make_unique<gl::BackendGL>(windowInstance);
 }
 
 }

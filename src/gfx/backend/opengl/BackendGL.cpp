@@ -1,11 +1,19 @@
 #include "gfx/backend/opengl/BackendGL.hpp"
 
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include "pch.hpp"
+
 namespace gfx::gl 
 {
 
-BackendGL::BackendGL() : Device(BackendType::OpenGL), screenFBO(*this)
+BackendGL::BackendGL(Window* windowInstance) : Device(BackendType::OpenGL), windowInstance(windowInstance), screenFBO(*this)
 {
-
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD\n";
+        exit(1);
+    }
 }
 
 Handle<Image>         BackendGL::createImage (const ImageDesc& desc) 
